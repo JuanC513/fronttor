@@ -1,59 +1,120 @@
-# TgSmartTutor
+# 🎓 Sistema Tutor Inteligente – Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.2.1.
+Aplicación frontend desarrollada en Angular como parte del Trabajo de Grado para la creación de un **Sistema Tutor Inteligente orientado a la enseñanza de temas de Frontend**.
 
-## Development server
+El sistema busca integrar un modelo de Inteligencia Artificial para generar retroalimentación personalizada según el progreso del estudiante.
 
-To start a local development server, run:
+---
 
-```bash
-ng serve
-```
+## 📌 Estado actual
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+El proyecto se encuentra en fase de configuración base y estandarización del entorno de desarrollo:
 
-## Code scaffolding
+- ✅ Proyecto Angular inicializado
+- ✅ ESLint configurado
+- ✅ Prettier configurado
+- ✅ Husky integrado
+- ✅ lint-staged configurado
+- ✅ Documentación automática con Compodoc
+- ✅ Validación automática antes de commit
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+El objetivo actual es garantizar calidad, consistencia y escalabilidad desde el inicio del desarrollo.
 
-```bash
-ng generate component component-name
-```
+---
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## 🧠 Tecnologías
 
-```bash
-ng generate --help
-```
+- Angular
+- TypeScript
+- ESLint
+- Prettier
+- Husky
+- lint-staged
+- Compodoc
 
-## Building
+---
 
-To build the project run:
+## ⚙️ Requisitos
 
-```bash
-ng build
-```
+- Node.js (LTS recomendado)
+- npm
+- Angular CLI
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
+Verificar versiones:
 
 ```bash
-ng e2e
+node -v
+npm -v
+ng version
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+---
 
-## Additional Resources
+## 🚀 Instalación
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+1. Clonar repositorio:
+
+```bash
+git clone <URL_DEL_REPOSITORIO>
+cd <nombre-del-proyecto>
+```
+
+2. Instalar dependencias:
+
+```bash
+npm install
+```
+
+3. Ejecutar en desarrollo:
+
+```bash
+npm start
+```
+
+---
+
+## 🔒 Control de calidad (Pre-commit)
+
+El proyecto utiliza **Husky + lint-staged** para validar automáticamente los archivos antes de cada commit.
+
+Al ejecutar:
+
+```bash
+git commit -m "mensaje"
+```
+
+Se ejecuta automáticamente:
+
+- ESLint sobre archivos en stage
+- Prettier sobre archivos en stage
+
+Si hay errores:
+
+- ❌ El commit falla
+- Deben corregirse antes de continuar
+
+Esto garantiza consistencia y calidad en todo el repositorio.
+
+---
+
+## 📚 Documentación
+
+Se utiliza Compodoc para generar documentación técnica del proyecto.
+
+Generar documentación:
+
+```bash
+npm run docs
+```
+
+Levantar servidor local de documentación:
+
+```bash
+npm run docs:serve
+```
+
+---
+
+## 👨‍💻 Autor
+
+Proyecto desarrollado como Trabajo de Grado en Ingeniería de Sistemas.
