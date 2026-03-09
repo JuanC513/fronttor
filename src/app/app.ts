@@ -1,5 +1,6 @@
-import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, inject, signal } from '@angular/core';
+import { Router, RouterOutlet } from '@angular/router';
+import { AuthService } from '@core/services/auth/auth-service';
 
 @Component({
   selector: 'app-root',
@@ -9,4 +10,11 @@ import { RouterOutlet } from '@angular/router';
 })
 export class App {
   protected readonly title = signal('tg-smart-tutor');
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+
+  async logout() {
+    await this.authService.signOut();
+    this.router.navigate(['/login']);
+  }
 }
