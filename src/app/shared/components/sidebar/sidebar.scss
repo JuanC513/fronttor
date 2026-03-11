@@ -1,4 +1,13 @@
 .app-sidebar {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  padding: 40px;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
 }
