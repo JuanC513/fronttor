@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from '@core/guards/auth/auth-guard';
 import { guestGuard } from '@core/guards/guest/guest-guard';
+import { AppLayout } from '@shared/layouts/app-layout/app-layout';
 
 export const routes: Routes = [
   {
@@ -23,18 +24,25 @@ export const routes: Routes = [
   // },
 
   {
-    path: 'learning',
-    loadComponent: () =>
-      import('@features/learning/pages/learning-page/learning-page').then((m) => m.LearningPage),
+    path: '',
+    component: AppLayout,
     canActivate: [authGuard],
-  },
-  {
-    path: 'playground',
-    loadComponent: () =>
-      import('@features/playground/pages/playground-page/playground-page').then(
-        (m) => m.PlaygroundPage,
-      ),
-    canActivate: [authGuard],
+    children: [
+      {
+        path: 'learning',
+        loadComponent: () =>
+          import('@features/learning/pages/learning-page/learning-page').then(
+            (m) => m.LearningPage,
+          ),
+      },
+      {
+        path: 'playground',
+        loadComponent: () =>
+          import('@features/playground/pages/playground-page/playground-page').then(
+            (m) => m.PlaygroundPage,
+          ),
+      },
+    ],
   },
 
   // {

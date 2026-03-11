@@ -1,0 +1,32 @@
+.app-layout-container {
+  display: grid;
+  grid-template-areas: 'sidebar content';
+  grid-template-columns: auto 1fr;
+  height: 100%;
+}
+
+.app-layout-sidebar {
+  grid-area: sidebar;
+}
+
+.app-layout-content {
+  grid-area: content;
+  display: grid;
+  grid-template-areas:
+    'topbar'
+    'content';
+  grid-template-rows: auto 1fr;
+  height: 100%;
+}
+
+.topbar {
+  grid-area: topbar;
+}
+
+.content {
+  grid-area: content;
+}
+
+.content {
+  background-color: lightgray;
+}
