@@ -23,6 +23,12 @@ export const routes: Routes = [
   // },
 
   {
+    path: 'learning',
+    loadComponent: () =>
+      import('@features/learning/pages/learning-page/learning-page').then((m) => m.LearningPage),
+    canActivate: [authGuard],
+  },
+  {
     path: 'playground',
     loadComponent: () =>
       import('@features/playground/pages/playground-page/playground-page').then(
