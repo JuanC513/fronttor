@@ -17,10 +17,12 @@
     'content';
   grid-template-rows: auto 1fr;
   height: 100%;
+  overflow-y: auto;
 }
 
 .topbar {
   grid-area: topbar;
+  background-color: gray;
 }
 
 .content {
@@ -29,4 +31,5 @@
 
 .content {
   background-color: lightgray;
+  padding: 0 50px;
 }
