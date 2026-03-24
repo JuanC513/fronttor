@@ -30,10 +30,8 @@ export const routes: Routes = [
     children: [
       {
         path: 'learning',
-        loadComponent: () =>
-          import('@features/learning/pages/learning-page/learning-page').then(
-            (m) => m.LearningPage,
-          ),
+        loadChildren: () =>
+          import('@features/learning/learning.routes').then((m) => m.LEARNING_ROUTES),
       },
       {
         path: 'playground',
