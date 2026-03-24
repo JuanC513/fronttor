@@ -65,6 +65,5 @@ export class LearningLesson implements OnInit {
   ngOnInit() {
     this.moduleId = Number(this.activatedRoute.snapshot.paramMap.get('moduleId')) - 1;
     this.lessonId = Number(this.activatedRoute.snapshot.paramMap.get('lessonId')) - 1;
-    console.log(this.moduleId, this.lessonId);
   }
 }
