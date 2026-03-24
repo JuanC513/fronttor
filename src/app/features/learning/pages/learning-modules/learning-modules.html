@@ -1,14 +1,22 @@
 <section class="learning-modules-container">
   <h1>Contenido</h1>
+  <p>
+    En esta sección se encuentran los contenidos para el aprendizaje dividido en temas y subtemas
+    ¡Haz clic en un subtema para iniciar el aprendizaje!
+  </p>
   <span>
-    <h2>Tema #1</h2>
-    <span>
-      <h4>-- Subtema #1</h4>
-      <h4>-- Subtema #2</h4>
-      <h4>-- Subtema #3</h4>
-    </span>
-    <h2>Tema #2</h2>
-    <h2>Tema #3</h2>
+    @for (module of contentModules; track $index) {
+      <h2>{{ module.name }}</h2>
+      @if (module.subModules.length) {
+        submodulos
+        <span>
+          @for (subModule of module.subModules; track $index) {
+            <a [href]="`learning/${index}`">
+              <h4>{{ subModule }}</h4>
+            </a>
+          }
+        </span>
+      }
+    }
   </span>
-  <span>fINAL</span>
 </section>
