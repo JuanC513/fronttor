@@ -5,13 +5,12 @@
     ¡Haz clic en un subtema para iniciar el aprendizaje!
   </p>
   <span>
-    @for (module of contentModules; track $index) {
+    @for (module of contentModules; track $index; let moduleIndex = $index) {
       <h2>{{ module.name }}</h2>
-      @if (module.subModules.length) {
-        submodulos
+      @if (module.lessons) {
         <span>
-          @for (subModule of module.subModules; track $index) {
-            <a [href]="`learning/${index}`">
+          @for (subModule of module.lessons; track $index; let lessonIndex = $index) {
+            <a [href]="`learning/modules/${moduleIndex + 1}/lessons/${lessonIndex + 1}`">
               <h4>{{ subModule }}</h4>
             </a>
           }
