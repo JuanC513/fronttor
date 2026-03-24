@@ -24,19 +24,41 @@ export class LearningModules {
     },
     {
       name: 'Tema #2 CSS: Estilos y Diseño Visual',
-      lessons: [],
+      lessons: [
+        'Selectores y propiedades básicas',
+        'Colores, fuentes y texto',
+        'Modelo de caja (box model)',
+        'Bordes, márgenes, rellenos y fondos',
+        'Posicionamiento y visualización de elementos',
+      ],
     },
     {
       name: 'Tema #3 Diseño responsivo y Buenas Prácticas',
-      lessons: [],
+      lessons: [
+        'Uso de unidades relativas',
+        'Media queries',
+        'Flexbox y Grid Layout',
+        'Accesibilidad y semántica visual',
+        'Organización y reutilización de estilos',
+      ],
     },
     {
       name: 'Tema #4 Interactividad y Fundamentos de Frameworks',
-      lessons: [],
+      lessons: [
+        'Manipulación del DOM',
+        'Introducción a la interactividad con JavaScript',
+        'Principios de componentes y reactividad',
+        'Ejemplos introductorios con frameworks frontend',
+      ],
     },
     {
       name: 'Tema #5 Integración y Prácticas Guiadas',
-      lessons: [],
+      lessons: [
+        'Estructura de una página completa',
+        'Aplicación combinada de estilos y scripts',
+        'Retroalimentación automática del código ',
+        'Corrección guiada y explicación adaptativa de errores',
+      ],
     },
   ];
 }
