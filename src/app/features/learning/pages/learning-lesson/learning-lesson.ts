@@ -1,9 +1,10 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { TabsModule } from 'primeng/tabs';
 
 @Component({
   selector: 'app-learning-lesson',
-  imports: [],
+  imports: [TabsModule],
   templateUrl: './learning-lesson.html',
   styleUrl: './learning-lesson.scss',
 })
@@ -59,6 +60,49 @@ export class LearningLesson implements OnInit {
         'Retroalimentación automática del código ',
         'Corrección guiada y explicación adaptativa de errores',
       ],
+    },
+  ];
+
+  blocks = [
+    {
+      label: 'Fundamentos',
+      content: '¿Qué es HTML y qué es una etiqueta?',
+    },
+    {
+      label: 'Estructura',
+      content: 'Estructura base de un documento HTML',
+    },
+    {
+      label: 'Metadatos',
+      content: 'La etiqueta <head>',
+    },
+    {
+      label: 'Contenido',
+      content: 'La etiqueta <body>',
+    },
+    {
+      label: 'Jerarquía',
+      content: 'Encabezados <h1> a <h6>',
+    },
+    {
+      label: 'Texto',
+      content: 'Párrafos <p>',
+    },
+    {
+      label: 'Navegación',
+      content: 'Enlaces <a>',
+    },
+    {
+      label: 'Multimedia',
+      content: 'Imágenes <img>',
+    },
+    {
+      label: 'Configuración',
+      content: 'Atributos en HTML',
+    },
+    {
+      label: 'Calidad',
+      content: 'Buenas prácticas básicas',
     },
   ];
 

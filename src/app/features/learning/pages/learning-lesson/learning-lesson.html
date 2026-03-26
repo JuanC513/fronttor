@@ -1,6 +1,20 @@
 <section class="learning-lesson-container">
   <h1>{{ modules[moduleId].lessons[lessonId] }}</h1>
   <p>Tema: {{ modules[moduleId].name }}</p>
-  <p>Bloques</p>
-  |-----|-----|
+  <div class="card">
+    <p-tabs [value]="0">
+      <p-tablist>
+        @for (tab of blocks; track $index) {
+          <p-tab [value]="$index">{{ tab.label }}</p-tab>
+        }
+      </p-tablist>
+      <p-tabpanels>
+        @for (tab of blocks; track $index) {
+          <p-tabpanel [value]="$index">
+            <p class="m-0">{{ tab.content }}</p>
+          </p-tabpanel>
+        }
+      </p-tabpanels>
+    </p-tabs>
+  </div>
 </section>
