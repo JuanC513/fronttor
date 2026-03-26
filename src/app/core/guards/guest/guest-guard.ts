@@ -17,7 +17,7 @@ export const guestGuard: CanActivateFn = () => {
         return true;
       }
 
-      return router.createUrlTree(['/playground']);
+      return router.createUrlTree(['/']);
     }),
   );
 };

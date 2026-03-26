@@ -5,12 +5,6 @@ import { AppLayout } from '@shared/layouts/app-layout/app-layout';
 
 export const routes: Routes = [
   {
-    path: '',
-    redirectTo: 'login',
-    pathMatch: 'full',
-  },
-
-  {
     path: 'login',
     loadComponent: () =>
       import('@features/auth/pages/login-page/login-page').then((m) => m.LoginPage),
@@ -45,6 +39,10 @@ export const routes: Routes = [
         loadComponent: () =>
           import('@features/profile/pages/profile-page/profile-page').then((m) => m.ProfilePage),
       },
+      {
+        path: '**',
+        redirectTo: 'learning',
+      },
     ],
   },
 
@@ -56,7 +54,11 @@ export const routes: Routes = [
   //   canActivate: [authGuard, roleGuard],
   //   data: { roles: ['admin'] },
   // },
-
+  {
+    path: '',
+    redirectTo: 'login',
+    pathMatch: 'full',
+  },
   {
     path: '**',
     redirectTo: '',

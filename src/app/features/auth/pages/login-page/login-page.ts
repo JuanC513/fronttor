@@ -16,7 +16,7 @@ export class LoginPage {
     try {
       await this.authService.signIn('student3@test.com', '12345678');
 
-      this.router.navigate(['/playground']);
+      this.router.navigate(['/']);
     } catch (error) {
       console.error('Login failed', error);
 
