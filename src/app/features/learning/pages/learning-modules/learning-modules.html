@@ -6,24 +6,26 @@
       ¡Haz clic en un subtema para iniciar el aprendizaje!
     </p>
   </span>
-  <p-accordion [value]="['0']">
-    @for (module of contentModules; track $index; let moduleIndex = $index) {
-      <p-accordion-panel [value]="$index">
-        <p-accordion-header>
-          <h2>{{ module.name }}</h2>
-        </p-accordion-header>
-        <p-accordion-content>
-          @if (module.lessons) {
-            <span>
-              @for (subModule of module.lessons; track $index; let lessonIndex = $index) {
-                <a [href]="`learning/modules/${moduleIndex + 1}/lessons/${lessonIndex + 1}`">
-                  <h4>{{ subModule }}</h4>
-                </a>
-              }
-            </span>
-          }
-        </p-accordion-content>
-      </p-accordion-panel>
-    }
-  </p-accordion>
+  <p-scrollpanel style="height: 100%">
+    <p-accordion [value]="['0']">
+      @for (module of contentModules; track $index; let moduleIndex = $index) {
+        <p-accordion-panel [value]="$index">
+          <p-accordion-header>
+            <h2>{{ module.name }}</h2>
+          </p-accordion-header>
+          <p-accordion-content>
+            @if (module.lessons) {
+              <span>
+                @for (subModule of module.lessons; track $index; let lessonIndex = $index) {
+                  <a [href]="`learning/modules/${moduleIndex + 1}/lessons/${lessonIndex + 1}`">
+                    <h4>{{ subModule }}</h4>
+                  </a>
+                }
+              </span>
+            }
+          </p-accordion-content>
+        </p-accordion-panel>
+      }
+    </p-accordion>
+  </p-scrollpanel>
 </section>

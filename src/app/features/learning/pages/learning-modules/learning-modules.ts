@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { AccordionModule } from 'primeng/accordion';
+import { ScrollPanelModule } from 'primeng/scrollpanel';
 
 interface module {
   name: string;
@@ -8,7 +9,7 @@ interface module {
 
 @Component({
   selector: 'app-learning-modules',
-  imports: [AccordionModule],
+  imports: [AccordionModule, ScrollPanelModule],
   templateUrl: './learning-modules.html',
   styleUrl: './learning-modules.scss',
 })
