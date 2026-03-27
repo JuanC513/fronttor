@@ -1,21 +1,29 @@
 <section class="learning-modules-container">
-  <h1>Contenido</h1>
-  <p>
-    En esta sección se encuentran los contenidos para el aprendizaje dividido en temas y subtemas
-    ¡Haz clic en un subtema para iniciar el aprendizaje!
-  </p>
-  <span>
-    @for (module of contentModules; track $index; let moduleIndex = $index) {
-      <h2>{{ module.name }}</h2>
-      @if (module.lessons) {
-        <span>
-          @for (subModule of module.lessons; track $index; let lessonIndex = $index) {
-            <a [href]="`learning/modules/${moduleIndex + 1}/lessons/${lessonIndex + 1}`">
-              <h4>{{ subModule }}</h4>
-            </a>
-          }
-        </span>
-      }
-    }
+  <span class="header">
+    <h1>Contenido</h1>
+    <p>
+      En esta sección se encuentran los contenidos para el aprendizaje dividido en temas y subtemas
+      ¡Haz clic en un subtema para iniciar el aprendizaje!
+    </p>
   </span>
+  <p-accordion [value]="['0']">
+    @for (module of contentModules; track $index; let moduleIndex = $index) {
+      <p-accordion-panel [value]="$index">
+        <p-accordion-header>
+          <h2>{{ module.name }}</h2>
+        </p-accordion-header>
+        <p-accordion-content>
+          @if (module.lessons) {
+            <span>
+              @for (subModule of module.lessons; track $index; let lessonIndex = $index) {
+                <a [href]="`learning/modules/${moduleIndex + 1}/lessons/${lessonIndex + 1}`">
+                  <h4>{{ subModule }}</h4>
+                </a>
+              }
+            </span>
+          }
+        </p-accordion-content>
+      </p-accordion-panel>
+    }
+  </p-accordion>
 </section>

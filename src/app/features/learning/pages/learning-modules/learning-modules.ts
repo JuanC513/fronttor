@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { AccordionModule } from 'primeng/accordion';
 
 interface module {
   name: string;
@@ -7,7 +8,7 @@ interface module {
 
 @Component({
   selector: 'app-learning-modules',
-  imports: [],
+  imports: [AccordionModule],
   templateUrl: './learning-modules.html',
   styleUrl: './learning-modules.scss',
 })
