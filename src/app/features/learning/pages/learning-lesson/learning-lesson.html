@@ -1,20 +1,36 @@
 <section class="learning-lesson-container">
-  <h1>{{ modules[moduleId].lessons[lessonId] }}</h1>
-  <p>Tema: {{ modules[moduleId].name }}</p>
-  <div class="card">
-    <p-tabs [value]="0">
+  <div class="header">
+    <h1>{{ modules[moduleId].lessons[lessonId] }}</h1>
+    <p>Tema: {{ modules[moduleId].name }}</p>
+  </div>
+  <div class="tabs">
+    <p-tabs [(value)]="activeTab">
       <p-tablist>
         @for (tab of blocks; track $index) {
           <p-tab [value]="$index">{{ tab.label }}</p-tab>
         }
       </p-tablist>
-      <p-tabpanels>
-        @for (tab of blocks; track $index) {
-          <p-tabpanel [value]="$index">
-            <p class="m-0">{{ tab.content }}</p>
-          </p-tabpanel>
-        }
-      </p-tabpanels>
     </p-tabs>
+  </div>
+  <div class="content">
+    <p-scrollpanel style="height: 100%">
+      <h2>Introducción</h2>
+      <p style="white-space: pre-line">
+        {{ `Una introducción para el tema actual` }}
+      </p>
+      <h2>Conceptos</h2>
+      {{ `Conceptos básicos del tema actual` }}
+      <h2>Ejemplos</h2>
+      {{ `Ejemplos propios del tema actual` }}
+      <h2>Resumen</h2>
+      {{ `Resumen del tema actual` }}
+      <p style="white-space: pre-line">{{ blocks[activeTab].content }}</p>
+    </p-scrollpanel>
+  </div>
+  <div class="footer">
+    <a routerLink="/learning">
+      <button>Regresar</button>
+    </a>
+    <button>Ejercicios</button>
   </div>
 </section>

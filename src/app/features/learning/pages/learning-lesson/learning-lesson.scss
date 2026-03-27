@@ -1,6 +1,46 @@
-.learning-lesson-container {
-  display: flex;
-  flex-direction: column;
-  background-color: white;
+:host {
+  display: block;
   height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.learning-lesson-container {
+  display: grid;
+  grid-template-areas:
+    'header'
+    'tabs'
+    'content'
+    'footer';
+  grid-template-rows: auto auto 1fr auto;
+  height: 100%;
+  overflow: hidden;
+  background-color: white;
+}
+
+.header {
+  grid-area: header;
+  padding: 0 20px;
+}
+.tabs {
+  grid-area: tabs;
+}
+
+.content {
+  grid-area: content;
+  min-height: 0;
+  padding: 0 20px;
+  width: 100%;
+}
+
+::ng-deep .p-scrollpanel-content {
+  width: auto;
+}
+
+.footer {
+  grid-area: footer;
+  border-top: 1px solid lightgray;
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
 }

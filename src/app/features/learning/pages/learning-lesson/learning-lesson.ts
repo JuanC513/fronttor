@@ -1,10 +1,11 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TabsModule } from 'primeng/tabs';
+import { ScrollPanelModule } from 'primeng/scrollpanel';
 
 @Component({
   selector: 'app-learning-lesson',
-  imports: [TabsModule],
+  imports: [TabsModule, ScrollPanelModule, RouterLink],
   templateUrl: './learning-lesson.html',
   styleUrl: './learning-lesson.scss',
 })
@@ -102,9 +103,28 @@ export class LearningLesson implements OnInit {
     },
     {
       label: 'Calidad',
-      content: 'Buenas prácticas básicas',
+      content: `Buenas prácticas básicas
+      
+      
+      ${'-\n\n\n\n\n\n\n\n\n\n'}
+      Texto prueba
+      
+      
+      ${'-\n\n\n\n\n\n\n\n\n\n'}
+      Texto prueba
+
+      
+      ${'-\n\n\n\n\n\n\n\n\n\n'}
+      Texto prueba
+
+      
+      ${'-\n\n\n\n\n\n\n\n\n\n'}
+      Texto prueba
+      `,
     },
   ];
+
+  activeTab = 0;
 
   ngOnInit() {
     this.moduleId = Number(this.activatedRoute.snapshot.paramMap.get('moduleId')) - 1;
