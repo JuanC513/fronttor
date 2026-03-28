@@ -1,10 +1,11 @@
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '@core/services/auth/auth-service';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
   selector: 'app-profile-page',
-  imports: [],
+  imports: [ButtonModule],
   templateUrl: './profile-page.html',
   styleUrl: './profile-page.scss',
 })

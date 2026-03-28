@@ -11,7 +11,7 @@
       @for (module of contentModules; track $index; let moduleIndex = $index) {
         <p-accordion-panel [value]="$index">
           <p-accordion-header>
-            <h2>{{ module.name }}</h2>
+            <h3>{{ module.name }}</h3>
           </p-accordion-header>
           <p-accordion-content>
             @if (module.lessons) {
