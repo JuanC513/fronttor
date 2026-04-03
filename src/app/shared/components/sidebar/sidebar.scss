@@ -1,13 +1,16 @@
 .app-sidebar {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 40px;
-  justify-content: space-between;
+  padding: 40px 20px;
   height: 100%;
 }
 
-.items {
-  display: flex;
-  flex-direction: column;
+:host ::ng-deep .active {
+  border: 1px solid;
+  border-radius: var(--p-menu-border-radius);
+  background-color: #e0f3fe;
+  border-color: var(--p-button-info-border-color);
+  pointer-events: none;
+}
+
+:host ::ng-deep .p-menu-item.p-focus .p-menu-item-content {
+  background: none !important ;
 }

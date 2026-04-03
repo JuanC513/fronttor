@@ -1,25 +1,14 @@
-<nav class="app-sidebar">
-  <span>
+<nav class="app-sidebar flex flex-column align-items-center justify-content-between">
+  <span class="flex flex-column align-items-center gap-8">
     <h1>FronTTor</h1>
-    <div class="items">
-      <a href="">Ir a ""</a>
-      <a href="/login">Ir a login</a>
-    </div>
+    <p-menu [model]="items" />
   </span>
-  <div class="items">
-    <a href="/home">Inicio</a>
-    <a href="/learning">Aprender</a>
-    <a href="/exercises">Ejercicios</a>
-    <a href="/playground">< > Libre</a>
-  </div>
 
-  <span>
-    <p-button
-      icon="pi pi-user"
-      [rounded]="true"
-      severity="info"
-      [outlined]="true"
-      routerLink="/profile"
-    />
-  </span>
+  <p-button
+    icon="pi pi-user"
+    [rounded]="true"
+    severity="info"
+    [outlined]="true"
+    routerLink="/profile"
+  />
 </nav>
