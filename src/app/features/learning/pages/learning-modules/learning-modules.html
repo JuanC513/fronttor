@@ -17,7 +17,7 @@
             @if (module.lessons) {
               <span>
                 @for (subModule of module.lessons; track $index; let lessonIndex = $index) {
-                  <a [href]="`learning/modules/${moduleIndex + 1}/lessons/${lessonIndex + 1}`">
+                  <a [href]="`learning/modules/${moduleIndex}/lessons/${lessonIndex}`">
                     <h4>{{ subModule }}</h4>
                   </a>
                 }

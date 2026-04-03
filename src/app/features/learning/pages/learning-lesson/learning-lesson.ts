@@ -127,7 +127,7 @@ export class LearningLesson implements OnInit {
   activeTab = 0;
 
   ngOnInit() {
-    this.moduleId = Number(this.activatedRoute.snapshot.paramMap.get('moduleId')) - 1;
-    this.lessonId = Number(this.activatedRoute.snapshot.paramMap.get('lessonId')) - 1;
+    this.moduleId = Number(this.activatedRoute.snapshot.paramMap.get('moduleId'));
+    this.lessonId = Number(this.activatedRoute.snapshot.paramMap.get('lessonId'));
   }
 }

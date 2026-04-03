@@ -1,6 +1,8 @@
-<header>
-  <div class="card flex justify-center">
-    <p-breadcrumb [home]="home" [model]="breadcrumbItems" />
-  </div>
-  <p-divider />
-</header>
+@if (breadcrumbItems.length) {
+  <header>
+    <div class="card flex justify-center">
+      <p-breadcrumb [home]="home" [model]="breadcrumbItems" />
+    </div>
+    <p-divider />
+  </header>
+}
