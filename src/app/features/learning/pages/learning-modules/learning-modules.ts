@@ -1,6 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { AccordionModule } from 'primeng/accordion';
+import { ButtonModule } from 'primeng/button';
 import { ScrollPanelModule } from 'primeng/scrollpanel';
+import { Router } from '@angular/router';
 
 interface module {
   name: string;
@@ -9,11 +11,13 @@ interface module {
 
 @Component({
   selector: 'app-learning-modules',
-  imports: [AccordionModule, ScrollPanelModule],
+  imports: [AccordionModule, ScrollPanelModule, ButtonModule],
   templateUrl: './learning-modules.html',
   styleUrl: './learning-modules.scss',
 })
 export class LearningModules {
+  private readonly router = inject(Router);
+
   contentModules: module[] = [
     {
       name: 'Tema #1 HTML: Estructura y Semántica',
@@ -63,4 +67,8 @@ export class LearningModules {
       ],
     },
   ];
+
+  onSubmoduleClick(moduleId: number, subModuleId: number) {
+    this.router.navigate([`learning/modules/${moduleId}/lessons/${subModuleId}`]);
+  }
 }

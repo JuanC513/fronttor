@@ -15,3 +15,10 @@
 .header {
   padding: 0 1.25rem;
 }
+
+:host ::ng-deep .large-button {
+  .p-button {
+    justify-content: space-between;
+    width: 100% !important;
+  }
+}

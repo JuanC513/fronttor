@@ -15,11 +15,19 @@
           </p-accordion-header>
           <p-accordion-content>
             @if (module.lessons) {
-              <span>
+              <span class="flex flex-column w-full">
                 @for (subModule of module.lessons; track $index; let lessonIndex = $index) {
-                  <a [href]="`learning/modules/${moduleIndex}/lessons/${lessonIndex}`">
-                    <h4>{{ subModule }}</h4>
-                  </a>
+                  <p-button
+                    [label]="subModule"
+                    variant="text"
+                    severity="secondary"
+                    (onClick)="onSubmoduleClick(moduleIndex, lessonIndex)"
+                    link
+                    size="large"
+                    icon="pi pi-angle-right"
+                    iconPos="right"
+                    class="large-button"
+                  />
                 }
               </span>
             }
