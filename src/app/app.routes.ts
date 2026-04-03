@@ -23,6 +23,10 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       {
+        path: 'home',
+        loadChildren: () => import('@features/home/home.routes').then((m) => m.HOME_ROUTES),
+      },
+      {
         path: 'learning',
         loadChildren: () =>
           import('@features/learning/learning.routes').then((m) => m.LEARNING_ROUTES),
@@ -41,7 +45,7 @@ export const routes: Routes = [
       },
       {
         path: '**',
-        redirectTo: 'learning',
+        redirectTo: 'home',
       },
     ],
   },

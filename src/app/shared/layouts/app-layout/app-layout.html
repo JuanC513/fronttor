@@ -3,12 +3,7 @@
     <app-sidebar />
   </aside>
   <div class="app-layout-content">
-    <header class="topbar">
-      <div class="card flex justify-center">
-        <p-breadcrumb [home]="home" [model]="breadcrumbItems" />
-      </div>
-      <p-divider />
-    </header>
+    <app-topbar class="topbar" />
     <section class="content">
       <router-outlet></router-outlet>
     </section>
