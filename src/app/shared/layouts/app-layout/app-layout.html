@@ -1,8 +1,13 @@
 <div class="app-layout-container">
-  <aside class="app-layout-sidebar"><app-sidebar /></aside>
+  <aside class="app-layout-sidebar">
+    <app-sidebar />
+  </aside>
   <div class="app-layout-content">
     <header class="topbar">
-      <h1>Menubar</h1>
+      <div class="card flex justify-center">
+        <p-breadcrumb [home]="home" [model]="breadcrumbItems" />
+      </div>
+      <p-divider />
     </header>
     <section class="content">
       <router-outlet></router-outlet>
