@@ -13,7 +13,7 @@
     </p-tabs>
   </div>
   <div class="content">
-    <p-scrollpanel style="height: 100%">
+    <p-scrollpanel class="px-2 h-full">
       <h2>Introducción</h2>
       <p style="white-space: pre-line">
         {{ `Una introducción para el tema actual` }}
@@ -24,6 +24,7 @@
       {{ `Ejemplos propios del tema actual` }}
       <h2>Resumen</h2>
       {{ `Resumen del tema actual` }}
+      <app-markdown-renderer [content]="tempContent" />
       <p style="white-space: pre-line">{{ blocks[activeTab].content }}</p>
     </p-scrollpanel>
   </div>

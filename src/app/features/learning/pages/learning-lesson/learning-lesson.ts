@@ -2,10 +2,11 @@ import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TabsModule } from 'primeng/tabs';
 import { ScrollPanelModule } from 'primeng/scrollpanel';
+import { MarkdownRenderer } from '@shared/components/markdown-renderer/markdown-renderer';
 
 @Component({
   selector: 'app-learning-lesson',
-  imports: [TabsModule, ScrollPanelModule, RouterLink],
+  imports: [TabsModule, ScrollPanelModule, RouterLink, MarkdownRenderer],
   templateUrl: './learning-lesson.html',
   styleUrl: './learning-lesson.scss',
 })
@@ -125,6 +126,28 @@ export class LearningLesson implements OnInit {
   ];
 
   activeTab = 0;
+
+  tempContent = `
+    # Introducción a TypeScript
+
+    TypeScript es un **superset tipado** de JavaScript.
+
+    ## Variables y Tipos
+
+    \`\`\`typescript
+    const nombre: string = 'Juan';
+    const edad: number = 25;
+    let activo: boolean = true;
+    \`\`\`
+
+    ## Conceptos clave
+
+    - **Tipado estático** — errores en tiempo de compilación
+    - **Interfaces** — contratos para objetos
+    - **Generics** — código reutilizable y seguro
+
+    > 💡 Recuerda: TypeScript compila a JavaScript estándar.
+    `;
 
   ngOnInit() {
     this.moduleId = Number(this.activatedRoute.snapshot.paramMap.get('moduleId'));
