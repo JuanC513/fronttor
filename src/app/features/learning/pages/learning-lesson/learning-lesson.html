@@ -12,7 +12,7 @@
       </p-tablist>
     </p-tabs>
   </div>
-  <div class="content">
+  <div class="content relative w-full">
     <p-scrollpanel #myScroll class="px-2 h-full">
       <h2>Introducción</h2>
       <p style="white-space: pre-line">
@@ -27,12 +27,19 @@
       <app-markdown-renderer [content]="tempContent" />
       <p style="white-space: pre-line">{{ blocks[activeTab].content }}</p>
     </p-scrollpanel>
+    <p-button
+      class="scroll-top-btn"
+      icon="pi pi-chevron-up"
+      [rounded]="true"
+      [raised]="true"
+      severity="contrast"
+      (onClick)="scrollToTop()"
+    />
   </div>
   <div class="footer">
     <a routerLink="/learning">
       <button>Regresar</button>
     </a>
-    <button (click)="scrollToTop()">Ir arriba</button>
     <button>Ejercicios</button>
   </div>
 </section>
