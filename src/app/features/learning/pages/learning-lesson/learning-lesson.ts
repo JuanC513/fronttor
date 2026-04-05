@@ -3,10 +3,11 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TabsModule } from 'primeng/tabs';
 import { ScrollPanelModule } from 'primeng/scrollpanel';
 import { MarkdownRenderer } from '@shared/components/markdown-renderer/markdown-renderer';
+import { TagModule } from 'primeng/tag';
 
 @Component({
   selector: 'app-learning-lesson',
-  imports: [TabsModule, ScrollPanelModule, RouterLink, MarkdownRenderer],
+  imports: [TabsModule, ScrollPanelModule, RouterLink, MarkdownRenderer, TagModule],
   templateUrl: './learning-lesson.html',
   styleUrl: './learning-lesson.scss',
 })
