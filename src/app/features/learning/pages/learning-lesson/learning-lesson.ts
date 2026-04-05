@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, inject, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TabsModule } from 'primeng/tabs';
 import { ScrollPanel, ScrollPanelModule } from 'primeng/scrollpanel';
@@ -12,7 +12,7 @@ import { ButtonModule } from 'primeng/button';
   templateUrl: './learning-lesson.html',
   styleUrl: './learning-lesson.scss',
 })
-export class LearningLesson implements OnInit {
+export class LearningLesson implements OnInit, AfterViewInit {
   private readonly activatedRoute = inject(ActivatedRoute);
   moduleId!: number;
   lessonId!: number;
@@ -21,6 +21,17 @@ export class LearningLesson implements OnInit {
 
   scrollToTop() {
     this.myScroll.scrollTop(0);
+  }
+
+  showScrollTop = false;
+
+  ngAfterViewInit() {
+    const el = this.myScroll.el.nativeElement.querySelector('.p-scrollpanel-content');
+
+    el?.addEventListener('scroll', () => {
+      // aparece después de 300px
+      this.showScrollTop = el.scrollTop > 300;
+    });
   }
 
   modules = [

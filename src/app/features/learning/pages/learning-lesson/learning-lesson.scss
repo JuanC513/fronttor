@@ -50,4 +50,12 @@
   bottom: 1rem;
   right: 1.5rem;
   z-index: 10;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+
+  &.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
