@@ -1,7 +1,7 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TabsModule } from 'primeng/tabs';
-import { ScrollPanelModule } from 'primeng/scrollpanel';
+import { ScrollPanel, ScrollPanelModule } from 'primeng/scrollpanel';
 import { MarkdownRenderer } from '@shared/components/markdown-renderer/markdown-renderer';
 import { TagModule } from 'primeng/tag';
 
@@ -15,6 +15,12 @@ export class LearningLesson implements OnInit {
   private readonly activatedRoute = inject(ActivatedRoute);
   moduleId!: number;
   lessonId!: number;
+
+  @ViewChild('myScroll') myScroll!: ScrollPanel;
+
+  scrollToTop() {
+    this.myScroll.scrollTop(0);
+  }
 
   modules = [
     {

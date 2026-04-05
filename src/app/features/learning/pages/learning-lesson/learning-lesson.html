@@ -13,7 +13,7 @@
     </p-tabs>
   </div>
   <div class="content">
-    <p-scrollpanel class="px-2 h-full">
+    <p-scrollpanel #myScroll class="px-2 h-full">
       <h2>Introducción</h2>
       <p style="white-space: pre-line">
         {{ `Una introducción para el tema actual` }}
@@ -32,6 +32,7 @@
     <a routerLink="/learning">
       <button>Regresar</button>
     </a>
+    <button (click)="scrollToTop()">Ir arriba</button>
     <button>Ejercicios</button>
   </div>
 </section>

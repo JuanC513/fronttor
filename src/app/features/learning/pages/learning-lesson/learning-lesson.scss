@@ -44,3 +44,7 @@
   justify-content: space-between;
   padding: 20px;
 }
+
+::ng-deep .p-scrollpanel-content {
+  scroll-behavior: smooth;
+}
