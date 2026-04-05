@@ -1,14 +1,28 @@
-<nav class="app-sidebar flex flex-column align-items-center justify-content-between">
-  <span class="flex flex-column align-items-center gap-8">
-    <h1>FronTTor</h1>
-    <p-menu [model]="items" />
-  </span>
+<nav class="h-full flex" style="position: relative">
+  <span class="p-4 flex flex-column align-items-center justify-content-between">
+    <span class="flex flex-column align-items-center gap-8">
+      <h1>FronTTor</h1>
+      <p-menu #menu [model]="items" [popup]="popupMenuMode()" />
+      @if (popupMenuMode()) {
+        <p-button (click)="menu.toggle($event)" icon="pi pi-ellipsis-v" severity="secondary" />
+      }
+    </span>
 
+    <p-button icon="pi pi-user" [rounded]="true" [outlined]="true" severity="info" />
+  </span>
+  <p-divider class="sidebar-divider" layout="vertical" />
   <p-button
-    icon="pi pi-user"
+    [style]="{
+      position: 'absolute',
+      right: '0',
+      top: '90%',
+      transform: 'translate(50%, -50%)',
+      zIndex: '10',
+    }"
+    icon="pi pi-chevron-left"
     [rounded]="true"
-    severity="info"
-    [outlined]="true"
+    severity="secondary"
     routerLink="/profile"
+    size="small"
   />
 </nav>

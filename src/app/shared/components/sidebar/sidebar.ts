@@ -1,13 +1,14 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 import { filter, Subscription } from 'rxjs';
+import { DividerModule } from 'primeng/divider';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [ButtonModule, RouterLink, MenuModule],
+  imports: [ButtonModule, RouterLink, MenuModule, DividerModule],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
 })
@@ -22,6 +23,7 @@ export class Sidebar implements OnInit, OnDestroy {
   private routerSubscription!: Subscription;
 
   items!: MenuItem[];
+  popupMenuMode = signal<boolean>(false);
 
   ngOnInit(): void {
     this.items = [
