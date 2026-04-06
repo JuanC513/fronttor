@@ -1,5 +1,5 @@
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import { NavigationEnd, Router, RouterLink } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
@@ -8,7 +8,7 @@ import { DividerModule } from 'primeng/divider';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [ButtonModule, RouterLink, MenuModule, DividerModule],
+  imports: [ButtonModule, MenuModule, DividerModule],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
 })

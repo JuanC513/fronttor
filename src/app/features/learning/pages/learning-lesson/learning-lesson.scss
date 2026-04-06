@@ -28,13 +28,8 @@
 
 .content {
   grid-area: content;
+  height: 100%;
   min-height: 0;
-  padding: 0 20px;
-}
-
-::ng-deep .p-scrollpanel-content {
-  width: auto;
-  scroll-behavior: smooth;
 }
 
 .footer {
@@ -43,19 +38,4 @@
   display: flex;
   justify-content: space-between;
   padding: 20px;
-}
-
-.scroll-top-btn {
-  position: absolute;
-  bottom: 1rem;
-  right: 1.5rem;
-  z-index: 10;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
-
-  &.visible {
-    opacity: 1;
-    pointer-events: auto;
-  }
 }

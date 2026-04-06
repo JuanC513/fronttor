@@ -1,38 +1,20 @@
-import { AfterViewInit, Component, inject, OnInit, ViewChild } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TabsModule } from 'primeng/tabs';
-import { ScrollPanel, ScrollPanelModule } from 'primeng/scrollpanel';
 import { MarkdownRenderer } from '@shared/components/markdown-renderer/markdown-renderer';
 import { TagModule } from 'primeng/tag';
-import { ButtonModule } from 'primeng/button';
+import { CustomScrollPanel } from '@shared/components/custom-scroll-panel/custom-scroll-panel';
 
 @Component({
   selector: 'app-learning-lesson',
-  imports: [TabsModule, ScrollPanelModule, RouterLink, MarkdownRenderer, TagModule, ButtonModule],
+  imports: [TabsModule, RouterLink, MarkdownRenderer, TagModule, CustomScrollPanel],
   templateUrl: './learning-lesson.html',
   styleUrl: './learning-lesson.scss',
 })
-export class LearningLesson implements OnInit, AfterViewInit {
+export class LearningLesson implements OnInit {
   private readonly activatedRoute = inject(ActivatedRoute);
   moduleId!: number;
   lessonId!: number;
-
-  @ViewChild('myScroll') myScroll!: ScrollPanel;
-
-  scrollToTop() {
-    this.myScroll.scrollTop(0);
-  }
-
-  showScrollTop = false;
-
-  ngAfterViewInit() {
-    const el = this.myScroll.el.nativeElement.querySelector('.p-scrollpanel-content');
-
-    el?.addEventListener('scroll', () => {
-      // aparece después de 300px
-      this.showScrollTop = el.scrollTop > 300;
-    });
-  }
 
   modules = [
     {

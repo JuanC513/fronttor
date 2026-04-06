@@ -12,31 +12,10 @@
       </p-tablist>
     </p-tabs>
   </div>
-  <div class="content relative w-full">
-    <p-scrollpanel #myScroll class="px-2 h-full">
-      <h2>Introducción</h2>
-      <p style="white-space: pre-line">
-        {{ `Una introducción para el tema actual` }}
-      </p>
-      <h2>Conceptos</h2>
-      {{ `Conceptos básicos del tema actual` }}
-      <h2>Ejemplos</h2>
-      {{ `Ejemplos propios del tema actual` }}
-      <h2>Resumen</h2>
-      {{ `Resumen del tema actual` }}
-      <app-markdown-renderer [content]="tempContent" />
-      <p style="white-space: pre-line">{{ blocks[activeTab].content }}</p>
-    </p-scrollpanel>
-    <p-button
-      class="scroll-top-btn"
-      [class.visible]="showScrollTop"
-      icon="pi pi-chevron-up"
-      [rounded]="true"
-      [raised]="true"
-      severity="contrast"
-      (onClick)="scrollToTop()"
-    />
-  </div>
+  <app-custom-scroll-panel class="content">
+    <app-markdown-renderer [content]="tempContent" />
+    <p style="white-space: pre-line">{{ blocks[activeTab].content }}</p>
+  </app-custom-scroll-panel>
   <div class="footer">
     <a routerLink="/learning">
       <button>Regresar</button>
