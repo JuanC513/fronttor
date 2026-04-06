@@ -22,8 +22,12 @@
   grid-area: header;
   padding: 0 20px;
 }
+
 .tabs {
   grid-area: tabs;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .content {

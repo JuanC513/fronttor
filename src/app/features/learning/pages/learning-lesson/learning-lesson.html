@@ -4,7 +4,7 @@
     <p-tag severity="secondary" [value]="`Tema: ${modules[moduleId].name}`" />
   </div>
   <div class="tabs">
-    <p-tabs [(value)]="activeTab">
+    <p-tabs [(value)]="activeTab" scrollable>
       <p-tablist>
         @for (tab of blocks; track $index) {
           <p-tab [value]="$index">{{ tab.label }}</p-tab>
