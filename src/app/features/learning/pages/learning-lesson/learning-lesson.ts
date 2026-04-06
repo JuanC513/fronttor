@@ -4,10 +4,11 @@ import { TabsModule } from 'primeng/tabs';
 import { MarkdownRenderer } from '@shared/components/markdown-renderer/markdown-renderer';
 import { TagModule } from 'primeng/tag';
 import { CustomScrollPanel } from '@shared/components/custom-scroll-panel/custom-scroll-panel';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
   selector: 'app-learning-lesson',
-  imports: [TabsModule, RouterLink, MarkdownRenderer, TagModule, CustomScrollPanel],
+  imports: [TabsModule, RouterLink, MarkdownRenderer, TagModule, CustomScrollPanel, ButtonModule],
   templateUrl: './learning-lesson.html',
   styleUrl: './learning-lesson.scss',
 })

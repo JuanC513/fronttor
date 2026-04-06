@@ -16,10 +16,14 @@
     <app-markdown-renderer [content]="tempContent" />
     <p style="white-space: pre-line">{{ blocks[activeTab].content }}</p>
   </app-custom-scroll-panel>
-  <div class="footer">
-    <a routerLink="/learning">
-      <button>Regresar</button>
-    </a>
-    <button>Ejercicios</button>
+  <div class="footer flex justify-content-between p-3">
+    <p-button
+      label="Regresar"
+      variant="outlined"
+      severity="secondary"
+      link
+      routerLink="/learning"
+    />
+    <p-button label="Ejercicios" variant="outlined" severity="help" link routerLink="/exercises" />
   </div>
 </section>
