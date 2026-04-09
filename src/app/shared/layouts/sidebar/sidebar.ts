@@ -80,6 +80,10 @@ export class Sidebar implements OnInit, OnDestroy {
     });
   }
 
+  switchSidebarMode() {
+    this.popupMenuMode.update((s) => !s);
+  }
+
   ngOnDestroy(): void {
     this.routerSubscription?.unsubscribe();
   }
