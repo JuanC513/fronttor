@@ -1,7 +1,11 @@
 <nav class="h-full flex" style="position: relative">
   <span class="p-4 flex flex-column align-items-center justify-content-between">
     <span class="flex flex-column align-items-center gap-8">
-      <h1>FronTTor</h1>
+      @if (popupMenuMode()) {
+        <h1>F</h1>
+      } @else {
+        <h1>FronTTor</h1>
+      }
       <p-menu #menu [model]="items" [popup]="popupMenuMode()" />
       @if (popupMenuMode()) {
         <p-button (click)="menu.toggle($event)" icon="pi pi-ellipsis-v" severity="secondary" />
