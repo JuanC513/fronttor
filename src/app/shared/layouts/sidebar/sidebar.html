@@ -1,6 +1,9 @@
 <nav class="h-full flex" style="position: relative">
   <span class="p-4 flex flex-column align-items-center justify-content-between">
-    <span class="flex flex-column align-items-center gap-8">
+    <span
+      class="flex flex-column align-items-center"
+      [ngClass]="popupMenuMode() ? 'gap-2' : 'gap-8'"
+    >
       @if (popupMenuMode()) {
         <h1>F</h1>
       } @else {

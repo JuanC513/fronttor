@@ -5,10 +5,11 @@ import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 import { filter, Subscription } from 'rxjs';
 import { DividerModule } from 'primeng/divider';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [ButtonModule, MenuModule, DividerModule, RouterLink],
+  imports: [ButtonModule, MenuModule, DividerModule, RouterLink, CommonModule],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
 })
