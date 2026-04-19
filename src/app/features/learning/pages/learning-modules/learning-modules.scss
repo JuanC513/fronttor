@@ -17,6 +17,7 @@
 }
 
 :host ::ng-deep .large-button {
+  width: 100% !important;
   .p-button {
     justify-content: space-between;
     width: 100% !important;

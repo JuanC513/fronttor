@@ -56,7 +56,7 @@ export class AuthService {
     const { data, error } = await this.supabaseService.client
       .from('profiles')
       .select('*')
-      .eq('id', userId)
+      .eq('user_id', userId)
       .single();
 
     if (error) {
