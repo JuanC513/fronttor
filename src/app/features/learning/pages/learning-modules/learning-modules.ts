@@ -1,74 +1,44 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { AccordionModule } from 'primeng/accordion';
 import { ButtonModule } from 'primeng/button';
 import { ScrollPanelModule } from 'primeng/scrollpanel';
 import { Router } from '@angular/router';
-
-interface module {
-  name: string;
-  lessons: string[];
-}
+import { ModuleService } from '@domain/learning/services/module-service';
+import { ModuleWithLessons } from '@domain/learning/models/module-with-lessons';
+import { SkeletonModule } from 'primeng/skeleton';
 
 @Component({
   selector: 'app-learning-modules',
-  imports: [AccordionModule, ScrollPanelModule, ButtonModule],
+  imports: [AccordionModule, ScrollPanelModule, ButtonModule, SkeletonModule],
   templateUrl: './learning-modules.html',
   styleUrl: './learning-modules.scss',
 })
-export class LearningModules {
+export class LearningModules implements OnInit {
   private readonly router = inject(Router);
+  private readonly moduleService = inject(ModuleService);
 
-  contentModules: module[] = [
-    {
-      name: 'Tema #1 HTML: Estructura y Semántica',
-      lessons: [
-        'Etiquetas básicas (html, head, body, p, h1–h6, a, img)',
-        'Elementos semánticos (header, nav, main, article, section)',
-        'Listas, tablas y formularios',
-        'Enlaces y atributos globales',
-      ],
-    },
-    {
-      name: 'Tema #2 CSS: Estilos y Diseño Visual',
-      lessons: [
-        'Selectores y propiedades básicas',
-        'Colores, fuentes y texto',
-        'Modelo de caja (box model)',
-        'Bordes, márgenes, rellenos y fondos',
-        'Posicionamiento y visualización de elementos',
-      ],
-    },
-    {
-      name: 'Tema #3 Diseño responsivo y Buenas Prácticas',
-      lessons: [
-        'Uso de unidades relativas',
-        'Media queries',
-        'Flexbox y Grid Layout',
-        'Accesibilidad y semántica visual',
-        'Organización y reutilización de estilos',
-      ],
-    },
-    {
-      name: 'Tema #4 Interactividad y Fundamentos de Frameworks',
-      lessons: [
-        'Manipulación del DOM',
-        'Introducción a la interactividad con JavaScript',
-        'Principios de componentes y reactividad',
-        'Ejemplos introductorios con frameworks frontend',
-      ],
-    },
-    {
-      name: 'Tema #5 Integración y Prácticas Guiadas',
-      lessons: [
-        'Estructura de una página completa',
-        'Aplicación combinada de estilos y scripts',
-        'Retroalimentación automática del código ',
-        'Corrección guiada y explicación adaptativa de errores',
-      ],
-    },
-  ];
+  modules = signal<ModuleWithLessons[]>([]);
+  loading = signal(true);
+  error = signal<string | null>(null);
 
-  onSubmoduleClick(moduleId: number, subModuleId: number) {
-    this.router.navigate([`learning/modules/${moduleId}/lessons/${subModuleId}`]);
+  skeletons = Array(4).fill(0);
+
+  ngOnInit() {
+    this.fetchModules();
+  }
+
+  async fetchModules() {
+    try {
+      const data = await this.moduleService.getAllWithLessons();
+      this.modules.set(data);
+    } catch (err) {
+      this.error.set('No se pudieron cargar los módulos. Intenta de nuevo. ' + err);
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  onSubmoduleClick(moduleId: number, lessonId: number) {
+    this.router.navigate([`learning/modules/${moduleId}/lessons/${lessonId}`]);
   }
 }

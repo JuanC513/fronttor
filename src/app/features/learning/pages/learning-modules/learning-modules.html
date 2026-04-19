@@ -1,5 +1,5 @@
-<section class="learning-modules-container">
-  <span class="header">
+<section class="learning-modules-container flex flex-column h-full">
+  <span class="px-4">
     <h1>Contenido</h1>
     <p style="white-space: pre">
       {{
@@ -8,34 +8,53 @@
       }}
     </p>
   </span>
-  <p-scrollpanel style="height: 100%">
-    <p-accordion [value]="['0']">
-      @for (module of contentModules; track $index; let moduleIndex = $index) {
-        <p-accordion-panel [value]="$index">
-          <p-accordion-header>
-            <h3>{{ module.name }}</h3>
-          </p-accordion-header>
-          <p-accordion-content>
-            @if (module.lessons) {
-              <span class="flex flex-column w-full">
-                @for (subModule of module.lessons; track $index; let lessonIndex = $index) {
-                  <p-button
-                    [label]="subModule"
-                    variant="text"
-                    severity="secondary"
-                    (onClick)="onSubmoduleClick(moduleIndex, lessonIndex)"
-                    link
-                    size="large"
-                    icon="pi pi-angle-right"
-                    iconPos="right"
-                    class="large-button"
-                  />
-                }
-              </span>
-            }
-          </p-accordion-content>
-        </p-accordion-panel>
+
+  @if (loading()) {
+    <div class="px-4">
+      @for (item of skeletons; track $index) {
+        <p-skeleton height="5.5rem" class="mb-2" />
       }
-    </p-accordion>
-  </p-scrollpanel>
+    </div>
+  }
+
+  @if (error()) {
+    Error
+  }
+
+  @if (!loading() && !error()) {
+    <p-scrollpanel class="px-4 overflow-hidden">
+      <p-accordion [value]="['0']">
+        @for (module of modules(); track $index; let moduleIndex = $index) {
+          <p-accordion-panel [value]="$index">
+            <p-accordion-header class="accordion-header">
+              <h3>{{ module.name }}</h3>
+            </p-accordion-header>
+            <p-accordion-content>
+              @if (module.lessons) {
+                @for (lesson of module.lessons; track lesson.id; let lessonIndex = $index) {
+                  <span class="flex w-full align-items-center">
+                    <p-button
+                      [label]="lesson.name"
+                      variant="text"
+                      severity="secondary"
+                      (onClick)="onSubmoduleClick(moduleIndex, lessonIndex)"
+                      link
+                      size="large"
+                      iconPos="right"
+                      class="large-button"
+                      [icon]="$index % 2 === 0 ? 'pi pi-angle-right' : undefined"
+                      [disabled]="$index % 2 === 1"
+                    />
+                    @if ($index % 2 === 1) {
+                      <i class="pi pi-lock pr-3" style="font-size: 1rem"></i>
+                    }
+                  </span>
+                }
+              }
+            </p-accordion-content>
+          </p-accordion-panel>
+        }
+      </p-accordion>
+    </p-scrollpanel>
+  }
 </section>
