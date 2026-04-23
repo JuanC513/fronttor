@@ -9,6 +9,8 @@ import { ModuleService } from '@domain/learning/services/module-service';
 import { Module } from '@domain/learning/models/module-model';
 import { Lesson } from '@domain/learning/models/lesson-model';
 import { LessonService } from '@domain/learning/services/lesson-service';
+import { BlockService } from '@domain/learning/services/block-service';
+import { Block } from '@domain/learning/models/block-model';
 
 @Component({
   selector: 'app-learning-lesson',
@@ -20,69 +22,11 @@ export class LearningLesson implements OnInit {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly moduleService = inject(ModuleService);
   private readonly lessonService = inject(LessonService);
+  private readonly blockService = inject(BlockService);
   currentModule = signal<Module | null>(null);
   currentLesson = signal<Lesson | null>(null);
+  currentBlocks = signal<Block[] | null>(null);
   activeTab = 0;
-
-  blocks = [
-    {
-      label: 'Fundamentos',
-      content: '¿Qué es HTML y qué es una etiqueta?',
-    },
-    {
-      label: 'Estructura',
-      content: 'Estructura base de un documento HTML',
-    },
-    {
-      label: 'Metadatos',
-      content: 'La etiqueta <head>',
-    },
-    {
-      label: 'Contenido',
-      content: 'La etiqueta <body>',
-    },
-    {
-      label: 'Jerarquía',
-      content: 'Encabezados <h1> a <h6>',
-    },
-    {
-      label: 'Texto',
-      content: 'Párrafos <p>',
-    },
-    {
-      label: 'Navegación',
-      content: 'Enlaces <a>',
-    },
-    {
-      label: 'Multimedia',
-      content: 'Imágenes <img>',
-    },
-    {
-      label: 'Configuración',
-      content: 'Atributos en HTML',
-    },
-    {
-      label: 'Calidad',
-      content: `Buenas prácticas básicas
-      
-      
-      ${'-\n\n\n\n\n\n\n\n\n\n'}
-      Texto prueba
-      
-      
-      ${'-\n\n\n\n\n\n\n\n\n\n'}
-      Texto prueba
-
-      
-      ${'-\n\n\n\n\n\n\n\n\n\n'}
-      Texto prueba
-
-      
-      ${'-\n\n\n\n\n\n\n\n\n\n'}
-      Texto prueba
-      `,
-    },
-  ];
 
   tempContent = `
     # Introducción a TypeScript
@@ -115,8 +59,10 @@ export class LearningLesson implements OnInit {
     try {
       const moduleData = await this.moduleService.getById(moduleId);
       const currentLesson = await this.lessonService.getById(lessonId);
+      const currentBlocks = await this.blockService.getAllByLessonId(lessonId);
       this.currentModule.set(moduleData);
       this.currentLesson.set(currentLesson);
+      this.currentBlocks.set(currentBlocks);
       // } catch (err) {
     } catch {
       // this.error.set('No se pudieron cargar los módulos. Intenta de nuevo. ' + err);
