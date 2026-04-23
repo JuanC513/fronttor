@@ -29,4 +29,15 @@ export class ModuleService {
     if (error) throw new Error(error.message);
     return (data as ModuleWithLessons[]) ?? [];
   }
+
+  async getById(id: number): Promise<Module> {
+    const { data, error } = await this.supabase
+      .from('modules')
+      .select('id, name')
+      .eq('id', id)
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data as Module;
+  }
 }
