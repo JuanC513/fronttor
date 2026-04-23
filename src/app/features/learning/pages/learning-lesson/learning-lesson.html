@@ -1,7 +1,7 @@
 <section class="learning-lesson-container">
   <div class="header">
-    <h1>{{ modules[moduleId].lessons[lessonId] }}</h1>
-    <p-tag severity="secondary" [value]="`Tema: ${modules[moduleId].name}`" />
+    <h1>{{ currentLesson()?.name }}</h1>
+    <p-tag severity="secondary" [value]="`Tema: ${currentModule()?.name}`" />
   </div>
   <div class="tabs">
     <p-tabs [(value)]="activeTab" scrollable>

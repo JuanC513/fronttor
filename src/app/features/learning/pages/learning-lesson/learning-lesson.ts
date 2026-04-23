@@ -1,10 +1,14 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TabsModule } from 'primeng/tabs';
 import { MarkdownRenderer } from '@shared/components/markdown-renderer/markdown-renderer';
 import { TagModule } from 'primeng/tag';
 import { CustomScrollPanel } from '@shared/components/custom-scroll-panel/custom-scroll-panel';
 import { ButtonModule } from 'primeng/button';
+import { ModuleService } from '@domain/learning/services/module-service';
+import { Module } from '@domain/learning/models/module-model';
+import { Lesson } from '@domain/learning/models/lesson-model';
+import { LessonService } from '@domain/learning/services/lesson-service';
 
 @Component({
   selector: 'app-learning-lesson',
@@ -14,58 +18,11 @@ import { ButtonModule } from 'primeng/button';
 })
 export class LearningLesson implements OnInit {
   private readonly activatedRoute = inject(ActivatedRoute);
-  moduleId!: number;
-  lessonId!: number;
-
-  modules = [
-    {
-      name: 'Tema #1 HTML: Estructura y Semántica',
-      lessons: [
-        'Etiquetas básicas (html, head, body, p, h1–h6, a, img)',
-        'Elementos semánticos (header, nav, main, article, section)',
-        'Listas, tablas y formularios',
-        'Enlaces y atributos globales',
-      ],
-    },
-    {
-      name: 'Tema #2 CSS: Estilos y Diseño Visual',
-      lessons: [
-        'Selectores y propiedades básicas',
-        'Colores, fuentes y texto',
-        'Modelo de caja (box model)',
-        'Bordes, márgenes, rellenos y fondos',
-        'Posicionamiento y visualización de elementos',
-      ],
-    },
-    {
-      name: 'Tema #3 Diseño responsivo y Buenas Prácticas',
-      lessons: [
-        'Uso de unidades relativas',
-        'Media queries',
-        'Flexbox y Grid Layout',
-        'Accesibilidad y semántica visual',
-        'Organización y reutilización de estilos',
-      ],
-    },
-    {
-      name: 'Tema #4 Interactividad y Fundamentos de Frameworks',
-      lessons: [
-        'Manipulación del DOM',
-        'Introducción a la interactividad con JavaScript',
-        'Principios de componentes y reactividad',
-        'Ejemplos introductorios con frameworks frontend',
-      ],
-    },
-    {
-      name: 'Tema #5 Integración y Prácticas Guiadas',
-      lessons: [
-        'Estructura de una página completa',
-        'Aplicación combinada de estilos y scripts',
-        'Retroalimentación automática del código ',
-        'Corrección guiada y explicación adaptativa de errores',
-      ],
-    },
-  ];
+  private readonly moduleService = inject(ModuleService);
+  private readonly lessonService = inject(LessonService);
+  currentModule = signal<Module | null>(null);
+  currentLesson = signal<Lesson | null>(null);
+  activeTab = 0;
 
   blocks = [
     {
@@ -127,8 +84,6 @@ export class LearningLesson implements OnInit {
     },
   ];
 
-  activeTab = 0;
-
   tempContent = `
     # Introducción a TypeScript
 
@@ -152,7 +107,21 @@ export class LearningLesson implements OnInit {
     `;
 
   ngOnInit() {
-    this.moduleId = Number(this.activatedRoute.snapshot.paramMap.get('moduleId'));
-    this.lessonId = Number(this.activatedRoute.snapshot.paramMap.get('lessonId'));
+    const moduleId = Number(this.activatedRoute.snapshot.paramMap.get('moduleId'));
+    const lessonId = Number(this.activatedRoute.snapshot.paramMap.get('lessonId'));
+    this.fetchData(moduleId, lessonId);
+  }
+  async fetchData(moduleId: number, lessonId: number) {
+    try {
+      const moduleData = await this.moduleService.getById(moduleId);
+      const currentLesson = await this.lessonService.getById(lessonId);
+      this.currentModule.set(moduleData);
+      this.currentLesson.set(currentLesson);
+      // } catch (err) {
+    } catch {
+      // this.error.set('No se pudieron cargar los módulos. Intenta de nuevo. ' + err);
+    } finally {
+      // this.loading.set(false);
+    }
   }
 }
