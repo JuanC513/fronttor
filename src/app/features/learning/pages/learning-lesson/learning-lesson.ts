@@ -11,10 +11,19 @@ import { Lesson } from '@domain/learning/models/lesson-model';
 import { LessonService } from '@domain/learning/services/lesson-service';
 import { BlockService } from '@domain/learning/services/block-service';
 import { Block } from '@domain/learning/models/block-model';
+import { SkeletonModule } from 'primeng/skeleton';
 
 @Component({
   selector: 'app-learning-lesson',
-  imports: [TabsModule, RouterLink, MarkdownRenderer, TagModule, CustomScrollPanel, ButtonModule],
+  imports: [
+    TabsModule,
+    RouterLink,
+    MarkdownRenderer,
+    TagModule,
+    CustomScrollPanel,
+    ButtonModule,
+    SkeletonModule,
+  ],
   templateUrl: './learning-lesson.html',
   styleUrl: './learning-lesson.scss',
 })
@@ -26,13 +35,19 @@ export class LearningLesson implements OnInit {
   currentModule = signal<Module | null>(null);
   currentLesson = signal<Lesson | null>(null);
   currentBlocks = signal<Block[] | null>(null);
+  loading = signal(true);
+  error = signal<string | null>(null);
   activeTab = 0;
+
+  tabSkeletons = Array(8).fill(0);
+  contentSkeletons = Array(3).fill(0);
 
   ngOnInit() {
     const moduleId = Number(this.activatedRoute.snapshot.paramMap.get('moduleId'));
     const lessonId = Number(this.activatedRoute.snapshot.paramMap.get('lessonId'));
     this.fetchData(moduleId, lessonId);
   }
+
   async fetchData(moduleId: number, lessonId: number) {
     try {
       const moduleData = await this.moduleService.getById(moduleId);
@@ -41,11 +56,10 @@ export class LearningLesson implements OnInit {
       this.currentModule.set(moduleData);
       this.currentLesson.set(currentLesson);
       this.currentBlocks.set(currentBlocks);
-      // } catch (err) {
-    } catch {
-      // this.error.set('No se pudieron cargar los módulos. Intenta de nuevo. ' + err);
+    } catch (err) {
+      this.error.set('No se pudo cargar la información. Intenta de nuevo. ' + err);
     } finally {
-      // this.loading.set(false);
+      this.loading.set(false);
     }
   }
 }
