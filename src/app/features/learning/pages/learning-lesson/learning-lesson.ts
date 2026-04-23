@@ -28,28 +28,6 @@ export class LearningLesson implements OnInit {
   currentBlocks = signal<Block[] | null>(null);
   activeTab = 0;
 
-  tempContent = `
-    # Introducción a TypeScript
-
-    TypeScript es un **superset tipado** de JavaScript.
-
-    ## Variables y Tipos
-
-    \`\`\`typescript
-    const nombre: string = 'Juan';
-    const edad: number = 25;
-    let activo: boolean = true;
-    \`\`\`
-
-    ## Conceptos clave
-
-    - **Tipado estático** — errores en tiempo de compilación
-    - **Interfaces** — contratos para objetos
-    - **Generics** — código reutilizable y seguro
-
-    > 💡 Recuerda: TypeScript compila a JavaScript estándar.
-    `;
-
   ngOnInit() {
     const moduleId = Number(this.activatedRoute.snapshot.paramMap.get('moduleId'));
     const lessonId = Number(this.activatedRoute.snapshot.paramMap.get('lessonId'));
