@@ -52,6 +52,8 @@ export const routes: Routes = [
 
   // {
   //   path: 'admin',
+  //   canActivate: [roleGuard],
+  //   data: { roles: ['admin'] as UserRole[] },
   //   loadComponent: () =>
   //     import('@features/admin/pages/admin-page/admin-page')
   //       .then(m => m.AdminPage),
