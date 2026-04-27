@@ -20,11 +20,24 @@ export class LoginPage {
     } catch (error) {
       console.error('Login failed', error);
 
-      // aquí mostrarías un mensaje en UI
+      // mostrar mensaje en UI
       alert('Credenciales incorrectas');
     }
   }
 
-  // registrarse
-  // const user = await this.authService.signUp('student3@test.com', '12345678');
+  async loginAdmin() {
+    try {
+      await this.authService.signIn('admin1@test.com', 'admin12345678');
+
+      this.router.navigate(['/']);
+    } catch (error) {
+      console.error('Login failed', error);
+
+      // mostrar mensaje en UI
+      alert('Credenciales incorrectas');
+    }
+  }
 }
+
+// registrarse
+// const user = await this.authService.signUp('prueba@test.com', 'prueba');
