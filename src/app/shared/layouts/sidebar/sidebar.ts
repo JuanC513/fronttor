@@ -6,6 +6,8 @@ import { MenuItem } from 'primeng/api';
 import { filter, Subscription } from 'rxjs';
 import { DividerModule } from 'primeng/divider';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '@core/services/auth/auth-service';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-sidebar',
@@ -14,6 +16,7 @@ import { CommonModule } from '@angular/common';
   styleUrl: './sidebar.scss',
 })
 export class Sidebar implements OnInit, OnDestroy {
+  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private routeMap: Record<string, string> = {
     home: 'Inicio',
@@ -26,6 +29,7 @@ export class Sidebar implements OnInit, OnDestroy {
   items!: MenuItem[];
   popupMenuMode = signal<boolean>(false);
 
+  isAdmin = toSignal(this.authService.isAdmin$, { initialValue: false });
   ngOnInit(): void {
     this.items = [
       {

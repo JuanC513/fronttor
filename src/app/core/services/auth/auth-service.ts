@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { SupabaseService } from '../supabase/supabase-service';
 import { BehaviorSubject, map } from 'rxjs';
 import { User } from '@supabase/supabase-js';
-import { Profile } from '@core/interfaces/profile';
+import { Profile, UserRole } from '@core/interfaces/profile';
 
 @Injectable({
   providedIn: 'root',
@@ -55,7 +55,13 @@ export class AuthService {
   private async loadProfile(userId: string) {
     const { data, error } = await this.supabaseService.client
       .from('profiles')
-      .select('*')
+      .select(
+        `*,
+        roles(
+          name
+        )
+        `,
+      )
       .eq('user_id', userId)
       .single();
 
@@ -64,7 +70,11 @@ export class AuthService {
       return;
     }
 
-    this.profileSubject.next(data);
+    const profile: Profile = {
+      ...data,
+      role: data.roles?.name as UserRole,
+    };
+    this.profileSubject.next(profile);
   }
 
   async signUp(email: string, password: string) {

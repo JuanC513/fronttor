@@ -1,6 +1,10 @@
+export type UserRole = 'student' | 'admin';
+
 export interface Profile {
-  id: string;
+  user_id: string;
   email: string;
-  role: 'student' | 'admin';
   created_at?: string;
+  profile_description: string | null;
+  role_id: number;
+  role: UserRole;
 }
