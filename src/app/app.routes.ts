@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
 import { authGuard } from '@core/guards/auth/auth-guard';
 import { guestGuard } from '@core/guards/guest/guest-guard';
+import { roleGuard } from '@core/guards/role/role-guard';
+import { UserRole } from '@core/interfaces/profile';
 import { AppLayout } from '@shared/layouts/app-layout/app-layout';
 
 export const routes: Routes = [
@@ -44,22 +46,17 @@ export const routes: Routes = [
           import('@features/profile/pages/profile-page/profile-page').then((m) => m.ProfilePage),
       },
       {
+        path: 'admin',
+        canActivate: [roleGuard],
+        data: { roles: ['admin'] as UserRole[] },
+        loadChildren: () => import('@features/admin/admin.routes').then((m) => m.ADMIN_ROUTES),
+      },
+      {
         path: '**',
         redirectTo: 'home',
       },
     ],
   },
-
-  // {
-  //   path: 'admin',
-  //   canActivate: [roleGuard],
-  //   data: { roles: ['admin'] as UserRole[] },
-  //   loadComponent: () =>
-  //     import('@features/admin/pages/admin-page/admin-page')
-  //       .then(m => m.AdminPage),
-  //   canActivate: [authGuard, roleGuard],
-  //   data: { roles: ['admin'] },
-  // },
   {
     path: '',
     redirectTo: 'login',
