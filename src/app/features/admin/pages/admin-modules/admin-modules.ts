@@ -1,9 +1,41 @@
-import { Component } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { Module } from '@domain/learning/models/module-model';
+import { ModuleService } from '@domain/learning/services/module-service';
+import { ButtonModule } from 'primeng/button';
+import { ScrollPanelModule } from 'primeng/scrollpanel';
+import { SkeletonModule } from 'primeng/skeleton';
 
 @Component({
   selector: 'app-admin-modules',
-  imports: [],
+  imports: [SkeletonModule, ScrollPanelModule, ButtonModule],
   templateUrl: './admin-modules.html',
   styleUrl: './admin-modules.scss',
 })
-export class AdminModules {}
+export class AdminModules implements OnInit {
+  private readonly moduleService = inject(ModuleService);
+
+  modules = signal<Module[]>([]);
+  loading = signal(true);
+  error = signal<string | null>(null);
+
+  skeletons = Array(4).fill(0);
+
+  ngOnInit() {
+    this.fetchModules();
+  }
+
+  async fetchModules() {
+    try {
+      const data = await this.moduleService.getAll();
+      this.modules.set(data);
+    } catch (err) {
+      this.error.set('No se pudieron cargar los módulos. Intenta de nuevo. ' + err);
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  onEditModule(moduleId: number) {
+    console.log('Editar modulo: ', moduleId);
+  }
+}

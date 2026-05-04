@@ -13,7 +13,7 @@ export class ModuleService {
   async getAll(): Promise<Module[]> {
     const { data, error } = await this.supabase
       .from('modules')
-      .select('id, name')
+      .select('*')
       .order('id', { ascending: true });
 
     if (error) throw new Error(error.message);
@@ -23,7 +23,7 @@ export class ModuleService {
   async getAllWithLessons(): Promise<ModuleWithLessons[]> {
     const { data, error } = await this.supabase
       .from('modules')
-      .select(`id, name, lessons(id, name, module_id)`)
+      .select(`*, lessons(id, name, module_id)`)
       .order('id', { ascending: true });
 
     if (error) throw new Error(error.message);

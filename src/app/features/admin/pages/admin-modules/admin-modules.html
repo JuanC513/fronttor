@@ -1,1 +1,39 @@
-<p>admin-modules works!</p>
+<section class="learning-modules-container flex flex-column h-full">
+  <span class="px-4">
+    <h1>Administración</h1>
+    <p style="white-space: pre">
+      {{
+        `En esta sección se puede editar o crear cada uno de los contenidos para el aprendizaje, bien sea temas, subtemas o bloques.
+        \n¡Haz en algún elemento para editar!`
+      }}
+    </p>
+  </span>
+
+  @if (error()) {
+    Error
+  }
+
+  <div class="px-4">
+    @if (loading()) {
+      @for (item of skeletons; track $index) {
+        <p-skeleton height="5.5rem" class="mb-2" />
+      }
+    }
+
+    @if (!loading() && !error()) {
+      <h2>Temas</h2>
+      <p-scrollpanel class="overflow-hidden">
+        @for (module of modules(); track $index; let moduleIndex = $index) {
+          <span class="flex justify-content-between pr-3 py-1">
+            <h3>{{ $index + 1 + '. ' + module.name }}</h3>
+            <p-button
+              icon="pi pi-pen-to-square text-xl"
+              severity="secondary"
+              (onClick)="onEditModule(module.id)"
+            />
+          </span>
+        }
+      </p-scrollpanel>
+    }
+  </div>
+</section>
