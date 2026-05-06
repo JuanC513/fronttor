@@ -18,6 +18,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 export class Sidebar implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private isAdmin = toSignal(this.authService.isAdmin$, { initialValue: false });
   private routeMap: Record<string, string> = {
     home: 'Inicio',
     learning: 'Aprender',
@@ -29,7 +30,6 @@ export class Sidebar implements OnInit, OnDestroy {
   items!: MenuItem[];
   popupMenuMode = signal<boolean>(false);
 
-  isAdmin = toSignal(this.authService.isAdmin$, { initialValue: false });
   ngOnInit(): void {
     this.items = [
       {
@@ -59,7 +59,16 @@ export class Sidebar implements OnInit, OnDestroy {
             label: 'Libre',
             icon: 'pi pi-code',
             routerLink: '/playground',
-            styleClass: 'active',
+          },
+        ],
+      },
+      {
+        label: 'Admin',
+        items: [
+          {
+            label: 'Administración',
+            icon: 'pi pi-user-edit',
+            routerLink: '/admin',
           },
         ],
       },

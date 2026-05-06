@@ -13,9 +13,6 @@
       @if (popupMenuMode()) {
         <p-button (click)="menu.toggle($event)" icon="pi pi-ellipsis-v" severity="secondary" />
       }
-      @if (isAdmin()) {
-        <p-button label="Panel Admin/Modulos" routerLink="/admin/modules" />
-      }
     </span>
 
     <p-button
