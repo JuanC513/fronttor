@@ -6,12 +6,12 @@ import { ScrollPanelModule } from 'primeng/scrollpanel';
 import { SkeletonModule } from 'primeng/skeleton';
 
 @Component({
-  selector: 'app-admin-modules',
+  selector: 'app-admin-main',
   imports: [SkeletonModule, ScrollPanelModule, ButtonModule],
-  templateUrl: './admin-modules.html',
-  styleUrl: './admin-modules.scss',
+  templateUrl: './admin-main.html',
+  styleUrl: './admin-main.scss',
 })
-export class AdminModules implements OnInit {
+export class AdminMain implements OnInit {
   private readonly moduleService = inject(ModuleService);
 
   modules = signal<Module[]>([]);

@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
-import { AdminModules } from './pages/admin-modules/admin-modules';
+import { AdminMain } from './pages/admin-main/admin-main';
 
 export const ADMIN_ROUTES: Routes = [
-  { path: 'modules', component: AdminModules },
-  { path: '**', redirectTo: 'modules' },
+  { path: '', component: AdminMain },
+  { path: '**', redirectTo: '' },
 ];

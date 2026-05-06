@@ -62,17 +62,23 @@ export class Sidebar implements OnInit, OnDestroy {
           },
         ],
       },
-      {
-        label: 'Admin',
-        items: [
-          {
-            label: 'Administración',
-            icon: 'pi pi-user-edit',
-            routerLink: '/admin',
-          },
-        ],
-      },
     ];
+
+    if (this.isAdmin()) {
+      this.items = [
+        ...this.items,
+        {
+          label: 'Admin',
+          items: [
+            {
+              label: 'Administración',
+              icon: 'pi pi-user-edit',
+              routerLink: '/admin',
+            },
+          ],
+        },
+      ];
+    }
 
     this.setActiveItem(this.router.url);
 
