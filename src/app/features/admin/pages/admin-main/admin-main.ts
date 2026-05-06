@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { Module } from '@domain/learning/models/module-model';
 import { ModuleService } from '@domain/learning/services/module-service';
 import { ButtonModule } from 'primeng/button';
@@ -13,6 +14,7 @@ import { SplitterModule } from 'primeng/splitter';
   styleUrl: './admin-main.scss',
 })
 export class AdminMain implements OnInit {
+  private readonly router = inject(Router);
   private readonly moduleService = inject(ModuleService);
 
   modules = signal<Module[]>([]);
@@ -36,7 +38,11 @@ export class AdminMain implements OnInit {
     }
   }
 
-  onEditModule(moduleId: number) {
-    console.log('Editar modulo: ', moduleId);
+  createModule() {
+    this.router.navigate(['admin/module/new']);
+  }
+
+  editModule(id: number) {
+    this.router.navigate([`admin/module/edit/${id}`]);
   }
 }
