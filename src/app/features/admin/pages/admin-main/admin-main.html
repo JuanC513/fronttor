@@ -1,5 +1,5 @@
-<section class="learning-modules-container flex flex-column h-full">
-  <span class="px-4">
+<section class="flex flex-column h-full gap-3 px-4 pb-5">
+  <span>
     <h1>Administración</h1>
     <p style="white-space: pre">
       {{
@@ -13,7 +13,7 @@
     Error
   }
 
-  <div class="px-4">
+  <div class="h-full">
     @if (loading()) {
       @for (item of skeletons; track $index) {
         <p-skeleton height="5.5rem" class="mb-2" />
@@ -21,19 +21,34 @@
     }
 
     @if (!loading() && !error()) {
-      <h2>Temas</h2>
-      <p-scrollpanel class="overflow-hidden">
-        @for (module of modules(); track $index; let moduleIndex = $index) {
-          <span class="flex justify-content-between pr-3 py-1">
-            <h3>{{ $index + 1 + '. ' + module.name }}</h3>
-            <p-button
-              icon="pi pi-pen-to-square text-xl"
-              severity="secondary"
-              (onClick)="onEditModule(module.id)"
-            />
-          </span>
-        }
-      </p-scrollpanel>
+      <p-splitter class="h-full" gutterSize="3" step="15" [minSizes]="[20, 20, 20]">
+        <ng-template #panel>
+          <div class="flex flex-column items-center justify-center h-full pl-4 pr-2 pb-5">
+            <span class="flex justify-content-between align-items-center pr-2">
+              <h3>Temas</h3>
+              <p-button icon="pi pi-plus" label="Crear tema" />
+            </span>
+            <p-scrollpanel class="overflow-hidden">
+              @for (module of modules(); track $index; let moduleIndex = $index) {
+                <span class="flex align-items-center justify-content-between pr-1 py-1">
+                  <p>{{ $index + 1 + '. ' + module.name }}</p>
+                  <p-button icon="pi pi-pen-to-square" link (onClick)="onEditModule(module.id)" />
+                </span>
+              }
+            </p-scrollpanel>
+          </div>
+        </ng-template>
+        <ng-template #panel>
+          <div class="flex items-center justify-center h-full">
+            <h3>Subtemas</h3>
+          </div>
+        </ng-template>
+        <ng-template #panel>
+          <div class="flex items-center justify-center h-full">
+            <h3>Bloques</h3>
+          </div>
+        </ng-template>
+      </p-splitter>
     }
   </div>
 </section>

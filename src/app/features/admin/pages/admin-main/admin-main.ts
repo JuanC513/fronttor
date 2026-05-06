@@ -4,10 +4,11 @@ import { ModuleService } from '@domain/learning/services/module-service';
 import { ButtonModule } from 'primeng/button';
 import { ScrollPanelModule } from 'primeng/scrollpanel';
 import { SkeletonModule } from 'primeng/skeleton';
+import { SplitterModule } from 'primeng/splitter';
 
 @Component({
   selector: 'app-admin-main',
-  imports: [SkeletonModule, ScrollPanelModule, ButtonModule],
+  imports: [SkeletonModule, ScrollPanelModule, ButtonModule, SplitterModule],
   templateUrl: './admin-main.html',
   styleUrl: './admin-main.scss',
 })

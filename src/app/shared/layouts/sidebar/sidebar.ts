@@ -24,6 +24,7 @@ export class Sidebar implements OnInit, OnDestroy {
     learning: 'Aprender',
     exercises: 'Ejercicios',
     playground: 'Libre',
+    admin: 'Administración',
   };
   private routerSubscription!: Subscription;
 
