@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterOutlet } from '@angular/router';
 import { Module } from '@domain/learning/models/module-model';
 import { ModuleService } from '@domain/learning/services/module-service';
 import { ButtonModule } from 'primeng/button';
@@ -9,7 +9,7 @@ import { SplitterModule } from 'primeng/splitter';
 
 @Component({
   selector: 'app-admin-main',
-  imports: [SkeletonModule, ScrollPanelModule, ButtonModule, SplitterModule],
+  imports: [SkeletonModule, ScrollPanelModule, ButtonModule, SplitterModule, RouterOutlet],
   templateUrl: './admin-main.html',
   styleUrl: './admin-main.scss',
 })
