@@ -1,27 +1,28 @@
-<nav class="h-full flex" style="position: relative">
-  <span class="p-4 flex flex-column align-items-center justify-content-between">
-    <span
-      class="flex flex-column align-items-center"
-      [ngClass]="popupMenuMode() ? 'gap-2' : 'gap-8'"
-    >
+<nav class="sidebar h-full flex" style="position: relative">
+  <span class="flex flex-column justify-content-between">
+    <span class="flex flex-column" [ngClass]="popupMenuMode() ? 'gap-2' : 'gap-8'">
       @if (popupMenuMode()) {
         <h1>F</h1>
       } @else {
-        <h1>FronTTor</h1>
+        <span class="px-4">
+          <h1 class="title-color">FronTTor</h1>
+          <p>Mastering the web</p>
+        </span>
       }
-      <p-menu #menu [model]="items" [popup]="popupMenuMode()" />
-      @if (popupMenuMode()) {
-        <p-button (click)="menu.toggle($event)" icon="pi pi-ellipsis-v" severity="secondary" />
-      }
+      <div class="px-3">
+        <p-menu #menu [model]="mainItems" [popup]="popupMenuMode()" />
+        @if (popupMenuMode()) {
+          <p-button (click)="menu.toggle($event)" icon="pi pi-ellipsis-v" severity="secondary" />
+        }
+      </div>
     </span>
 
-    <p-button
-      icon="pi pi-user"
-      [rounded]="true"
-      [outlined]="true"
-      severity="info"
-      routerLink="/profile"
-    />
+    <span class="w-100">
+      <p-divider />
+      <div class="w-100 px-3 pb-2">
+        <p-menu #menu [model]="aditionalItems" [popup]="popupMenuMode()" />
+      </div>
+    </span>
   </span>
   <p-divider class="sidebar-divider" layout="vertical" />
   <p-button

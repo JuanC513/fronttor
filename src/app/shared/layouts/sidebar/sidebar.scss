@@ -1,18 +1,33 @@
-.app-sidebar {
-  padding: 40px 20px;
-  height: 100%;
+:host .sidebar {
+  background-color: #f3f3fe;
 }
 
-:host ::ng-deep .active {
-  border: 1px solid;
-  border-radius: var(--p-menu-border-radius);
-  background-color: #e0f3fe;
-  border-color: var(--p-button-info-border-color);
-  pointer-events: none;
+.title-color {
+  color: #1452da;
 }
 
-:host ::ng-deep .p-menu-item.p-focus .p-menu-item-content {
-  background: none !important ;
+:host ::ng-deep .p-menu {
+  border: none;
+  background: none;
+}
+
+:host ::ng-deep .p-menu-item-link {
+  --p-menu-item-padding: 12px 16px;
+}
+
+:host ::ng-deep .p-menu-item-link-active {
+  border-left: 6px solid #1452da;
+  background-color: #2563eb;
+  color: white;
+  border-radius: 6px;
+}
+
+:host ::ng-deep .p-menu-item-link-active:hover {
+  background-color: #3674fc;
+}
+
+:host ::ng-deep .p-menu-item-link-active .p-menu-item-icon {
+  color: inherit !important;
 }
 
 .sidebar-divider {

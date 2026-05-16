@@ -1,9 +1,7 @@
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import { NavigationEnd, Router, RouterLink } from '@angular/router';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
-import { filter, Subscription } from 'rxjs';
 import { DividerModule } from 'primeng/divider';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '@core/services/auth/auth-service';
@@ -11,101 +9,61 @@ import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [ButtonModule, MenuModule, DividerModule, RouterLink, CommonModule],
+  imports: [ButtonModule, MenuModule, DividerModule, CommonModule],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
 })
-export class Sidebar implements OnInit, OnDestroy {
+export class Sidebar implements OnInit {
   private readonly authService = inject(AuthService);
-  private readonly router = inject(Router);
   private isAdmin = toSignal(this.authService.isAdmin$, { initialValue: false });
-  private routeMap: Record<string, string> = {
-    home: 'Inicio',
-    learning: 'Aprender',
-    exercises: 'Ejercicios',
-    playground: 'Libre',
-    admin: 'Administración',
-  };
-  private routerSubscription!: Subscription;
 
-  items!: MenuItem[];
+  mainItems: MenuItem[] = [
+    {
+      label: 'Inicio',
+      icon: 'pi pi-home',
+      routerLink: '/home',
+    },
+    {
+      label: 'Aprender',
+      icon: 'pi pi-graduation-cap',
+      routerLink: '/learning',
+    },
+    {
+      label: 'Ejercicios',
+      icon: 'pi pi-file-edit',
+      routerLink: '/exercises',
+    },
+    {
+      label: 'Libre',
+      icon: 'pi pi-code',
+      routerLink: '/playground',
+    },
+  ];
+  aditionalItems!: MenuItem[];
   popupMenuMode = signal<boolean>(false);
 
   ngOnInit(): void {
-    this.items = [
+    this.aditionalItems = [
       {
-        label: 'Principal',
-        items: [
-          {
-            label: 'Inicio',
-            icon: 'pi pi-home',
-            routerLink: '/home',
-          },
-          {
-            label: 'Aprender',
-            icon: 'pi pi-graduation-cap',
-            routerLink: '/learning',
-          },
-        ],
-      },
-      {
-        label: 'Práctica',
-        items: [
-          {
-            label: 'Ejercicios',
-            icon: 'pi pi-file-edit',
-            routerLink: '/exercises',
-          },
-          {
-            label: 'Libre',
-            icon: 'pi pi-code',
-            routerLink: '/playground',
-          },
-        ],
+        label: 'Perfil',
+        icon: 'pi pi-user',
+        routerLink: '/profile',
       },
     ];
 
     if (this.isAdmin()) {
-      this.items = [
-        ...this.items,
+      this.aditionalItems = [
         {
-          label: 'Admin',
-          items: [
-            {
-              label: 'Administración',
-              icon: 'pi pi-user-edit',
-              routerLink: '/admin',
-            },
-          ],
+          label: 'Administración',
+          icon: 'pi pi-user-edit',
+          routerLink: '/admin',
         },
+        ...this.aditionalItems,
       ];
     }
-
-    this.setActiveItem(this.router.url);
-
-    this.routerSubscription = this.router.events
-      .pipe(filter((event) => event instanceof NavigationEnd))
-      .subscribe((event: NavigationEnd) => {
-        this.setActiveItem(event.urlAfterRedirects);
-      });
-  }
-
-  private setActiveItem(url: string): void {
-    const firstSegment = url.split('/').filter(Boolean)[0] ?? '';
-    const activeLabel = this.routeMap[firstSegment];
-
-    this.items.forEach((group) => {
-      group.items!.forEach((item: MenuItem) => {
-        item.styleClass = item.label === activeLabel ? 'active' : '';
-      });
-    });
   }
 
   switchSidebarMode() {
     this.popupMenuMode.update((s) => !s);
-  }
-
-  ngOnDestroy(): void {
-    this.routerSubscription?.unsubscribe();
   }
 }
