@@ -1,9 +1,9 @@
 :host .sidebar {
-  background-color: #f3f3fe;
+  background-color: var(--color-surface-low);
 }
 
 .title-color {
-  color: #1452da;
+  color: var(--color-primary);
 }
 
 :host ::ng-deep .p-menu {
@@ -13,20 +13,37 @@
 
 :host ::ng-deep .p-menu-item-link {
   --p-menu-item-padding: 12px 16px;
+  color: var(--color-text-secondary);
 }
 
 :host ::ng-deep .p-menu-item-link-active {
-  border-left: 6px solid #1452da;
-  background-color: #2563eb;
-  color: white;
+  border-left: 6px solid var(--p-primary-color);
+  background-color: var(--color-primary-container);
+  color: var(--p-primary-50);
   border-radius: 6px;
 }
 
+:host ::ng-deep .p-menu-item-link:hover {
+  background-color: var(--p-primary-200);
+}
+
 :host ::ng-deep .p-menu-item-link-active:hover {
-  background-color: #3674fc;
+  background-color: var(--p-primary-600);
+}
+
+:host ::ng-deep .p-menu-item-link .p-menu-item-icon {
+  color: var(--color-text-secondary);
 }
 
 :host ::ng-deep .p-menu-item-link-active .p-menu-item-icon {
+  color: inherit;
+}
+
+:host ::ng-deep .p-menu-item-link:hover .p-menu-item-icon {
+  color: inherit !important;
+}
+
+:host ::ng-deep .p-menu-item-link-active:hover .p-menu-item-icon {
   color: inherit !important;
 }
 

@@ -3,30 +3,27 @@
 // ─────────────────────────────────────────────
 :host {
   --lc-bg-code: #0f1117;
-  --lc-bg-code-inline: #f0f2f5;
-  --lc-bg-blockquote: #f8f9ff;
-  --lc-bg-table-head: #f3f4f8;
-  --lc-bg-table-alt: #fafbfc;
+  --lc-bg-code-inline: #ededf9;
+  --lc-bg-blockquote: #f3f3fe;
+  --lc-bg-table-head: #e7e7f3;
+  --lc-bg-table-alt: #faf8ff;
 
-  --lc-text: #1a1d2e;
-  --lc-text-muted: #6b7280;
-  --lc-text-code: #e879f9;
+  --lc-text: #191b23;
+  --lc-text-muted: #737686;
+  --lc-text-code: #57dffe;
   --lc-text-code-block: #e2e8f0;
 
-  --lc-accent: #6366f1;
-  --lc-accent-light: #eef2ff;
-  --lc-border: #e5e7eb;
+  --lc-accent: #004ac6;
+  --lc-accent-light: #dbe1ff;
+  --lc-border: #c3c6d7;
   --lc-border-code: #1e2130;
 
-  --lc-radius: 12px;
-  --lc-radius-sm: 6px;
+  --lc-radius: 0.75rem;
+  --lc-radius-sm: 0.25rem;
   --lc-font-sans: 'Inter', system-ui, sans-serif;
-  --lc-font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
-
-  display: block;
-  font-family: var(--lc-font-sans);
-  color: var(--lc-text);
+  --lc-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 }
+
 // ─────────────────────────────────────────────
 // Cuerpo — estilos del Markdown renderizado
 // ─────────────────────────────────────────────
