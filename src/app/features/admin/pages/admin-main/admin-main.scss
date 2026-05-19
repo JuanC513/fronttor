@@ -1,0 +1,7 @@
+:host {
+  height: 100%;
+}
+
+:host ::ng-deep .p-orderlist-controls {
+  display: none !important;
+}

@@ -44,11 +44,8 @@ export class ModuleService {
     if (error) throw new Error(error.message);
   }
 
-  async reorder(id: number, newOrder: number): Promise<void> {
-    const { error } = await this.supabase.rpc('reorder_module', {
-      p_id: id,
-      p_new_order: newOrder,
-    });
+  async reorderAll(ids: number[]): Promise<void> {
+    const { error } = await this.supabase.rpc('reorder_modules', { p_ids: ids });
 
     if (error) throw new Error(error.message);
   }
