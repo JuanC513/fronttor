@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, effect, inject, OnInit, signal } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { Module } from '@domain/learning/models/module-model';
 import { ModuleService } from '@domain/learning/services/module-service';
@@ -32,6 +32,14 @@ export class AdminMain implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
   skeletons = Array(4).fill(0);
+
+  constructor() {
+    effect(() => {
+      // Cada vez que refreshTrigger cambie, recarga
+      this.moduleService.refreshTrigger();
+      this.fetchModules();
+    });
+  }
 
   ngOnInit() {
     this.fetchModules();
