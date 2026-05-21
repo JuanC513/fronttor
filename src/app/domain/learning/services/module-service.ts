@@ -38,8 +38,14 @@ export class ModuleService {
     return data as Module;
   }
 
-  async insert(name: string, order: number): Promise<void> {
-    const { error } = await this.supabase.rpc('insert_module', { p_name: name, p_order: order });
+  async insert(name: string): Promise<void> {
+    const { error } = await this.supabase.rpc('insert_module', { p_name: name });
+
+    if (error) throw new Error(error.message);
+  }
+
+  async update(id: number, name: string): Promise<void> {
+    const { error } = await this.supabase.rpc('update_module', { p_id: id, p_name: name });
 
     if (error) throw new Error(error.message);
   }

@@ -48,7 +48,17 @@ export class ModuleFormDialog implements OnInit {
 
   onSubmit() {
     if (this.moduleForm.valid) {
-      console.log(this.moduleForm.value);
+      if (this.isEditForm) {
+        const id = this.activatedRoute.snapshot.paramMap.get('id');
+        this.moduleService.update(Number(id), this.moduleForm.value.nombre).then(() => {
+          this.router.navigate(['/admin']);
+        });
+      } else {
+        console.log('crear');
+        this.moduleService.insert(this.moduleForm.value.nombre).then(() => {
+          this.router.navigate(['/admin']);
+        });
+      }
     }
   }
 }
