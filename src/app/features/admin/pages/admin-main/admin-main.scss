@@ -5,3 +5,11 @@
 :host ::ng-deep .p-orderlist-controls {
   display: none !important;
 }
+
+:host ::ng-deep .p-listbox {
+  border: none !important;
+}
+
+:host ::ng-deep .cdk-drop-list {
+  max-height: none !important;
+}
