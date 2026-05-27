@@ -1,18 +1,27 @@
 <nav class="sidebar h-full flex" style="position: relative">
   <span class="flex flex-column justify-content-between">
     <span class="flex flex-column" [ngClass]="popupMenuMode() ? 'gap-2' : 'gap-8'">
-      @if (popupMenuMode()) {
-        <h1>F</h1>
-      } @else {
-        <span class="px-4">
-          <h1 class="title-color">FronTTor</h1>
-          <p>Mastering the web</p>
-        </span>
-      }
+      <span class="flex">
+        @if (popupMenuMode()) {
+          <h1 class="pl-4">F</h1>
+        } @else {
+          <span class="px-4">
+            <h1 class="title-color">FronTTor</h1>
+            <p>Mastering the web</p>
+          </span>
+        }
+        <p-button
+          class="mt-4"
+          [icon]="popupMenuMode() ? 'pi pi-angle-double-right' : 'pi pi-angle-double-left'"
+          link
+          size="small"
+          (onClick)="switchSidebarMode()"
+        />
+      </span>
       <div class="px-3">
         <p-menu #menu [model]="mainItems" [popup]="popupMenuMode()" />
         @if (popupMenuMode()) {
-          <p-button (click)="menu.toggle($event)" icon="pi pi-ellipsis-v" severity="secondary" />
+          <p-button (click)="menu.toggle($event)" icon="pi pi-ellipsis-v" />
         }
       </div>
     </span>
@@ -25,18 +34,4 @@
     </span>
   </span>
   <p-divider class="sidebar-divider" layout="vertical" />
-  <p-button
-    [style]="{
-      position: 'absolute',
-      right: '0',
-      top: '90%',
-      transform: 'translate(50%, -50%)',
-      zIndex: '10',
-    }"
-    [icon]="popupMenuMode() ? 'pi pi-chevron-right' : 'pi pi-chevron-left'"
-    [rounded]="true"
-    severity="contrast"
-    size="small"
-    (onClick)="switchSidebarMode()"
-  />
 </nav>

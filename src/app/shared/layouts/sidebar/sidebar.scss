@@ -6,7 +6,7 @@
   color: var(--color-primary);
 }
 
-:host ::ng-deep .p-menu {
+:host ::ng-deep .p-menu:not(.p-menu-overlay) {
   border: none;
   background: none;
 }
