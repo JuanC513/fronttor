@@ -8,7 +8,6 @@ import { Lesson } from '../models/lesson-model';
 export class LessonService {
   private readonly supabaseService = inject(SupabaseService);
   private readonly supabase = this.supabaseService.client;
-  private readonly orderColumn: keyof Lesson = 'order';
 
   async getById(id: number): Promise<Lesson> {
     const { data, error } = await this.supabase.from('lessons').select('*').eq('id', id).single();
@@ -27,17 +26,14 @@ export class LessonService {
     if (error) throw new Error(error.message);
   }
 
-  async reorder(id: number, newOrder: number): Promise<void> {
-    const { error } = await this.supabase.rpc('reorder_lesson', {
-      p_id: id,
-      p_new_order: newOrder,
-    });
+  async delete(id: number): Promise<void> {
+    const { error } = await this.supabase.rpc('delete_lesson', { p_id: id });
 
     if (error) throw new Error(error.message);
   }
 
-  async delete(id: number): Promise<void> {
-    const { error } = await this.supabase.rpc('delete_lesson', { p_id: id });
+  async reorderAll(ids: number[]): Promise<void> {
+    const { error } = await this.supabase.rpc('reorder_lessons', { p_ids: ids });
 
     if (error) throw new Error(error.message);
   }

@@ -13,3 +13,10 @@
 :host ::ng-deep .cdk-drop-list {
   max-height: none !important;
 }
+
+.select-item-container {
+  border: 1px solid;
+  border-color: var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface-container);
+}
