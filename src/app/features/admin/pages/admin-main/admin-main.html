@@ -23,23 +23,44 @@
     @if (!loading() && !error()) {
       <p-splitter class="h-full" gutterSize="3" step="15" [minSizes]="[20, 20, 20]">
         <ng-template #panel>
-          <div class="flex flex-column items-center justify-center h-full pl-4 pr-2 pb-5">
+          <!-- Modules -->
+          <div class="flex flex-column items-center justify-center h-full px-4 pb-5">
             <span class="flex justify-content-between align-items-center pr-2">
               <h3>Temas</h3>
-              <p-button icon="pi pi-plus" label="Crear tema" (onClick)="createModule()" />
+              <p-button
+                icon="pi pi-plus"
+                label="Crear tema"
+                (onClick)="createModule()"
+                [disabled]="isModuleReordering()"
+              />
             </span>
-            @if (!isReordering()) {
+            @if (!isModuleReordering()) {
               <div class="h-full flex flex-column justify-content-between">
-                <p-scrollpanel class="overflow-hidden">
-                  @for (module of modules(); track $index; let moduleIndex = $index) {
-                    <span class="flex align-items-center justify-content-between pr-1 py-1">
-                      <p>{{ $index + 1 + '. ' + module.name }}</p>
-                      <p-button icon="pi pi-pen-to-square" link (onClick)="editModule(module.id)" />
-                    </span>
-                  }
-                </p-scrollpanel>
+                <p-listbox
+                  class="h-full"
+                  [options]="modules()"
+                  [(ngModel)]="selectedModule"
+                  optionLabel="name"
+                  dataKey="id"
+                >
+                  <ng-template #item let-module let-index="index">
+                    <div class="flex align-items-center justify-content-between w-full h-full">
+                      <span>{{ index + 1 + '. ' + module.name }}</span>
+                      <p-button
+                        icon="pi pi-pen-to-square"
+                        link
+                        (onClick)="editModule(module.id); $event.stopPropagation()"
+                      />
+                    </div>
+                  </ng-template>
+                </p-listbox>
                 <div class="ml-auto p-2">
-                  <p-button label="Cambiar orden" icon="pi pi-sort" (onClick)="startReorder()" />
+                  <p-button
+                    label="Cambiar orden"
+                    icon="pi pi-sort"
+                    [disabled]="isReorderingOrSaving"
+                    (onClick)="startModulesReorder()"
+                  />
                 </div>
               </div>
             } @else {
@@ -48,7 +69,7 @@
                   [value]="modulesBuffer"
                   [dragdrop]="true"
                   dataKey="id"
-                  [disabled]="isSaving()"
+                  [disabled]="isModuleSaving()"
                   [responsive]="true"
                 >
                   <ng-template #item let-option>
@@ -59,15 +80,16 @@
                   <p-button
                     label="Guardar"
                     icon="pi pi-check"
-                    [disabled]="isSaving()"
-                    (onClick)="saveOrder()"
+                    [disabled]="isModuleSaving()"
+                    (onClick)="saveModulesOrder()"
                   />
                   <p-button
                     label="Cancelar"
                     icon="pi pi-times"
-                    severity="secondary"
-                    [disabled]="isSaving()"
-                    (onClick)="cancelReorder()"
+                    severity="danger"
+                    variant="outlined"
+                    [disabled]="isModuleSaving()"
+                    (onClick)="cancelModulesReorder()"
                   />
                 </div>
               </div>
@@ -75,8 +97,89 @@
           </div>
         </ng-template>
         <ng-template #panel>
-          <div class="flex items-center justify-center h-full">
-            <h3>Subtemas</h3>
+          <!-- Lessons -->
+          <div class="flex flex-column items-center justify-center h-full px-4 pb-5">
+            <span class="flex justify-content-between align-items-center pr-2">
+              <h3>Subtemas</h3>
+              <p-button
+                icon="pi pi-plus-circle"
+                label="Crear subtema"
+                (onClick)="createLesson()"
+                severity="secondary"
+                [disabled]="!selectedModule"
+              />
+            </span>
+            @if (selectedModule) {
+              @if (!isLessonReordering()) {
+                <div class="h-full flex flex-column justify-content-between">
+                  <p-listbox
+                    class="h-full"
+                    [options]="currentLessons"
+                    optionLabel="name"
+                    dataKey="id"
+                  >
+                    <ng-template #item let-module let-index="index">
+                      <div class="flex align-items-center justify-content-between w-full">
+                        <span>{{
+                          selectedModule.order + '.' + (index + 1) + '. ' + module.name
+                        }}</span>
+                        <p-button
+                          icon="pi pi-pen-to-square"
+                          link
+                          (onClick)="editLesson(index); $event.stopPropagation()"
+                        />
+                      </div>
+                    </ng-template>
+                  </p-listbox>
+                  <div class="ml-auto p-2">
+                    <p-button
+                      label="Cambiar orden"
+                      icon="pi pi-sort"
+                      (onClick)="startLessonsReorder()"
+                      severity="secondary"
+                      [disabled]="isReorderingOrSaving"
+                    />
+                  </div>
+                </div>
+              } @else {
+                <div class="h-full flex flex-column justify-content-between">
+                  <p-orderlist
+                    [value]="lessonsBuffer"
+                    [dragdrop]="true"
+                    dataKey="id"
+                    [disabled]="isLessonSaving()"
+                    [responsive]="true"
+                  >
+                    <ng-template #item let-option>
+                      {{ option.name }}
+                    </ng-template>
+                  </p-orderlist>
+                  <div class="ml-auto reorder-actions mt-3 flex gap-3">
+                    <p-button
+                      label="Guardar"
+                      icon="pi pi-check"
+                      severity="secondary"
+                      [disabled]="isLessonSaving()"
+                      (onClick)="saveLessonsOrder()"
+                    />
+                    <p-button
+                      label="Cancelar"
+                      icon="pi pi-times"
+                      severity="danger"
+                      variant="outlined"
+                      [disabled]="isLessonSaving()"
+                      (onClick)="cancelLessonsReorder()"
+                    />
+                  </div>
+                </div>
+              }
+            } @else {
+              <div
+                class="select-item-container h-full flex flex-column justify-content-center align-items-center"
+              >
+                Selecciona un módulo
+              </div>
+            }
           </div>
         </ng-template>
         <ng-template #panel>
