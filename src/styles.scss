@@ -110,6 +110,8 @@ body {
   /* Focus ring */
   --p-focus-ring-color: #2563eb !important;
   --p-focus-ring-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2) !important;
+
+  --p-floatlabel-focus-color: #var(--color-text-secondary) !important;
 }
 
 .p-button-secondary {
@@ -127,11 +129,11 @@ body {
 .p-inputtext.ng-invalid.ng-touched,
 .p-dropdown.ng-invalid.ng-touched,
 .p-select.ng-invalid.ng-touched {
-  border-color: var(--color-error,) !important;
-  color: var(--color-error,) !important;
+  border-color: var(--color-error) !important;
+  color: var(--color-error) !important;
   box-shadow: 0 0 0 0.1rem color-mix(in srgb, var(--color-error) 20%, transparent) !important;
 }
 
 .p-floatlabel .ng-invalid.ng-touched label {
-  color: var(--color-error,) !important;
+  color: var(--color-error) !important;
 }

@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { SupabaseService } from '@core/services/supabase/supabase-service';
 import { Lesson } from '../models/lesson-model';
 
@@ -8,6 +8,11 @@ import { Lesson } from '../models/lesson-model';
 export class LessonService {
   private readonly supabaseService = inject(SupabaseService);
   private readonly supabase = this.supabaseService.client;
+  readonly refreshTrigger = signal(0);
+
+  private notifyRefresh(): void {
+    this.refreshTrigger.update((v) => v + 1);
+  }
 
   async getById(id: number): Promise<Lesson> {
     const { data, error } = await this.supabase.from('lessons').select('*').eq('id', id).single();
@@ -16,20 +21,28 @@ export class LessonService {
     return data as Lesson;
   }
 
-  async insert(name: string, moduleId: number, order: number): Promise<void> {
+  async insert(name: string, moduleId: number): Promise<void> {
     const { error } = await this.supabase.rpc('insert_lesson', {
       p_name: name,
       p_module_id: moduleId,
-      p_order: order,
     });
 
     if (error) throw new Error(error.message);
+    this.notifyRefresh();
+  }
+
+  async update(id: number, name: string): Promise<void> {
+    const { error } = await this.supabase.rpc('update_lesson', { p_id: id, p_name: name });
+
+    if (error) throw new Error(error.message);
+    this.notifyRefresh();
   }
 
   async delete(id: number): Promise<void> {
     const { error } = await this.supabase.rpc('delete_lesson', { p_id: id });
 
     if (error) throw new Error(error.message);
+    this.notifyRefresh();
   }
 
   async reorderAll(ids: number[]): Promise<void> {
