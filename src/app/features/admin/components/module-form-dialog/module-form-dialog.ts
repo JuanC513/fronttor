@@ -38,7 +38,7 @@ export class ModuleFormDialog implements OnInit {
       const data = await this.moduleService.getById(id);
       this.moduleForm.patchValue({ nombre: data.name });
     } catch (err) {
-      console.error('No se pudieron cargar los módulos. Intenta de nuevo. ' + err);
+      console.error('No se pudo cargar el tema. Intenta de nuevo. ' + err);
     }
   }
 
@@ -54,7 +54,6 @@ export class ModuleFormDialog implements OnInit {
           this.router.navigate(['/admin']);
         });
       } else {
-        console.log('crear');
         this.moduleService.insert(this.moduleForm.value.nombre).then(() => {
           this.router.navigate(['/admin']);
         });
