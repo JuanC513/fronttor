@@ -30,7 +30,8 @@ export class ModuleService {
     const { data, error } = await this.supabase
       .from('modules')
       .select(`*, lessons(*)`)
-      .order(this.orderColumn, { ascending: true });
+      .order(this.orderColumn, { ascending: true })
+      .order(this.orderColumn, { ascending: true, referencedTable: 'lessons' });
 
     if (error) throw new Error(error.message);
     return (data as ModuleWithLessons[]) ?? [];

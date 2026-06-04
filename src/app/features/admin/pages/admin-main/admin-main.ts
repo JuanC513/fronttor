@@ -137,17 +137,15 @@ export class AdminMain implements OnInit {
   }
 
   async saveLessonsOrder() {
-    // this.isLessonSaving.set(true);
-    // try {
-    //   const ids = this.modulesBuffer.map((m) => m.id);
-    //   await this.moduleService.reorderAll(ids);
-    //   this.modules.set(this.modulesBuffer.map((m, i) => ({ ...m, order: i + 1 })));
-    //   this.isModuleReordering.set(false);
-    //   this.isModuleSaving.set(false);
-    // } catch {
-    //   this.isModuleSaving.set(false);
-    //   this.error.set('No se pudo guardar el orden.');
-    //   await this.fetchModules();
-    // }
+    this.isLessonSaving.set(true);
+    try {
+      const ids = this.lessonsBuffer.map((l) => l.id);
+      await this.lessonService.reorderAll(ids);
+      this.isLessonReordering.set(false);
+      this.isLessonSaving.set(false);
+    } catch {
+      this.isLessonSaving.set(false);
+      this.error.set('No se pudo guardar el orden.');
+    }
   }
 }

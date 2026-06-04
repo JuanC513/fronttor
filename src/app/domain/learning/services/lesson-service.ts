@@ -53,5 +53,6 @@ export class LessonService {
     const { error } = await this.supabase.rpc('reorder_lessons', { p_ids: ids });
 
     if (error) throw new Error(error.message);
+    this.notifyRefresh();
   }
 }
