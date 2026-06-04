@@ -37,11 +37,12 @@ export class AdminMain implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
   skeletons = Array(4).fill(0);
-  selectedModule: ModuleWithLessons | undefined = undefined;
+  selectedModule = signal<ModuleWithLessons | undefined>(undefined);
 
   constructor() {
     effect(() => {
       // Cada vez que refreshTrigger cambie, recarga
+      this.selectedModule.set(undefined);
       this.moduleService.refreshTrigger();
       this.lessonService.refreshTrigger();
       this.fetchModules();
@@ -66,7 +67,7 @@ export class AdminMain implements OnInit {
       return [];
     }
 
-    return this.modules().find((module) => module.id === this.selectedModule!.id)?.lessons ?? [];
+    return this.modules().find((module) => module.id === this.selectedModule()!.id)?.lessons ?? [];
   }
 
   async fetchModules() {

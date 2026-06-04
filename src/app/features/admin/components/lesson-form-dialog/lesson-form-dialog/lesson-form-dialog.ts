@@ -74,9 +74,11 @@ export class LessonFormDialog implements OnInit {
     if (this.lessonForm.valid) {
       if (this.isEditForm) {
         const id = this.activatedRoute.snapshot.paramMap.get('id');
-        this.lessonService.update(Number(id), this.lessonForm.value.name).then(() => {
-          this.router.navigate(['/admin']);
-        });
+        this.lessonService
+          .update(Number(id), this.lessonForm.value.name, this.lessonForm.value.module_id)
+          .then(() => {
+            this.router.navigate(['/admin']);
+          });
       } else {
         this.lessonService
           .insert(this.lessonForm.value.name, this.lessonForm.value.module_id)

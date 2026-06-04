@@ -31,8 +31,12 @@ export class LessonService {
     this.notifyRefresh();
   }
 
-  async update(id: number, name: string): Promise<void> {
-    const { error } = await this.supabase.rpc('update_lesson', { p_id: id, p_name: name });
+  async update(id: number, name: string, moduleId: number): Promise<void> {
+    const { error } = await this.supabase.rpc('update_lesson', {
+      p_id: id,
+      p_name: name,
+      p_module_id: moduleId,
+    });
 
     if (error) throw new Error(error.message);
     this.notifyRefresh();

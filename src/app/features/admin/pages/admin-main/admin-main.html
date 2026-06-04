@@ -108,8 +108,8 @@
                 severity="secondary"
               />
             </span>
-            @if (selectedModule) {
-              @if (selectedModule.lessons.length) {
+            @if (selectedModule()) {
+              @if (selectedModule()?.lessons!.length > 0) {
                 @if (!isLessonReordering()) {
                   <div class="h-full flex flex-column justify-content-between">
                     <p-listbox
@@ -121,7 +121,7 @@
                       <ng-template #item let-submodule let-index="index">
                         <div class="flex align-items-center justify-content-between w-full">
                           <span>{{
-                            selectedModule.order + '.' + (index + 1) + '. ' + submodule.name
+                            selectedModule()!.order + '.' + (index + 1) + '. ' + submodule.name
                           }}</span>
                           <p-button
                             icon="pi pi-pen-to-square"
