@@ -51,10 +51,11 @@ export class BlockService {
     this.notifyRefresh();
   }
 
-  async update(id: number, name: string, lessonId: number): Promise<void> {
+  async update(id: number, name: string, content: string, lessonId: number): Promise<void> {
     const { error } = await this.supabase.rpc('update_block', {
       p_id: id,
       p_name: name,
+      p_content: content,
       p_lesson_id: lessonId,
     });
 
