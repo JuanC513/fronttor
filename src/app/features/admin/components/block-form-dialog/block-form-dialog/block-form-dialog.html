@@ -2,7 +2,7 @@
   [header]="isEditForm ? 'Editar bloque' : 'Crear bloque'"
   [modal]="true"
   [visible]="true"
-  [style]="{ width: '30rem' }"
+  [style]="{ width: '80rem' }"
   (onHide)="closeDialog()"
 >
   <span class="flex flex-column gap-5">
@@ -10,64 +10,76 @@
       isEditForm ? 'Edita el bloque seleccionado' : 'Crea un nuevo bloque'
     }}</span>
     <form [formGroup]="blockForm" (ngSubmit)="onSubmit()" class="flex flex-column gap-5">
-      <p-floatlabel variant="on" [formGroup]="uiForm">
-        <p-select
-          id="moduleList"
-          class="w-full"
-          appendTo="body"
-          [options]="modulesList()"
-          optionLabel="name"
-          optionValue="id"
-          [filter]="true"
-          [checkmark]="true"
-          [showClear]="true"
-          formControlName="module_id"
-        />
-        <label for="on_label">Selecciona un tema</label>
-      </p-floatlabel>
-      <p-floatlabel variant="on">
-        <p-select
-          id="lessonList"
-          class="w-full"
-          appendTo="body"
-          [options]="lessonsList()"
-          optionLabel="name"
-          optionValue="id"
-          [filter]="true"
-          [checkmark]="true"
-          [showClear]="true"
-          formControlName="lesson_id"
-        />
-        <label for="on_label">Selecciona un subtema</label>
-      </p-floatlabel>
-      <p-floatlabel variant="on">
-        <input
-          pInputText
-          id="blockname"
-          class="flex-auto w-full"
-          autocomplete="off"
-          formControlName="name"
-        />
-        <label for="on_label">Nombre</label>
-      </p-floatlabel>
-      <p-floatlabel variant="on">
-        <input
-          pInputText
-          id="blockcontent"
-          class="flex-auto w-full"
-          autocomplete="off"
-          formControlName="content"
-        />
-        <label for="on_label">Contenido</label>
-      </p-floatlabel>
-      <div class="flex justify-content-end gap-2">
-        <p-button label="Cancelar" variant="outlined" (click)="closeDialog()" />
-        <p-button
-          [label]="isEditForm ? 'Actualizar' : 'Crear'"
-          type="submit"
-          [disabled]="blockForm.invalid"
-        />
-      </div>
+      <span class="flex gap-3">
+        <p-floatlabel variant="on" [formGroup]="uiForm" class="w-full">
+          <p-select
+            id="moduleList"
+            class="w-full"
+            appendTo="body"
+            [options]="modulesList()"
+            optionLabel="name"
+            optionValue="id"
+            [filter]="true"
+            [checkmark]="true"
+            [showClear]="true"
+            formControlName="module_id"
+          />
+          <label for="on_label">Selecciona un tema</label>
+        </p-floatlabel>
+        <p-floatlabel variant="on" class="w-full">
+          <p-select
+            id="lessonList"
+            class="w-full"
+            appendTo="body"
+            [options]="lessonsList()"
+            optionLabel="name"
+            optionValue="id"
+            [filter]="true"
+            [checkmark]="true"
+            [showClear]="true"
+            formControlName="lesson_id"
+          />
+          <label for="on_label">Selecciona un subtema</label>
+        </p-floatlabel>
+        <p-floatlabel variant="on" class="w-full">
+          <input
+            pInputText
+            id="blockname"
+            class="flex-auto w-full"
+            autocomplete="off"
+            formControlName="name"
+          />
+          <label for="on_label">Nombre</label>
+        </p-floatlabel>
+      </span>
+      <span class="flex flex-column">
+        <h5>Escribe el contenido del bloque y visualiza su resultado.</h5>
+        <span class="flex gap-1 w-full">
+          <p-floatlabel variant="on" class="w-full">
+            <textarea
+              pTextarea
+              id="on_label"
+              rows="5"
+              cols="30"
+              style="resize: none"
+              class="h-full w-full"
+              formControlName="content"
+            ></textarea>
+            <label for="on_label">Contenido</label>
+          </p-floatlabel>
+          <div class="markdown-rendered w-full p-4">
+            <app-markdown-renderer [content]="blockForm.get('content')?.value || ''" />
+          </div>
+        </span>
+      </span>
     </form>
   </span>
+  <ng-template #footer class="pt-2">
+    <p-button label="Cancelar" variant="outlined" (click)="closeDialog()" />
+    <p-button
+      [label]="isEditForm ? 'Actualizar' : 'Crear'"
+      (onClick)="onSubmit()"
+      [disabled]="blockForm.invalid"
+    />
+  </ng-template>
 </p-dialog>

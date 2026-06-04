@@ -1,0 +1,9 @@
+.markdown-rendered {
+  border: 1px solid;
+  border-color: var(--color-border-strong);
+  border-radius: var(--radius-md);
+}
+
+:host ::ng-deep .p-dialog-footer {
+  padding-top: 1rem;
+}

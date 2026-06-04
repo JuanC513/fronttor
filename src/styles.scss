@@ -127,6 +127,7 @@ body {
 // Input error styles
 
 .p-inputtext.ng-invalid.ng-touched,
+.p-textarea.ng-invalid.ng-touched,
 .p-dropdown.ng-invalid.ng-touched,
 .p-select.ng-invalid.ng-touched {
   border-color: var(--color-error) !important;

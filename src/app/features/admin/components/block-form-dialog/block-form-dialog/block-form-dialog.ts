@@ -11,6 +11,8 @@ import { DialogModule } from 'primeng/dialog';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
+import { MarkdownRenderer } from '@shared/components/markdown-renderer/markdown-renderer';
+import { TextareaModule } from 'primeng/textarea';
 
 @Component({
   selector: 'app-block-form-dialog',
@@ -21,6 +23,8 @@ import { SelectModule } from 'primeng/select';
     SelectModule,
     FloatLabelModule,
     ReactiveFormsModule,
+    MarkdownRenderer,
+    TextareaModule,
   ],
   templateUrl: './block-form-dialog.html',
   styleUrl: './block-form-dialog.scss',
