@@ -118,15 +118,15 @@
                       optionLabel="name"
                       dataKey="id"
                     >
-                      <ng-template #item let-module let-index="index">
+                      <ng-template #item let-submodule let-index="index">
                         <div class="flex align-items-center justify-content-between w-full">
                           <span>{{
-                            selectedModule.order + '.' + (index + 1) + '. ' + module.name
+                            selectedModule.order + '.' + (index + 1) + '. ' + submodule.name
                           }}</span>
                           <p-button
                             icon="pi pi-pen-to-square"
                             link
-                            (onClick)="editLesson(index); $event.stopPropagation()"
+                            (onClick)="editLesson(submodule.id); $event.stopPropagation()"
                           />
                         </div>
                       </ng-template>

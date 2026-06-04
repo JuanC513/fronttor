@@ -71,16 +71,12 @@ export class LessonFormDialog implements OnInit {
   }
 
   onSubmit() {
-    console.log(this.lessonForm.value);
-    console.log(this.lessonForm.valid);
-    return;
     if (this.lessonForm.valid) {
       if (this.isEditForm) {
-        // const id = this.activatedRoute.snapshot.paramMap.get('id');
-        // this.lessonService.update(Number(id), this.lessonForm.value.nombre).then(() => {
-        //   this.router.navigate(['/admin']);
-        // });
-        console.log('Editar');
+        const id = this.activatedRoute.snapshot.paramMap.get('id');
+        this.lessonService.update(Number(id), this.lessonForm.value.name).then(() => {
+          this.router.navigate(['/admin']);
+        });
       } else {
         this.lessonService
           .insert(this.lessonForm.value.name, this.lessonForm.value.module_id)

@@ -9,6 +9,7 @@ import { Lesson } from '@domain/learning/models/lesson-model';
 import { ListboxModule } from 'primeng/listbox';
 import { FormsModule } from '@angular/forms';
 import { ModuleWithLessons } from '@domain/learning/models/module-with-lessons';
+import { LessonService } from '@domain/learning/services/lesson-service';
 
 @Component({
   selector: 'app-admin-main',
@@ -27,6 +28,7 @@ import { ModuleWithLessons } from '@domain/learning/models/module-with-lessons';
 export class AdminMain implements OnInit {
   private readonly router = inject(Router);
   private readonly moduleService = inject(ModuleService);
+  private readonly lessonService = inject(LessonService);
 
   isModuleReordering = signal(false);
   isModuleSaving = signal(false);
@@ -41,6 +43,7 @@ export class AdminMain implements OnInit {
     effect(() => {
       // Cada vez que refreshTrigger cambie, recarga
       this.moduleService.refreshTrigger();
+      this.lessonService.refreshTrigger();
       this.fetchModules();
     });
   }
