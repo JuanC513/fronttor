@@ -10,6 +10,8 @@ import { ListboxModule } from 'primeng/listbox';
 import { FormsModule } from '@angular/forms';
 import { ModuleWithLessons } from '@domain/learning/models/module-with-lessons';
 import { LessonService } from '@domain/learning/services/lesson-service';
+import { Block } from '@domain/learning/models/block-model';
+import { BlockService } from '@domain/learning/services/block-service';
 
 @Component({
   selector: 'app-admin-main',
@@ -29,6 +31,7 @@ export class AdminMain implements OnInit {
   private readonly router = inject(Router);
   private readonly moduleService = inject(ModuleService);
   private readonly lessonService = inject(LessonService);
+  private readonly blockService = inject(BlockService);
 
   isModuleReordering = signal(false);
   isModuleSaving = signal(false);
@@ -38,6 +41,8 @@ export class AdminMain implements OnInit {
   error = signal<string | null>(null);
   skeletons = Array(4).fill(0);
   selectedModule = signal<ModuleWithLessons | undefined>(undefined);
+  selectedLesson = signal<Lesson | undefined>(undefined);
+  blocksList = signal<Block[]>([]);
 
   constructor() {
     effect(() => {
@@ -51,6 +56,7 @@ export class AdminMain implements OnInit {
 
   ngOnInit() {
     this.fetchModules();
+    this.fetchBlocks();
   }
 
   get isReorderingOrSaving(): boolean {
@@ -58,7 +64,9 @@ export class AdminMain implements OnInit {
       this.isModuleReordering() ||
       this.isModuleSaving() ||
       this.isLessonReordering() ||
-      this.isLessonSaving()
+      this.isLessonSaving() ||
+      this.isBlockReordering() ||
+      this.isBlockSaving()
     );
   }
 
@@ -70,12 +78,31 @@ export class AdminMain implements OnInit {
     return this.modules().find((module) => module.id === this.selectedModule()!.id)?.lessons ?? [];
   }
 
+  get currentBlocks() {
+    if (!this.selectedLesson()) {
+      return [];
+    }
+
+    return this.blocksList().filter((block) => block.lesson_id === this.selectedLesson()!.id);
+  }
+
   async fetchModules() {
     try {
       const data = await this.moduleService.getAllWithLessons();
       this.modules.set(data);
     } catch (err) {
       this.error.set('No se pudieron cargar los módulos. Intenta de nuevo. ' + err);
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  async fetchBlocks() {
+    try {
+      const data = await this.blockService.getAll();
+      this.blocksList.set(data);
+    } catch (err) {
+      this.error.set('No se pudieron cargar los bloques. Intenta de nuevo. ' + err);
     } finally {
       this.loading.set(false);
     }
@@ -116,7 +143,6 @@ export class AdminMain implements OnInit {
   // Lesson
   isLessonReordering = signal(false);
   isLessonSaving = signal(false);
-  modulesWithlessons = signal<Lesson[]>([]);
   lessonsBuffer: Lesson[] = [];
 
   createLesson() {
@@ -145,6 +171,41 @@ export class AdminMain implements OnInit {
       this.isLessonSaving.set(false);
     } catch {
       this.isLessonSaving.set(false);
+      this.error.set('No se pudo guardar el orden.');
+    }
+  }
+
+  // Block
+  isBlockReordering = signal(false);
+  isBlockSaving = signal(false);
+  blocksBuffer: Block[] = [];
+
+  createBlock() {
+    this.router.navigate(['admin/block/new']);
+  }
+
+  editBlock(id: number) {
+    this.router.navigate([`admin/block/edit/${id}`]);
+  }
+
+  startBlocksReorder() {
+    this.blocksBuffer = [...this.currentBlocks];
+    this.isBlockReordering.set(true);
+  }
+
+  cancelBlocksReorder() {
+    this.isBlockReordering.set(false);
+  }
+
+  async saveBlocksOrder() {
+    this.isBlockSaving.set(true);
+    try {
+      const ids = this.blocksBuffer.map((l) => l.id);
+      await this.blockService.reorderAll(ids);
+      this.isBlockReordering.set(false);
+      this.isBlockSaving.set(false);
+    } catch {
+      this.isBlockSaving.set(false);
       this.error.set('No se pudo guardar el orden.');
     }
   }
