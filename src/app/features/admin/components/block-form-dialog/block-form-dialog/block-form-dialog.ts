@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Lesson } from '@domain/learning/models/lesson-model';
 import { ModuleWithLessons } from '@domain/learning/models/module-with-lessons';
 import { BlockService } from '@domain/learning/services/block-service';
+import { LessonService } from '@domain/learning/services/lesson-service';
 import { ModuleService } from '@domain/learning/services/module-service';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -30,13 +31,16 @@ export class BlockFormDialog implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   private readonly blockService = inject(BlockService);
   private readonly moduleService = inject(ModuleService);
+  private readonly lessonService = inject(LessonService);
+  private lessonsSource = signal<Lesson[]>([]);
+  selectedModuleId = signal<number | undefined>(undefined);
   modulesList = signal<ModuleWithLessons[]>([]);
   lessonsList = signal<Lesson[]>([]);
   blockForm!: FormGroup;
   uiForm!: FormGroup;
   isEditForm!: boolean;
 
-  ngOnInit(): void {
+  async ngOnInit() {
     const id = this.activatedRoute.snapshot.paramMap.get('id');
     this.isEditForm = !!id;
 
@@ -50,12 +54,14 @@ export class BlockFormDialog implements OnInit {
     });
 
     this.loadModules();
+    this.loadLessons();
 
     this.uiForm.get('module_id')?.valueChanges.subscribe((value) => {
       if (value) {
-        const module = this.modulesList().find((m) => m.id === value);
-        this.lessonsList.set(module?.lessons ?? []);
+        if (value === this.selectedModuleId()) return;
+        this.lessonsList.set(this.lessonsSource().filter((l) => l.module_id === value));
         this.blockForm.get('lesson_id')?.enable();
+        this.blockForm.get('lesson_id')?.setValue(undefined);
       } else {
         this.lessonsList.set([]);
         this.blockForm.get('lesson_id')?.disable();
@@ -71,6 +77,9 @@ export class BlockFormDialog implements OnInit {
     try {
       const data = await this.blockService.getById(id);
       this.blockForm.patchValue(data);
+      const currentModuleId = this.lessonsList().find((l) => l.id === data.lesson_id)?.module_id;
+      this.uiForm.patchValue({ module_id: currentModuleId }, { emitEvent: false });
+      this.selectedModuleId.set(currentModuleId);
     } catch (err) {
       console.error('No se pudo cargar el bloque. Intenta de nuevo. ' + err);
     }
@@ -80,6 +89,16 @@ export class BlockFormDialog implements OnInit {
     try {
       const data = await this.moduleService.getAllWithLessons();
       this.modulesList.set(data);
+    } catch (err) {
+      console.error('No se pudo cargar los temas. Intenta de nuevo. ' + err);
+    }
+  }
+
+  private async loadLessons(): Promise<void> {
+    try {
+      const data = await this.lessonService.getAll();
+      this.lessonsList.set(data);
+      this.lessonsSource.set(data);
     } catch (err) {
       console.error('No se pudo cargar los temas. Intenta de nuevo. ' + err);
     }
@@ -96,9 +115,9 @@ export class BlockFormDialog implements OnInit {
         this.blockService
           .update(
             Number(id),
-            this.blockForm.value.content,
             this.blockForm.value.name,
-            this.blockForm.value.module_id,
+            this.blockForm.value.content,
+            this.blockForm.value.lesson_id,
           )
           .then(() => {
             this.router.navigate(['/admin']);
@@ -108,7 +127,7 @@ export class BlockFormDialog implements OnInit {
           .insert(
             this.blockForm.value.name,
             this.blockForm.value.content,
-            this.blockForm.value.module_id,
+            this.blockForm.value.lesson_id,
           )
           .then(() => {
             this.router.navigate(['/admin']);

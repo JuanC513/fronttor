@@ -53,6 +53,7 @@ export class AdminMain implements OnInit {
       this.lessonService.refreshTrigger();
       this.blockService.refreshTrigger();
       this.fetchModules();
+      this.fetchBlocks();
     });
   }
 

@@ -14,6 +14,13 @@ export class LessonService {
     this.refreshTrigger.update((v) => v + 1);
   }
 
+  async getAll(): Promise<Lesson[]> {
+    const { data, error } = await this.supabase.from('lessons').select('*');
+
+    if (error) throw new Error(error.message);
+    return (data as Lesson[]) ?? [];
+  }
+
   async getById(id: number): Promise<Lesson> {
     const { data, error } = await this.supabase.from('lessons').select('*').eq('id', id).single();
 
