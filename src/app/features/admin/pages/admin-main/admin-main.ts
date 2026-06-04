@@ -48,8 +48,10 @@ export class AdminMain implements OnInit {
     effect(() => {
       // Cada vez que refreshTrigger cambie, recarga
       this.selectedModule.set(undefined);
+      this.selectedLesson.set(undefined);
       this.moduleService.refreshTrigger();
       this.lessonService.refreshTrigger();
+      this.blockService.refreshTrigger();
       this.fetchModules();
     });
   }
