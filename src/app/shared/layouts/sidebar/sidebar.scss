@@ -9,6 +9,8 @@
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow-x: hidden;
   white-space: nowrap;
+  border-right: 1px solid;
+  border-color: var(--color-border);
 }
 
 // Cuando está colapsado cambian las dimensiones

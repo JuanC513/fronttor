@@ -20,3 +20,12 @@
   border-radius: var(--radius-lg);
   background-color: var(--color-surface-container);
 }
+
+:host ::ng-deep .p-splitter {
+  border-radius: 0;
+}
+
+.title-tab-container {
+  border-bottom: 1px solid;
+  border-color: var(--color-border);
+}
