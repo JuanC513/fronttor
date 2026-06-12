@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
@@ -13,55 +13,56 @@ import { toSignal } from '@angular/core/rxjs-interop';
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
 })
-export class Sidebar implements OnInit {
+export class Sidebar {
   private readonly authService = inject(AuthService);
   private isAdmin = toSignal(this.authService.isAdmin$, { initialValue: false });
 
-  mainItems: MenuItem[] = [
-    {
-      label: 'Inicio',
-      icon: 'pi pi-home',
-      routerLink: '/home',
-    },
-    {
-      label: 'Aprender',
-      icon: 'pi pi-graduation-cap',
-      routerLink: '/learning',
-    },
-    {
-      label: 'Ejercicios',
-      icon: 'pi pi-file-edit',
-      routerLink: '/exercises',
-    },
-    {
-      label: 'Libre',
-      icon: 'pi pi-code',
-      routerLink: '/playground',
-    },
-  ];
-  aditionalItems!: MenuItem[];
-  popupMenuMode = signal<boolean>(false);
-
-  ngOnInit(): void {
-    this.aditionalItems = [
-      {
-        label: 'Perfil',
-        icon: 'pi pi-user',
-        routerLink: '/profile',
-      },
+  readonly mainItems = computed<MenuItem[]>(() => {
+    const showLabel = !this.popupMenuMode();
+    const items: MenuItem[] = [
+      { icon: 'pi pi-home', routerLink: '/home', label: 'Inicio' },
+      { icon: 'pi pi-graduation-cap', routerLink: '/learning', label: 'Aprender' },
+      { icon: 'pi pi-file-edit', routerLink: '/exercises', label: 'Ejercicios' },
+      { icon: 'pi pi-code', routerLink: '/playground', label: 'Libre' },
     ];
 
+    return items.map((item) => {
+      if (showLabel) return item;
+
+      const itemWithoutLabel = { ...item };
+      delete itemWithoutLabel.label;
+      return itemWithoutLabel;
+    });
+  });
+
+  readonly aditionalItems = computed<MenuItem[]>(() => {
+    const showLabel = !this.popupMenuMode();
+    const items: MenuItem[] = [];
+
     if (this.isAdmin()) {
-      this.aditionalItems = [
-        {
-          label: 'Administración',
-          icon: 'pi pi-user-edit',
-          routerLink: '/admin',
-        },
-        ...this.aditionalItems,
-      ];
+      items.push({
+        label: 'Administración',
+        icon: 'pi pi-user-edit',
+        routerLink: '/admin',
+      });
     }
-  }
+
+    items.push({
+      label: 'Perfil',
+      icon: 'pi pi-user',
+      routerLink: '/profile',
+    });
+
+    return items.map((item) => {
+      if (showLabel) return item;
+
+      const itemWithoutLabel = { ...item };
+      delete itemWithoutLabel.label;
+      return itemWithoutLabel;
+    });
+  });
+
+  popupMenuMode = signal<boolean>(false);
 
   switchSidebarMode() {
     this.popupMenuMode.update((s) => !s);

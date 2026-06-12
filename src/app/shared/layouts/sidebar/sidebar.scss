@@ -9,6 +9,7 @@
 :host ::ng-deep .p-menu:not(.p-menu-overlay) {
   border: none;
   background: none;
+  min-width: 0;
 }
 
 :host ::ng-deep .p-menu-item-link {

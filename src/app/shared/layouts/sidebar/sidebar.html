@@ -19,17 +19,14 @@
         />
       </span>
       <div class="px-3">
-        <p-menu #menu [model]="mainItems" [popup]="popupMenuMode()" />
-        @if (popupMenuMode()) {
-          <p-button (click)="menu.toggle($event)" icon="pi pi-ellipsis-v" />
-        }
+        <p-menu #menu [model]="mainItems()" />
       </div>
     </span>
 
     <span class="w-100">
       <p-divider />
       <div class="w-100 px-3 pb-2">
-        <p-menu #menu [model]="aditionalItems" [popup]="popupMenuMode()" />
+        <p-menu #menu [model]="aditionalItems()" />
       </div>
     </span>
   </span>
