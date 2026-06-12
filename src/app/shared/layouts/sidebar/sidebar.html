@@ -1,4 +1,8 @@
-<nav class="sidebar h-full flex" style="position: relative">
+<nav
+  class="sidebar h-full flex"
+  [class.sidebar-collapsed]="popupMenuMode()"
+  style="position: relative"
+>
   <span class="flex flex-column justify-content-between">
     <span class="flex flex-column" [ngClass]="popupMenuMode() ? 'gap-2' : 'gap-8'">
       <span class="flex">
@@ -18,14 +22,14 @@
           (onClick)="switchSidebarMode()"
         />
       </span>
-      <div class="px-3">
+      <div class="px-3 menu-container">
         <p-menu #menu [model]="mainItems()" />
       </div>
     </span>
 
     <span class="w-100">
       <p-divider />
-      <div class="w-100 px-3 pb-2">
+      <div class="w-100 px-3 pb-2 menu-container">
         <p-menu #menu [model]="aditionalItems()" />
       </div>
     </span>
