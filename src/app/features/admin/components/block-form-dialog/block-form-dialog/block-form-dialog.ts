@@ -74,6 +74,17 @@ export class BlockFormDialog implements OnInit {
 
     if (id) {
       this.loadBlock(Number(id));
+    } else {
+      const { moduleId, lessonId } = this.activatedRoute.snapshot.queryParams;
+
+      if (moduleId && lessonId) {
+        this.uiForm.patchValue({
+          module_id: Number(moduleId),
+        });
+        this.blockForm.patchValue({
+          lesson_id: Number(lessonId),
+        });
+      }
     }
   }
 

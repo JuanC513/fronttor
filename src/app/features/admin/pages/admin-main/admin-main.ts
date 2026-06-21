@@ -55,6 +55,10 @@ export class AdminMain implements OnInit {
       this.fetchModules();
       this.fetchBlocks();
     });
+    effect(() => {
+      this.selectedModule();
+      this.selectedLesson.set(undefined);
+    });
   }
 
   ngOnInit() {
@@ -149,7 +153,11 @@ export class AdminMain implements OnInit {
   lessonsBuffer: Lesson[] = [];
 
   createLesson() {
-    this.router.navigate(['admin/lesson/new']);
+    const moduleId = this.selectedModule()?.id;
+
+    this.router.navigate(['admin/lesson/new'], {
+      queryParams: moduleId ? { moduleId } : {},
+    });
   }
 
   editLesson(id: number) {
@@ -184,7 +192,12 @@ export class AdminMain implements OnInit {
   blocksBuffer: Block[] = [];
 
   createBlock() {
-    this.router.navigate(['admin/block/new']);
+    const moduleId = this.selectedModule()?.id;
+    const lessonId = this.selectedLesson()?.id;
+
+    this.router.navigate(['admin/block/new'], {
+      queryParams: moduleId && lessonId ? { moduleId, lessonId } : {},
+    });
   }
 
   editBlock(id: number) {

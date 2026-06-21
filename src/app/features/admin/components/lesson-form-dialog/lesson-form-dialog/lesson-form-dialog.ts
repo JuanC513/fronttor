@@ -45,6 +45,14 @@ export class LessonFormDialog implements OnInit {
     this.loadModules();
     if (id) {
       this.loadSubmodule(Number(id));
+    } else {
+      const { moduleId } = this.activatedRoute.snapshot.queryParams;
+
+      if (moduleId) {
+        this.lessonForm.patchValue({
+          module_id: Number(moduleId),
+        });
+      }
     }
   }
 
