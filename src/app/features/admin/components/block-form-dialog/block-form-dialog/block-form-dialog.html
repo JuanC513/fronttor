@@ -6,10 +6,7 @@
   (onHide)="closeDialog()"
 >
   <span class="flex flex-column gap-5">
-    <span class="p-text-secondary block">{{
-      isEditForm ? 'Edita el bloque seleccionado' : 'Crea un nuevo bloque'
-    }}</span>
-    <form [formGroup]="blockForm" (ngSubmit)="onSubmit()" class="flex flex-column gap-5">
+    <form [formGroup]="blockForm" (ngSubmit)="onSubmit()" class="flex flex-column gap-5 mt-2">
       <span class="flex gap-3">
         <p-floatlabel variant="on" [formGroup]="uiForm" class="w-full">
           <p-select
