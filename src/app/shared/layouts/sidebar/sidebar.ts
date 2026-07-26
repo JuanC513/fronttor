@@ -1,5 +1,4 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { ButtonModule } from 'primeng/button';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 import { DividerModule } from 'primeng/divider';
@@ -9,7 +8,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [ButtonModule, MenuModule, DividerModule, CommonModule],
+  imports: [MenuModule, DividerModule, CommonModule],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
 })

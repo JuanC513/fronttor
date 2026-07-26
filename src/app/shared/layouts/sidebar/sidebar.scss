@@ -1,6 +1,6 @@
 :host {
-  --sidebar-width-expanded: 221px;
-  --sidebar-width-collapsed: 78px;
+  --sidebar-width-expanded: 212px;
+  --sidebar-width-collapsed: 70px;
 }
 
 .sidebar {
@@ -16,16 +16,55 @@
 // Cuando está colapsado cambian las dimensiones
 .sidebar-collapsed {
   width: var(--sidebar-width-collapsed);
-
-  .header-container {
-    flex-direction: column-reverse;
-    gap: 1rem;
-    padding-top: 1rem;
-  }
 }
 
 .title-color {
   color: var(--color-primary);
+}
+
+.slogan {
+  color: var(--color-text-muted);
+}
+
+.sidebar-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+
+  svg {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+
+  &:hover {
+    background-color: var(--color-surface-container);
+    color: var(--color-primary);
+  }
+}
+
+.sidebar-logo-row {
+  display: flex;
+  align-items: center;
+  min-height: 2.25rem;
+}
+
+.sidebar-collapsed .sidebar-logo-row {
+  justify-content: center;
+}
+
+.logo-mark {
+  margin: 0;
 }
 
 // --- Animaciones y Estilos de PrimeNG Menu ---
@@ -91,7 +130,8 @@
   .p-menu-item-link {
     padding: 12px 0px;
     justify-content: center;
-    s .p-menu-item-icon {
+
+    .p-menu-item-icon {
       margin-right: 0 !important;
     }
   }
