@@ -53,5 +53,11 @@
     }
   </div>
 
-  <p-button type="submit" label="Iniciar sesión" styleClass="w-full" [loading]="loading()" />
+  <p-button
+    type="submit"
+    label="Iniciar sesión"
+    styleClass="w-full"
+    [loading]="loading()"
+    [disabled]="loginForm.invalid"
+  />
 </form>
