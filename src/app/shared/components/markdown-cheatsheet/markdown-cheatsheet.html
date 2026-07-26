@@ -1,0 +1,31 @@
+<p-button
+  icon="pi pi-question-circle"
+  [rounded]="true"
+  [text]="true"
+  size="small"
+  type="button"
+  [attr.aria-label]="'Ayuda de formato Markdown'"
+  (click)="op.toggle($event)"
+/>
+<p-popover #op [appendTo]="'body'" styleClass="markdown-cheatsheet-popover">
+  <div class="cheatsheet-list">
+    <h6 class="cheatsheet-title">Referencia rápida de Markdown</h6>
+    @for (entry of entries; track entry.label) {
+      <div class="cheatsheet-entry">
+        <span class="cheatsheet-entry-label">{{ entry.label }}</span>
+        <div class="cheatsheet-entry-grid">
+          <div class="cheatsheet-syntax">
+            <span class="cheatsheet-column-title">Escribes</span>
+            <pre>{{ entry.syntax }}</pre>
+          </div>
+          <div class="cheatsheet-preview">
+            <span class="cheatsheet-column-title">Se ve así</span>
+            <div class="cheatsheet-preview-box">
+              <app-markdown-renderer [content]="entry.syntax" />
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</p-popover>

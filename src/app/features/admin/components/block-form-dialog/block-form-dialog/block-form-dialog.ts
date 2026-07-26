@@ -12,6 +12,7 @@ import { FloatLabelModule } from 'primeng/floatlabel';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { MarkdownRenderer } from '@shared/components/markdown-renderer/markdown-renderer';
+import { MarkdownCheatsheet } from '@shared/components/markdown-cheatsheet/markdown-cheatsheet';
 import { TextareaModule } from 'primeng/textarea';
 
 @Component({
@@ -24,6 +25,7 @@ import { TextareaModule } from 'primeng/textarea';
     FloatLabelModule,
     ReactiveFormsModule,
     MarkdownRenderer,
+    MarkdownCheatsheet,
     TextareaModule,
   ],
   templateUrl: './block-form-dialog.html',

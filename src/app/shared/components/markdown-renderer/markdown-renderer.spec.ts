@@ -1,4 +1,6 @@
+import { importProvidersFrom } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MarkdownModule } from 'ngx-markdown';
 
 import { MarkdownRenderer } from './markdown-renderer';
 
@@ -9,6 +11,7 @@ describe('MarkdownRenderer', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MarkdownRenderer],
+      providers: [importProvidersFrom(MarkdownModule.forRoot())],
     }).compileComponents();
 
     fixture = TestBed.createComponent(MarkdownRenderer);
