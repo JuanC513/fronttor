@@ -64,6 +64,9 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "hmr": false
+          },
           "configurations": {
             "production": {
               "buildTarget": "tg-smart-tutor:build:production"
