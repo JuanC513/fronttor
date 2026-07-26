@@ -5,10 +5,11 @@ import { ModuleService } from '@domain/learning/services/module-service';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
+import { FloatLabelModule } from 'primeng/floatlabel';
 
 @Component({
   selector: 'app-module-form-dialog',
-  imports: [DialogModule, ButtonModule, InputTextModule, ReactiveFormsModule],
+  imports: [DialogModule, ButtonModule, InputTextModule, ReactiveFormsModule, FloatLabelModule],
   templateUrl: './module-form-dialog.html',
   styleUrl: './module-form-dialog.scss',
 })
