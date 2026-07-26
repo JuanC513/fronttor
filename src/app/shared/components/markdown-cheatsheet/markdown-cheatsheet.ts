@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { PopoverModule } from 'primeng/popover';
 import { MarkdownRenderer } from '@shared/components/markdown-renderer/markdown-renderer';
@@ -7,6 +7,8 @@ interface MarkdownCheatsheetEntry {
   label: string;
   syntax: string;
 }
+
+const COPIED_FEEDBACK_MS = 1500;
 
 @Component({
   selector: 'app-markdown-cheatsheet',
@@ -37,4 +39,21 @@ export class MarkdownCheatsheet {
     },
     { label: 'Línea horizontal', syntax: '---' },
   ];
+
+  private readonly copiedLabelSignal = signal<string | null>(null);
+  readonly copiedLabel = this.copiedLabelSignal.asReadonly();
+
+  async copySyntax(entry: MarkdownCheatsheetEntry): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(entry.syntax);
+      this.copiedLabelSignal.set(entry.label);
+      setTimeout(() => {
+        if (this.copiedLabelSignal() === entry.label) {
+          this.copiedLabelSignal.set(null);
+        }
+      }, COPIED_FEEDBACK_MS);
+    } catch (err) {
+      console.error('No se pudo copiar al portapapeles. Intenta de nuevo. ' + err);
+    }
+  }
 }

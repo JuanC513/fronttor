@@ -16,7 +16,19 @@
         <div class="cheatsheet-entry-grid">
           <div class="cheatsheet-syntax">
             <span class="cheatsheet-column-title">Escribes</span>
-            <pre>{{ entry.syntax }}</pre>
+            <div class="cheatsheet-syntax-box">
+              <pre>{{ entry.syntax }}</pre>
+              <p-button
+                class="cheatsheet-copy-button"
+                [icon]="copiedLabel() === entry.label ? 'pi pi-check' : 'pi pi-copy'"
+                [rounded]="true"
+                [text]="true"
+                size="small"
+                type="button"
+                [attr.aria-label]="'Copiar sintaxis de ' + entry.label"
+                (click)="copySyntax(entry)"
+              />
+            </div>
           </div>
           <div class="cheatsheet-preview">
             <span class="cheatsheet-column-title">Se ve así</span>

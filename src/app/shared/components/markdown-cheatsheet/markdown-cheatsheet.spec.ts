@@ -1,5 +1,5 @@
 import { importProvidersFrom } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MarkdownModule } from 'ngx-markdown';
 
 import { MarkdownCheatsheet } from './markdown-cheatsheet';
@@ -39,5 +39,25 @@ describe('MarkdownCheatsheet', () => {
 
     expect(compiled.querySelectorAll('p-button').length).toBe(1);
     expect(compiled.querySelectorAll('p-popover').length).toBe(1);
+  });
+
+  describe('copySyntax', () => {
+    beforeEach(() => {
+      spyOn(navigator.clipboard, 'writeText').and.resolveTo();
+    });
+
+    it('should copy the entry syntax to the clipboard and show feedback that resets after a timeout', fakeAsync(() => {
+      const entry = component.entries[0];
+
+      component.copySyntax(entry);
+      tick();
+
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(entry.syntax);
+      expect(component.copiedLabel()).toBe(entry.label);
+
+      tick(1500);
+
+      expect(component.copiedLabel()).toBeNull();
+    }));
   });
 });

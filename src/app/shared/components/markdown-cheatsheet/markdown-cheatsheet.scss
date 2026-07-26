@@ -46,16 +46,26 @@
   margin-bottom: 0.25rem;
 }
 
-.cheatsheet-syntax pre {
-  margin: 0;
-  padding: 0.5rem 0.65rem;
-  background: var(--color-surface-container);
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-md);
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 0.8rem;
-  white-space: pre-wrap;
-  word-break: break-word;
+.cheatsheet-syntax-box {
+  position: relative;
+
+  pre {
+    margin: 0;
+    padding: 0.5rem 2.25rem 0.5rem 0.65rem;
+    background: var(--color-surface-container);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.8rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+}
+
+.cheatsheet-copy-button {
+  position: absolute;
+  top: 0.15rem;
+  right: 0.15rem;
 }
 
 .cheatsheet-preview-box {
