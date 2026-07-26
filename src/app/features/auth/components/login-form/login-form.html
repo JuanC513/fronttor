@@ -1,0 +1,57 @@
+<form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="flex flex-column gap-4">
+  @if (serverError(); as error) {
+    <p-message severity="error" [text]="error" class="w-full" />
+  }
+
+  <div class="field">
+    <label for="login-email">Correo electrónico</label>
+    <p-iconfield class="w-full">
+      <p-inputicon class="pi pi-envelope" />
+      <input
+        pInputText
+        id="login-email"
+        type="email"
+        class="w-full"
+        autocomplete="email"
+        placeholder="tucorreo@ejemplo.com"
+        formControlName="email"
+      />
+    </p-iconfield>
+    @if (loginForm.controls.email.touched && loginForm.controls.email.invalid) {
+      <small class="field-error">
+        @if (loginForm.controls.email.hasError('required')) {
+          Ingresa tu correo electrónico.
+        } @else {
+          El correo electrónico no es válido.
+        }
+      </small>
+    }
+  </div>
+
+  <div class="field">
+    <div class="flex justify-content-between align-items-center">
+      <label for="login-password">Contraseña</label>
+      <button type="button" class="link-button" (click)="forgotPassword.emit()">
+        ¿Olvidaste tu contraseña?
+      </button>
+    </div>
+    <div class="password-wrapper">
+      <i class="pi pi-lock input-leading-icon" aria-hidden="true"></i>
+      <p-password
+        inputId="login-password"
+        formControlName="password"
+        [feedback]="false"
+        [toggleMask]="true"
+        placeholder="••••••••"
+        autocomplete="current-password"
+        class="w-full"
+        inputStyleClass="w-full"
+      />
+    </div>
+    @if (loginForm.controls.password.touched && loginForm.controls.password.invalid) {
+      <small class="field-error">Ingresa tu contraseña.</small>
+    }
+  </div>
+
+  <p-button type="submit" label="Iniciar sesión" styleClass="w-full" [loading]="loading()" />
+</form>

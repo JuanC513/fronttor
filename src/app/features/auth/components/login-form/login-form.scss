@@ -1,0 +1,13 @@
+@use '../../auth-shared' as auth;
+
+.field {
+  @include auth.auth-field;
+}
+
+.password-wrapper {
+  @include auth.auth-password-icon;
+}
+
+.link-button {
+  @include auth.auth-link-button;
+}

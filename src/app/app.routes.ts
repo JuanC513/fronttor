@@ -12,13 +12,20 @@ export const routes: Routes = [
       import('@features/auth/pages/login-page/login-page').then((m) => m.LoginPage),
     canActivate: [guestGuard],
   },
-
-  // {
-  //   path: 'register',
-  //   loadComponent: () =>
-  //     import('@features/auth/pages/register-page/register-page').then((m) => m.RegisterPage),
-  // },
-
+  {
+    path: 'auth/callback',
+    loadComponent: () =>
+      import('@features/auth/pages/auth-callback-page/auth-callback-page').then(
+        (m) => m.AuthCallbackPage,
+      ),
+  },
+  {
+    path: 'auth/reset-password',
+    loadComponent: () =>
+      import('@features/auth/pages/reset-password-page/reset-password-page').then(
+        (m) => m.ResetPasswordPage,
+      ),
+  },
   {
     path: '',
     component: AppLayout,

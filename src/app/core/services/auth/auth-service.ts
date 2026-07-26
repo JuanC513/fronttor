@@ -22,6 +22,10 @@ export class AuthService {
     return this.userSubject.value;
   }
 
+  getCurrentProfile() {
+    return this.profileSubject.value;
+  }
+
   constructor() {
     this.initializeAuth();
   }
@@ -67,6 +71,10 @@ export class AuthService {
 
     if (error) {
       console.error('Error loading profile', error);
+      // Se limpia el perfil en vez de dejar el anterior: si no, al cambiar de usuario (o si el
+      // trigger que crea la fila en `profiles` falló) quedaría un rol obsoleto que los guards
+      // darían por bueno.
+      this.profileSubject.next(null);
       return;
     }
 
@@ -81,6 +89,9 @@ export class AuthService {
     const { data, error } = await this.supabaseService.client.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
     });
 
     if (error) throw error;
@@ -97,6 +108,37 @@ export class AuthService {
     if (error) throw error;
 
     return data;
+  }
+
+  /**
+   * Redirige al consentimiento de Google. La promesa resuelve al iniciar la redirección, no al
+   * completarla: la sesión se establece de vuelta en `/auth/callback`.
+   */
+  async signInWithGoogle() {
+    const { error } = await this.supabaseService.client.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) throw error;
+  }
+
+  async sendPasswordReset(email: string) {
+    const { error } = await this.supabaseService.client.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    });
+
+    if (error) throw error;
+  }
+
+  async updatePassword(newPassword: string) {
+    const { error } = await this.supabaseService.client.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (error) throw error;
   }
 
   async signOut() {
