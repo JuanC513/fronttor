@@ -2,6 +2,7 @@ import { Component, inject, model, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '@core/services/auth/auth-service';
 import { authErrorMessage } from '@features/auth/utils/auth-error-messages';
+import { FieldError } from '@shared/components/field-error/field-error';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { IconFieldModule } from 'primeng/iconfield';
@@ -19,6 +20,7 @@ import { MessageModule } from 'primeng/message';
     IconFieldModule,
     InputIconModule,
     MessageModule,
+    FieldError,
   ],
   templateUrl: './forgot-password-dialog.html',
   styleUrl: './forgot-password-dialog.scss',

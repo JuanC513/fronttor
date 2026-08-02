@@ -8,46 +8,64 @@
   <span class="flex flex-column gap-5">
     <form [formGroup]="blockForm" (ngSubmit)="onSubmit()" class="flex flex-column gap-5 mt-2">
       <span class="flex gap-3">
-        <p-floatlabel variant="on" [formGroup]="uiForm" class="w-full">
-          <p-select
-            id="moduleList"
-            class="w-full"
-            appendTo="body"
-            [options]="modulesList()"
-            optionLabel="name"
-            optionValue="id"
-            [filter]="true"
-            [checkmark]="true"
-            [showClear]="true"
-            formControlName="module_id"
+        <div class="w-full">
+          <p-floatlabel variant="on" [formGroup]="uiForm" class="w-full">
+            <p-select
+              id="moduleList"
+              class="w-full"
+              appendTo="body"
+              [options]="modulesList()"
+              optionLabel="name"
+              optionValue="id"
+              [filter]="true"
+              [checkmark]="true"
+              [showClear]="true"
+              formControlName="module_id"
+            />
+            <label for="on_label">Selecciona un tema</label>
+          </p-floatlabel>
+          <app-field-error
+            [control]="uiForm.controls['module_id']"
+            [customMessages]="{ required: 'Selecciona un tema.' }"
           />
-          <label for="on_label">Selecciona un tema</label>
-        </p-floatlabel>
-        <p-floatlabel variant="on" class="w-full">
-          <p-select
-            id="lessonList"
-            class="w-full"
-            appendTo="body"
-            [options]="lessonsList()"
-            optionLabel="name"
-            optionValue="id"
-            [filter]="true"
-            [checkmark]="true"
-            [showClear]="true"
-            formControlName="lesson_id"
+        </div>
+        <div class="w-full">
+          <p-floatlabel variant="on" class="w-full">
+            <p-select
+              id="lessonList"
+              class="w-full"
+              appendTo="body"
+              [options]="lessonsList()"
+              optionLabel="name"
+              optionValue="id"
+              [filter]="true"
+              [checkmark]="true"
+              [showClear]="true"
+              formControlName="lesson_id"
+            />
+            <label for="on_label">Selecciona un subtema</label>
+          </p-floatlabel>
+          <app-field-error
+            [control]="blockForm.controls['lesson_id']"
+            [customMessages]="{ required: 'Selecciona un subtema.' }"
           />
-          <label for="on_label">Selecciona un subtema</label>
-        </p-floatlabel>
-        <p-floatlabel variant="on" class="w-full">
-          <input
-            pInputText
-            id="blockname"
-            class="flex-auto w-full"
-            autocomplete="off"
-            formControlName="name"
+        </div>
+        <div class="w-full">
+          <p-floatlabel variant="on" class="w-full">
+            <input
+              pInputText
+              id="blockname"
+              class="flex-auto w-full"
+              autocomplete="off"
+              formControlName="name"
+            />
+            <label for="on_label">Nombre</label>
+          </p-floatlabel>
+          <app-field-error
+            [control]="blockForm.controls['name']"
+            [customMessages]="{ required: 'Ingresa un nombre para el bloque.' }"
           />
-          <label for="on_label">Nombre</label>
-        </p-floatlabel>
+        </div>
       </span>
       <span class="flex flex-column">
         <span class="flex align-items-center gap-2">
@@ -55,18 +73,24 @@
           <app-markdown-cheatsheet />
         </span>
         <span class="flex gap-1 w-full">
-          <p-floatlabel variant="on" class="w-full">
-            <textarea
-              pTextarea
-              id="on_label"
-              rows="5"
-              cols="30"
-              style="resize: none"
-              class="h-full w-full"
-              formControlName="content"
-            ></textarea>
-            <label for="on_label">Contenido</label>
-          </p-floatlabel>
+          <div class="w-full">
+            <p-floatlabel variant="on" class="w-full h-full">
+              <textarea
+                pTextarea
+                id="on_label"
+                rows="5"
+                cols="30"
+                style="resize: none"
+                class="h-full w-full"
+                formControlName="content"
+              ></textarea>
+              <label for="on_label">Contenido</label>
+            </p-floatlabel>
+            <app-field-error
+              [control]="blockForm.controls['content']"
+              [customMessages]="{ required: 'Escribe el contenido del bloque.' }"
+            />
+          </div>
           <div class="markdown-rendered w-full p-4">
             <app-markdown-renderer [content]="blockForm.get('content')?.value || ''" />
           </div>

@@ -4,6 +4,7 @@ import { NonNullableFormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '@core/services/auth/auth-service';
 import { authErrorMessage } from '@features/auth/utils/auth-error-messages';
+import { FieldError } from '@shared/components/field-error/field-error';
 import { ButtonModule } from 'primeng/button';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
@@ -21,6 +22,7 @@ import { PasswordModule } from 'primeng/password';
     InputIconModule,
     ButtonModule,
     MessageModule,
+    FieldError,
   ],
   templateUrl: './login-form.html',
   styleUrl: './login-form.scss',

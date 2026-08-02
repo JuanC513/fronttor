@@ -17,15 +17,10 @@
         formControlName="email"
       />
     </p-iconfield>
-    @if (loginForm.controls.email.touched && loginForm.controls.email.invalid) {
-      <small class="field-error">
-        @if (loginForm.controls.email.hasError('required')) {
-          Ingresa tu correo electrónico.
-        } @else {
-          El correo electrónico no es válido.
-        }
-      </small>
-    }
+    <app-field-error
+      [control]="loginForm.controls.email"
+      [customMessages]="{ required: 'Ingresa tu correo electrónico.' }"
+    />
   </div>
 
   <div class="field">
@@ -48,9 +43,10 @@
         inputStyleClass="w-full"
       />
     </div>
-    @if (loginForm.controls.password.touched && loginForm.controls.password.invalid) {
-      <small class="field-error">Ingresa tu contraseña.</small>
-    }
+    <app-field-error
+      [control]="loginForm.controls.password"
+      [customMessages]="{ required: 'Ingresa tu contraseña.' }"
+    />
   </div>
 
   <p-button

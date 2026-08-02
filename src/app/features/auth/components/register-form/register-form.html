@@ -32,15 +32,10 @@
           formControlName="email"
         />
       </p-iconfield>
-      @if (registerForm.controls.email.touched && registerForm.controls.email.invalid) {
-        <small class="field-error">
-          @if (registerForm.controls.email.hasError('required')) {
-            Ingresa tu correo electrónico.
-          } @else {
-            El correo electrónico no es válido.
-          }
-        </small>
-      }
+      <app-field-error
+        [control]="registerForm.controls.email"
+        [customMessages]="{ required: 'Ingresa tu correo electrónico.' }"
+      />
     </div>
 
     <div class="field">
@@ -61,15 +56,13 @@
           inputStyleClass="w-full"
         />
       </div>
-      @if (registerForm.controls.password.touched && registerForm.controls.password.invalid) {
-        <small class="field-error">
-          @if (registerForm.controls.password.hasError('required')) {
-            Ingresa una contraseña.
-          } @else {
-            La contraseña debe tener al menos {{ minPasswordLength }} caracteres.
-          }
-        </small>
-      }
+      <app-field-error
+        [control]="registerForm.controls.password"
+        [customMessages]="{
+          required: 'Ingresa una contraseña.',
+          minlength: 'La contraseña debe tener al menos ' + minPasswordLength + ' caracteres.',
+        }"
+      />
     </div>
 
     <div class="field">
@@ -87,12 +80,16 @@
           inputStyleClass="w-full"
         />
       </div>
-      @if (registerForm.controls.confirmPassword.touched) {
-        @if (registerForm.controls.confirmPassword.hasError('required')) {
-          <small class="field-error">Confirma tu contraseña.</small>
-        } @else if (registerForm.hasError('passwordsMismatch')) {
-          <small class="field-error">Las contraseñas no coinciden.</small>
-        }
+      <app-field-error
+        [control]="registerForm.controls.confirmPassword"
+        [customMessages]="{ required: 'Confirma tu contraseña.' }"
+      />
+      @if (
+        registerForm.controls.confirmPassword.touched &&
+        registerForm.controls.confirmPassword.valid &&
+        registerForm.hasError('passwordsMismatch')
+      ) {
+        <small class="field-error">Las contraseñas no coinciden.</small>
       }
     </div>
 

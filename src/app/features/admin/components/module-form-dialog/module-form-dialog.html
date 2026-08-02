@@ -9,16 +9,22 @@
     isEditForm ? 'Edita el tema seleccionado' : 'Crea un nuevo tema'
   }}</span>
   <form [formGroup]="moduleForm" (ngSubmit)="onSubmit()" class="flex flex-column gap-5">
-    <p-floatlabel variant="on">
-      <input
-        pInputText
-        id="modulename"
-        class="flex-auto w-full"
-        autocomplete="off"
-        formControlName="nombre"
+    <div>
+      <p-floatlabel variant="on">
+        <input
+          pInputText
+          id="modulename"
+          class="flex-auto w-full"
+          autocomplete="off"
+          formControlName="nombre"
+        />
+        <label for="modulename">Nombre</label>
+      </p-floatlabel>
+      <app-field-error
+        [control]="moduleForm.controls['nombre']"
+        [customMessages]="{ required: 'Ingresa un nombre para el tema.' }"
       />
-      <label for="modulename">Nombre</label>
-    </p-floatlabel>
+    </div>
     <div class="flex justify-content-end gap-2">
       <p-button label="Cancelar" variant="outlined" severity="danger" (click)="closeDialog()" />
       <p-button

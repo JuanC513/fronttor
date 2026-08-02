@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Module } from '@domain/learning/models/module-model';
 import { LessonService } from '@domain/learning/services/lesson-service';
 import { ModuleService } from '@domain/learning/services/module-service';
+import { FieldError } from '@shared/components/field-error/field-error';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -19,6 +20,7 @@ import { FloatLabelModule } from 'primeng/floatlabel';
     ReactiveFormsModule,
     SelectModule,
     FloatLabelModule,
+    FieldError,
   ],
   templateUrl: './lesson-form-dialog.html',
   styleUrl: './lesson-form-dialog.scss',

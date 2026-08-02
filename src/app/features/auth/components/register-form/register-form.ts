@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '@core/services/auth/auth-service';
 import { authErrorMessage } from '@features/auth/utils/auth-error-messages';
 import { passwordsMatch } from '@features/auth/utils/passwords-match.validator';
+import { FieldError } from '@shared/components/field-error/field-error';
 import { ButtonModule } from 'primeng/button';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
@@ -11,7 +12,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { PasswordModule } from 'primeng/password';
 
-/** Mínimo de caracteres exigido en el cliente. Supabase acepta 6 por defecto; aquí somos más estrictos. */
+/** Mínimo de caracteres exigido en el cliente. */
 const MIN_PASSWORD_LENGTH = 8;
 
 @Component({
@@ -24,6 +25,7 @@ const MIN_PASSWORD_LENGTH = 8;
     InputIconModule,
     ButtonModule,
     MessageModule,
+    FieldError,
   ],
   templateUrl: './register-form.html',
   styleUrl: './register-form.scss',
