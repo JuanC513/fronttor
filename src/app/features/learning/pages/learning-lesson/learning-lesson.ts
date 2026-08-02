@@ -12,6 +12,7 @@ import { LessonService } from '@domain/learning/services/lesson-service';
 import { BlockService } from '@domain/learning/services/block-service';
 import { Block } from '@domain/learning/models/block-model';
 import { SkeletonModule } from 'primeng/skeleton';
+import { MessageModule } from 'primeng/message';
 
 @Component({
   selector: 'app-learning-lesson',
@@ -23,6 +24,7 @@ import { SkeletonModule } from 'primeng/skeleton';
     CustomScrollPanel,
     ButtonModule,
     SkeletonModule,
+    MessageModule,
   ],
   templateUrl: './learning-lesson.html',
   styleUrl: './learning-lesson.scss',

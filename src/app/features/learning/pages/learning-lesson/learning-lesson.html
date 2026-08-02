@@ -23,8 +23,11 @@
     </div>
   }
 
-  @if (error()) {
-    Error
+  @if (error(); as message) {
+    <div class="p-4">
+      <p-message severity="error" [text]="message" styleClass="w-full" />
+      <p-button label="Regresar" variant="outlined" routerLink="/learning" styleClass="mt-3" />
+    </div>
   }
 
   @if (!loading() && !error()) {
@@ -32,18 +35,32 @@
       <h1>{{ currentLesson()?.name }}</h1>
       <p-tag severity="secondary" [value]="`Tema: ${currentModule()?.name}`" />
     </div>
-    <div class="tabs">
-      <p-tabs [(value)]="activeTab" scrollable>
-        <p-tablist>
-          @for (tab of currentBlocks(); track $index) {
-            <p-tab [value]="$index">{{ tab.name }}</p-tab>
-          }
-        </p-tablist>
-      </p-tabs>
-    </div>
-    <app-custom-scroll-panel class="content">
-      <app-markdown-renderer [content]="currentBlocks()?.[activeTab]?.content ?? ''" />
-    </app-custom-scroll-panel>
+
+    <!-- Un subtema sin bloques ya no se lista en el recorrido, pero se puede llegar aquí por URL
+        directa -->
+    @if (currentBlocks()?.length) {
+      <div class="tabs">
+        <p-tabs [(value)]="activeTab" scrollable>
+          <p-tablist>
+            @for (tab of currentBlocks(); track $index) {
+              <p-tab [value]="$index">{{ tab.name }}</p-tab>
+            }
+          </p-tablist>
+        </p-tabs>
+      </div>
+      <app-custom-scroll-panel class="content">
+        <app-markdown-renderer [content]="currentBlocks()?.[activeTab]?.content ?? ''" />
+      </app-custom-scroll-panel>
+    } @else {
+      <div class="content-empty flex align-items-center justify-content-center p-4">
+        <p-message
+          severity="info"
+          text="Este subtema todavía no tiene contenido disponible."
+          styleClass="w-full"
+        />
+      </div>
+    }
+
     <div class="footer flex justify-content-between p-3">
       <p-button label="Regresar" variant="outlined" routerLink="/learning" />
       <p-button

@@ -35,6 +35,11 @@
   min-height: 0;
 }
 
+.content-empty {
+  grid-area: content;
+  min-height: 0;
+}
+
 .footer {
   grid-area: footer;
   border-top: 1px solid lightgray;

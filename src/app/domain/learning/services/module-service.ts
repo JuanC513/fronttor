@@ -1,6 +1,7 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { SupabaseService } from '@core/services/supabase/supabase-service';
 import { Module } from '../models/module-model';
+import { ModuleWithLessonCounts } from '../models/module-with-lesson-counts';
 import { ModuleWithLessons } from '../models/module-with-lessons';
 
 @Injectable({
@@ -35,6 +36,22 @@ export class ModuleService {
 
     if (error) throw new Error(error.message);
     return (data as ModuleWithLessons[]) ?? [];
+  }
+
+  /**
+   * Árbol de contenido para la vista de estudiante: los mismos temas y subtemas que
+   * {@link getAllWithLessons}, más el conteo de bloques de cada subtema para poder descartar lo que
+   * todavía no es consumible.
+   */
+  async getLearningTree(): Promise<ModuleWithLessonCounts[]> {
+    const { data, error } = await this.supabase
+      .from('modules')
+      .select(`*, lessons(*, blocks(count))`)
+      .order(this.orderColumn, { ascending: true })
+      .order(this.orderColumn, { ascending: true, referencedTable: 'lessons' });
+
+    if (error) throw new Error(error.message);
+    return (data as ModuleWithLessonCounts[]) ?? [];
   }
 
   async getById(id: number): Promise<Module> {
