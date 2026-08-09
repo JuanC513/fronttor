@@ -1,60 +1,137 @@
-<section class="learning-modules-container flex flex-column h-full">
-  <span class="px-4">
+<section class="learning-modules">
+  <header class="page-header">
     <h1>Contenido</h1>
-    <p style="white-space: pre">
-      {{
-        `En esta sección se encuentran los contenidos para el aprendizaje dividido en temas y subtemas
-        \n¡Haz clic en un subtema para iniciar el aprendizaje!`
-      }}
+    <p>
+      Este es tu recorrido de aprendizaje, organizado en temas y subtemas. Haz clic en un subtema
+      para empezar.
     </p>
-  </span>
+  </header>
 
   @if (loading()) {
-    <div class="px-4">
-      @for (item of skeletons; track $index) {
-        <p-skeleton height="5.5rem" class="mb-2" />
-      }
+    <div class="grid">
+      <div class="col-12 lg:col-8">
+        @for (item of skeletons; track $index) {
+          <p-skeleton height="5.5rem" borderRadius="0.75rem" styleClass="mb-3" />
+        }
+      </div>
+      <div class="col-12 lg:col-4">
+        <p-skeleton height="14rem" borderRadius="0.75rem" />
+      </div>
     </div>
   }
 
-  @if (error()) {
-    Error
+  @if (error(); as message) {
+    <p-message severity="error" [text]="message" styleClass="w-full" />
   }
 
   @if (!loading() && !error()) {
-    <p-scrollpanel class="px-4 overflow-hidden">
-      <p-accordion [value]="['0']">
-        @for (module of modules(); track $index; let moduleIndex = $index) {
-          <p-accordion-panel [value]="$index">
-            <p-accordion-header class="accordion-header">
-              <h3>{{ module.name }}</h3>
-            </p-accordion-header>
-            <p-accordion-content>
-              @if (module.lessons) {
-                @for (lesson of module.lessons; track lesson.id; let lessonIndex = $index) {
-                  <span class="flex w-full align-items-center">
-                    <p-button
-                      [label]="lesson.name"
-                      variant="text"
-                      severity="secondary"
-                      (onClick)="onSubmoduleClick(module.id, lesson.id)"
-                      link
-                      size="large"
-                      iconPos="right"
-                      class="large-button"
-                      [icon]="$index % 2 === 0 ? 'pi pi-angle-right' : undefined"
-                      [disabled]="$index % 2 === 1"
-                    />
-                    @if ($index % 2 === 1) {
-                      <i class="pi pi-lock pr-3" style="font-size: 1rem"></i>
-                    }
+    <div class="grid flex-column-reverse lg:flex-row">
+      <!-- Temas -->
+      <div class="col-12 lg:col-8">
+        <p-accordion [(value)]="activePanel" class="modules-accordion">
+          @for (module of moduleViews(); track module.id) {
+            <p-accordion-panel [value]="module.id" [disabled]="module.locked">
+              <p-accordion-header>
+                <span class="flex flex-1 align-items-center gap-3 min-w-0">
+                  <span
+                    class="module-icon flex flex-shrink-0 align-items-center justify-content-center"
+                    aria-hidden="true"
+                  >
+                    <i [class]="module.locked ? 'pi pi-lock' : 'pi pi-book'"></i>
                   </span>
-                }
-              }
-            </p-accordion-content>
-          </p-accordion-panel>
-        }
-      </p-accordion>
-    </p-scrollpanel>
+                  <span class="flex flex-column min-w-0">
+                    <span class="module-name">{{ module.name }}</span>
+                    <span class="module-meta">
+                      {{ module.lessons.length }}
+                      {{ module.lessons.length === 1 ? 'subtema' : 'subtemas' }}
+                      @if (module.locked) {
+                        · Bloqueado
+                      }
+                    </span>
+                  </span>
+                </span>
+
+                <!-- Un tema bloqueado no se expande, así que el chevron se cambia por un candado. -->
+                <ng-template #toggleicon let-active="active">
+                  <i
+                    class="module-toggle pi flex-shrink-0"
+                    [class.pi-lock]="module.locked"
+                    [class.pi-chevron-up]="!module.locked && active"
+                    [class.pi-chevron-down]="!module.locked && !active"
+                    aria-hidden="true"
+                  ></i>
+                </ng-template>
+              </p-accordion-header>
+
+              <p-accordion-content>
+                <ul class="flex flex-column gap-2 list-none m-0 p-0">
+                  @for (item of module.lessons; track item.lesson.id) {
+                    <li>
+                      <!-- `<button>` nativo y no `p-button`: la tarjeta completa debe ser
+                          clicable y accesible por teclado, y así se evita pelear con los
+                          estilos globales de `.p-button-*`. -->
+                      <button
+                        type="button"
+                        class="lesson-card flex align-items-center gap-3 w-full text-left"
+                        [class]="'is-' + item.status"
+                        [disabled]="item.status === 'locked'"
+                        (click)="onLessonClick(module.id, item)"
+                      >
+                        <i
+                          class="lesson-icon flex-shrink-0"
+                          [class]="statusIcon(item.status)"
+                          aria-hidden="true"
+                        ></i>
+                        <span class="flex-1 min-w-0">{{ item.lesson.name }}</span>
+                        <span class="lesson-status flex flex-shrink-0 align-items-center gap-2">
+                          {{ statusLabel(item.status) }}
+                          @if (item.status !== 'locked') {
+                            <i class="lesson-arrow pi pi-arrow-right" aria-hidden="true"></i>
+                          }
+                        </span>
+                      </button>
+                    </li>
+                  }
+                </ul>
+              </p-accordion-content>
+            </p-accordion-panel>
+          } @empty {
+            <p-message
+              severity="info"
+              text="Aún no hay contenido disponible."
+              styleClass="w-full"
+            />
+          }
+        </p-accordion>
+      </div>
+
+      <!-- Progreso general -->
+      <aside class="col-12 lg:col-4">
+        <div class="progress-card">
+          <h2>Progreso general</h2>
+
+          <p class="progress-figure">
+            <span class="progress-value">{{ progress() }}%</span>
+            <span class="progress-caption">del curso completado</span>
+          </p>
+
+          <p-progressbar
+            [value]="progress()"
+            [showValue]="false"
+            class="progress-bar"
+            [attr.aria-label]="'Progreso del curso: ' + progress() + '%'"
+          />
+
+          <p-button
+            label="Continuar aprendiendo"
+            class="resume-button"
+            [disabled]="!canResume()"
+            (onClick)="onResumeLearning()"
+          />
+
+          <i class="progress-decor pi pi-sparkles" aria-hidden="true"></i>
+        </div>
+      </aside>
+    </div>
   }
 </section>
