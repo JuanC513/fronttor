@@ -4,6 +4,16 @@
   border-radius: var(--radius-md);
 }
 
+.ai-panel {
+  border: 1px dashed;
+  border-color: var(--color-border-strong);
+  border-radius: var(--radius-md);
+
+  &__hint {
+    color: var(--color-text-muted);
+  }
+}
+
 :host ::ng-deep .p-dialog-footer {
   padding-top: 1rem;
 }

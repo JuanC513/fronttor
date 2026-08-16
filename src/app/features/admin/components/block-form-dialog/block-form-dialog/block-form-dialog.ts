@@ -1,15 +1,19 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { AiService } from '@domain/ai/services/ai-service';
 import { Lesson } from '@domain/learning/models/lesson-model';
 import { ModuleWithLessons } from '@domain/learning/models/module-with-lessons';
 import { BlockService } from '@domain/learning/services/block-service';
 import { LessonService } from '@domain/learning/services/lesson-service';
 import { ModuleService } from '@domain/learning/services/module-service';
+import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { ConfirmPopupModule } from 'primeng/confirmpopup';
 import { DialogModule } from 'primeng/dialog';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { MarkdownRenderer } from '@shared/components/markdown-renderer/markdown-renderer';
 import { MarkdownCheatsheet } from '@shared/components/markdown-cheatsheet/markdown-cheatsheet';
@@ -29,7 +33,10 @@ import { TextareaModule } from 'primeng/textarea';
     MarkdownCheatsheet,
     TextareaModule,
     FieldError,
+    MessageModule,
+    ConfirmPopupModule,
   ],
+  providers: [ConfirmationService],
   templateUrl: './block-form-dialog.html',
   styleUrl: './block-form-dialog.scss',
 })
@@ -40,6 +47,8 @@ export class BlockFormDialog implements OnInit {
   private readonly blockService = inject(BlockService);
   private readonly moduleService = inject(ModuleService);
   private readonly lessonService = inject(LessonService);
+  private readonly aiService = inject(AiService);
+  private readonly confirmationService = inject(ConfirmationService);
   private lessonsSource = signal<Lesson[]>([]);
   selectedModuleId = signal<number | undefined>(undefined);
   modulesList = signal<ModuleWithLessons[]>([]);
@@ -47,6 +56,10 @@ export class BlockFormDialog implements OnInit {
   blockForm!: FormGroup;
   uiForm!: FormGroup;
   isEditForm!: boolean;
+
+  readonly showAiPanel = signal(false);
+  readonly isGenerating = signal(false);
+  readonly generationError = signal<string | null>(null);
 
   async ngOnInit() {
     const id = this.activatedRoute.snapshot.paramMap.get('id');
@@ -57,8 +70,11 @@ export class BlockFormDialog implements OnInit {
       lesson_id: [{ value: undefined, disabled: !this.isEditForm }, Validators.required],
       content: [undefined, Validators.required],
     });
+    // `uiForm` agrupa lo que no se persiste: el tema (solo filtra los subtemas) y la
+    // indicación que el admin le da a la IA.
     this.uiForm = this.formBuilder.group({
       module_id: [undefined, Validators.required],
+      instruccion: [undefined],
     });
 
     this.loadModules();
@@ -120,6 +136,86 @@ export class BlockFormDialog implements OnInit {
       this.lessonsSource.set(data);
     } catch (err) {
       console.error('No se pudo cargar los temas. Intenta de nuevo. ' + err);
+    }
+  }
+
+  /** La IA necesita tema, subtema y nombre del bloque para tener contexto suficiente. */
+  get canGenerate(): boolean {
+    return (
+      !!this.uiForm.get('module_id')?.value &&
+      !!this.blockForm.get('lesson_id')?.value &&
+      !!this.blockForm.get('name')?.value
+    );
+  }
+
+  toggleAiPanel(): void {
+    this.showAiPanel.update((visible) => !visible);
+    this.generationError.set(null);
+  }
+
+  /** Pide confirmación solo si hay contenido que se perdería al reemplazarlo. */
+  onGenerateClick(event: Event): void {
+    const currentContent: string = this.blockForm.get('content')?.value ?? '';
+
+    if (currentContent.trim().length === 0) {
+      void this.generateContent();
+      return;
+    }
+
+    this.confirmationService.confirm({
+      target: event.target as EventTarget,
+      message: 'Ya escribiste contenido en este bloque. ¿Reemplazarlo por el que genere la IA?',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Reemplazar',
+      rejectLabel: 'Cancelar',
+      rejectButtonProps: {
+        variant: 'outlined',
+      },
+      accept: () => void this.generateContent(),
+    });
+  }
+
+  private async generateContent(): Promise<void> {
+    const moduleId = this.uiForm.get('module_id')?.value;
+    const lessonId = this.blockForm.get('lesson_id')?.value;
+    const nombreBloque = this.blockForm.get('name')?.value;
+
+    const tema = this.modulesList().find((module) => module.id === moduleId)?.name;
+    const subtema = this.lessonsSource().find((lesson) => lesson.id === lessonId)?.name;
+
+    if (!tema || !subtema || !nombreBloque) return;
+
+    this.isGenerating.set(true);
+    this.generationError.set(null);
+
+    try {
+      const contenido = await this.aiService.generateBlockContent({
+        tema,
+        subtema,
+        nombreBloque,
+        bloquesExistentes: await this.loadSiblingBlockNames(lessonId),
+        instruccion: this.uiForm.get('instruccion')?.value || undefined,
+      });
+      this.blockForm.patchValue({ content: contenido });
+    } catch (err) {
+      this.generationError.set(err instanceof Error ? err.message : String(err));
+    } finally {
+      this.isGenerating.set(false);
+    }
+  }
+
+  /**
+   * Nombres de los otros bloques del subtema, para que la IA no repita lo ya cubierto.
+   * Es contexto opcional: si la consulta falla se genera igual, sin esa ayuda.
+   */
+  private async loadSiblingBlockNames(lessonId: number): Promise<string[]> {
+    const currentBlockId = Number(this.activatedRoute.snapshot.paramMap.get('id'));
+
+    try {
+      const blocks = await this.blockService.getAllByLessonId(lessonId);
+      return blocks.filter((block) => block.id !== currentBlockId).map((block) => block.name);
+    } catch {
+      return [];
     }
   }
 

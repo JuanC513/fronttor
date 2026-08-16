@@ -1,3 +1,5 @@
+<p-confirmpopup />
+
 <p-dialog
   [header]="isEditForm ? 'Editar bloque' : 'Crear bloque'"
   [modal]="true"
@@ -71,9 +73,60 @@
         <span class="flex align-items-center gap-2">
           <h5>Escribe el contenido del bloque y visualiza su resultado.</h5>
           <app-markdown-cheatsheet />
+          <p-button
+            [label]="showAiPanel() ? 'Ocultar asistente' : 'Generar con IA'"
+            icon="pi pi-sparkles"
+            severity="secondary"
+            variant="outlined"
+            size="small"
+            (onClick)="toggleAiPanel()"
+          />
         </span>
+
+        @if (showAiPanel()) {
+          <div class="ai-panel flex flex-column gap-3 p-3 mb-3">
+            <div [formGroup]="uiForm" class="w-full">
+              <p-floatlabel variant="on" class="w-full">
+                <textarea
+                  pTextarea
+                  id="aiInstruction"
+                  rows="2"
+                  style="resize: none"
+                  class="w-full"
+                  formControlName="instruccion"
+                ></textarea>
+                <label for="aiInstruction">¿Qué quieres que cubra este bloque? (opcional)</label>
+              </p-floatlabel>
+            </div>
+
+            <span class="flex align-items-center gap-3">
+              <p-button
+                label="Generar contenido"
+                icon="pi pi-sparkles"
+                [loading]="isGenerating()"
+                [disabled]="!canGenerate"
+                (onClick)="onGenerateClick($event)"
+              />
+              <small class="ai-panel__hint">
+                Se tienen en cuenta el tema, el subtema y los demás bloques del subtema. Puede
+                tardar unos segundos.
+              </small>
+            </span>
+
+            @if (!canGenerate) {
+              <p-message
+                severity="info"
+                text="Selecciona un tema y un subtema, y escribe el nombre del bloque para poder generar."
+                styleClass="w-full"
+              />
+            }
+            @if (generationError()) {
+              <p-message severity="error" [text]="generationError()!" styleClass="w-full" />
+            }
+          </div>
+        }
         <span class="flex gap-1 w-full">
-          <div class="w-full">
+          <div class="w-6">
             <p-floatlabel variant="on" class="w-full h-full">
               <textarea
                 pTextarea
@@ -91,7 +144,7 @@
               [customMessages]="{ required: 'Escribe el contenido del bloque.' }"
             />
           </div>
-          <div class="markdown-rendered w-full p-4">
+          <div class="markdown-rendered w-6 p-4">
             <app-markdown-renderer [content]="blockForm.get('content')?.value || ''" />
           </div>
         </span>

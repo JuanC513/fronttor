@@ -1,5 +1,7 @@
+import { requireUser } from '../_shared/auth.ts';
 import { corsHeaders } from '../_shared/cors.ts';
-import { callGemini, GeminiError } from '../_shared/gemini-client.ts';
+import { callGemini } from '../_shared/gemini-client.ts';
+import { errorResponse, jsonResponse } from '../_shared/http.ts';
 import { buildQuestionPrompt, QuestionPromptInput } from '../_shared/prompts/question-prompt.ts';
 
 Deno.serve(async (req) => {
@@ -8,31 +10,19 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Capa 1: cualquier usuario con sesión (estudiante o admin) puede preguntar.
+    await requireUser(req);
+
     const body: QuestionPromptInput = await req.json();
 
     if (!body.pregunta) {
-      return new Response(JSON.stringify({ error: 'Falta la pregunta' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return jsonResponse({ error: 'Falta la pregunta' }, 400);
     }
 
     const respuesta = await callGemini(buildQuestionPrompt(body));
 
-    return new Response(JSON.stringify({ respuesta }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ respuesta });
   } catch (err) {
-    if (err instanceof GeminiError) {
-      return new Response(JSON.stringify({ error: err.message, detail: err.detail }), {
-        status: 502,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    return new Response(JSON.stringify({ error: 'Solicitud inválida', detail: String(err) }), {
-      status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return errorResponse(err);
   }
 });
