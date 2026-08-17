@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AiService } from '@domain/ai/services/ai-service';
@@ -40,7 +40,7 @@ import { TextareaModule } from 'primeng/textarea';
   templateUrl: './block-form-dialog.html',
   styleUrl: './block-form-dialog.scss',
 })
-export class BlockFormDialog implements OnInit {
+export class BlockFormDialog implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly formBuilder = inject(FormBuilder);
@@ -60,6 +60,8 @@ export class BlockFormDialog implements OnInit {
   readonly showAiPanel = signal(false);
   readonly isGenerating = signal(false);
   readonly generationError = signal<string | null>(null);
+  /** Controla la generación en curso, para poder abortarla si el diálogo se cierra antes. */
+  private generationController: AbortController | null = null;
 
   async ngOnInit() {
     const id = this.activatedRoute.snapshot.paramMap.get('id');
@@ -188,22 +190,31 @@ export class BlockFormDialog implements OnInit {
 
     if (!tema || !subtema || !nombreBloque) return;
 
+    const controller = new AbortController();
+    this.generationController = controller;
     this.isGenerating.set(true);
     this.generationError.set(null);
 
     try {
-      const contenido = await this.aiService.generateBlockContent({
-        tema,
-        subtema,
-        nombreBloque,
-        bloquesExistentes: await this.loadSiblingBlockNames(lessonId),
-        instruccion: this.uiForm.get('instruccion')?.value || undefined,
-      });
+      const contenido = await this.aiService.generateBlockContent(
+        {
+          tema,
+          subtema,
+          nombreBloque,
+          bloquesExistentes: await this.loadSiblingBlockNames(lessonId),
+          instruccion: this.uiForm.get('instruccion')?.value || undefined,
+        },
+        controller.signal,
+      );
       this.blockForm.patchValue({ content: contenido });
     } catch (err) {
+      if (controller.signal.aborted) return;
       this.generationError.set(err instanceof Error ? err.message : String(err));
     } finally {
-      this.isGenerating.set(false);
+      if (this.generationController === controller) {
+        this.generationController = null;
+        this.isGenerating.set(false);
+      }
     }
   }
 
@@ -222,11 +233,25 @@ export class BlockFormDialog implements OnInit {
     }
   }
 
+  /**
+   * Cerrar el diálogo navega fuera y destruye el componente, pero el `fetch` de la Edge
+   * Function no está atado a ese ciclo de vida.
+   */
+  ngOnDestroy(): void {
+    this.generationController?.abort();
+    this.generationController = null;
+  }
+
   closeDialog() {
     this.router.navigate(['/admin']);
   }
 
   onSubmit() {
+    // El botón ya está deshabilitado mientras se genera, pero el `(ngSubmit)` del form
+    // también se dispara con Enter desde los inputs; guardar aquí evitaría persistir un
+    // contenido que la IA está a punto de reemplazar.
+    if (this.isGenerating()) return;
+
     if (this.blockForm.valid) {
       if (this.isEditForm) {
         const id = this.activatedRoute.snapshot.paramMap.get('id');

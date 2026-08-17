@@ -15,10 +15,15 @@ export class AiService {
   private readonly supabaseService = inject(SupabaseService);
   private readonly supabase = this.supabaseService.client;
 
-  async generateBlockContent(input: GenerateContentRequest): Promise<string> {
+  /**
+   * @param signal Permite cancelar la petición. La generación tarda varios segundos, así que
+   * el llamador debe poder abortarla si el usuario se va (p. ej. al cerrar el diálogo); sin
+   * esto la petición seguiría hasta responder, gastando cuota del modelo para nada.
+   */
+  async generateBlockContent(input: GenerateContentRequest, signal?: AbortSignal): Promise<string> {
     const { data, error } = await this.supabase.functions.invoke<GenerateContentResponse>(
       'generate-content',
-      { body: input },
+      { body: input, signal },
     );
 
     if (error) throw new Error(await this.readFunctionError(error));

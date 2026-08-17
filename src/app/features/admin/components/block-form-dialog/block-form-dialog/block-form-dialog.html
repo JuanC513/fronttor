@@ -95,6 +95,7 @@
                   style="resize: none"
                   class="w-full"
                   maxlength="2000"
+                  [readonly]="isGenerating()"
                   formControlName="instruccion"
                 ></textarea>
                 <label for="aiInstruction">¿Qué quieres que cubra este bloque? (opcional)</label>
@@ -139,6 +140,7 @@
                 style="resize: none"
                 class="h-full w-full"
                 maxlength="20000"
+                [readonly]="isGenerating()"
                 formControlName="content"
               ></textarea>
               <label for="on_label">Contenido</label>
@@ -160,7 +162,7 @@
     <p-button
       [label]="isEditForm ? 'Actualizar' : 'Crear'"
       (onClick)="onSubmit()"
-      [disabled]="blockForm.invalid"
+      [disabled]="blockForm.invalid || isGenerating()"
     />
   </ng-template>
 </p-dialog>
