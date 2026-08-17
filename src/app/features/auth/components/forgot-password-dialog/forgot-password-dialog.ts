@@ -2,6 +2,7 @@ import { Component, inject, model, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '@core/services/auth/auth-service';
 import { authErrorMessage } from '@features/auth/utils/auth-error-messages';
+import { MAX_EMAIL_LENGTH } from '@features/auth/utils/auth-input-limits';
 import { FieldError } from '@shared/components/field-error/field-error';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -32,12 +33,14 @@ export class ForgotPasswordDialog {
   /** Two-way binding con la página, que es quien decide cuándo abrirlo. */
   readonly visible = model(false);
 
+  readonly maxEmailLength = MAX_EMAIL_LENGTH;
+
   readonly loading = signal(false);
   readonly serverError = signal<string | null>(null);
   readonly emailSent = signal(false);
 
   readonly forgotForm = this.formBuilder.group({
-    email: ['', [Validators.required, Validators.email]],
+    email: ['', [Validators.required, Validators.email, Validators.maxLength(MAX_EMAIL_LENGTH)]],
   });
 
   async onSubmit(): Promise<void> {

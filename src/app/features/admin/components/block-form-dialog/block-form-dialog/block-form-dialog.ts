@@ -66,15 +66,18 @@ export class BlockFormDialog implements OnInit {
     this.isEditForm = !!id;
 
     this.blockForm = this.formBuilder.group({
-      name: [undefined, Validators.required],
+      name: [undefined, [Validators.required, Validators.maxLength(100)]],
       lesson_id: [{ value: undefined, disabled: !this.isEditForm }, Validators.required],
-      content: [undefined, Validators.required],
+      // El tope es generoso a propósito: es markdown de un bloque completo, con ejemplos
+      // de código incluidos, no una sola idea corta.
+      content: [undefined, [Validators.required, Validators.maxLength(20_000)]],
     });
     // `uiForm` agrupa lo que no se persiste: el tema (solo filtra los subtemas) y la
     // indicación que el admin le da a la IA.
     this.uiForm = this.formBuilder.group({
       module_id: [undefined, Validators.required],
-      instruccion: [undefined],
+      // Debe coincidir con MAX_INSTRUCCION_LENGTH en supabase/functions/_shared/prompts/content-prompt.ts.
+      instruccion: [undefined, Validators.maxLength(2_000)],
     });
 
     this.loadModules();

@@ -3,6 +3,11 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { Router } from '@angular/router';
 import { AuthService } from '@core/services/auth/auth-service';
 import { authErrorMessage } from '@features/auth/utils/auth-error-messages';
+import {
+  MAX_EMAIL_LENGTH,
+  MAX_PASSWORD_LENGTH,
+  MIN_PASSWORD_LENGTH,
+} from '@features/auth/utils/auth-input-limits';
 import { passwordsMatch } from '@features/auth/utils/passwords-match.validator';
 import { FieldError } from '@shared/components/field-error/field-error';
 import { ButtonModule } from 'primeng/button';
@@ -11,9 +16,6 @@ import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { PasswordModule } from 'primeng/password';
-
-/** Mínimo de caracteres exigido en el cliente. */
-const MIN_PASSWORD_LENGTH = 8;
 
 @Component({
   selector: 'app-register-form',
@@ -36,6 +38,8 @@ export class RegisterForm {
   private readonly router = inject(Router);
 
   readonly minPasswordLength = MIN_PASSWORD_LENGTH;
+  readonly maxPasswordLength = MAX_PASSWORD_LENGTH;
+  readonly maxEmailLength = MAX_EMAIL_LENGTH;
 
   readonly loading = signal(false);
   readonly serverError = signal<string | null>(null);
@@ -43,9 +47,16 @@ export class RegisterForm {
 
   readonly registerForm = this.formBuilder.group(
     {
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(MIN_PASSWORD_LENGTH)]],
-      confirmPassword: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email, Validators.maxLength(MAX_EMAIL_LENGTH)]],
+      password: [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(MIN_PASSWORD_LENGTH),
+          Validators.maxLength(MAX_PASSWORD_LENGTH),
+        ],
+      ],
+      confirmPassword: ['', [Validators.required, Validators.maxLength(MAX_PASSWORD_LENGTH)]],
     },
     { validators: passwordsMatch('password', 'confirmPassword') },
   );

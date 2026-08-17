@@ -40,7 +40,7 @@ export class LessonFormDialog implements OnInit {
     this.isEditForm = !!id;
 
     this.lessonForm = this.formBuilder.group({
-      name: [undefined, Validators.required],
+      name: [undefined, [Validators.required, Validators.maxLength(100)]],
       module_id: [undefined, Validators.required],
     });
 

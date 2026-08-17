@@ -4,6 +4,7 @@ import { NonNullableFormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '@core/services/auth/auth-service';
 import { authErrorMessage } from '@features/auth/utils/auth-error-messages';
+import { MAX_EMAIL_LENGTH, MAX_PASSWORD_LENGTH } from '@features/auth/utils/auth-input-limits';
 import { FieldError } from '@shared/components/field-error/field-error';
 import { ButtonModule } from 'primeng/button';
 import { IconFieldModule } from 'primeng/iconfield';
@@ -35,12 +36,15 @@ export class LoginForm {
   /** El diálogo de recuperación vive en la página, no aquí: el formulario solo lo solicita. */
   readonly forgotPassword = output<void>();
 
+  readonly maxEmailLength = MAX_EMAIL_LENGTH;
+  readonly maxPasswordLength = MAX_PASSWORD_LENGTH;
+
   readonly loading = signal(false);
   readonly serverError = signal<string | null>(null);
 
   readonly loginForm = this.formBuilder.group({
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', Validators.required],
+    email: ['', [Validators.required, Validators.email, Validators.maxLength(MAX_EMAIL_LENGTH)]],
+    password: ['', [Validators.required, Validators.maxLength(MAX_PASSWORD_LENGTH)]],
   });
 
   async onSubmit(): Promise<void> {

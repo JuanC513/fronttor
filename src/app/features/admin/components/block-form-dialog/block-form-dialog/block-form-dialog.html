@@ -59,6 +59,7 @@
               id="blockname"
               class="flex-auto w-full"
               autocomplete="off"
+              maxlength="100"
               formControlName="name"
             />
             <label for="on_label">Nombre</label>
@@ -93,10 +94,12 @@
                   rows="2"
                   style="resize: none"
                   class="w-full"
+                  maxlength="2000"
                   formControlName="instruccion"
                 ></textarea>
                 <label for="aiInstruction">¿Qué quieres que cubra este bloque? (opcional)</label>
               </p-floatlabel>
+              <app-field-error [control]="uiForm.controls['instruccion']" />
             </div>
 
             <span class="flex align-items-center gap-3">
@@ -135,6 +138,7 @@
                 cols="30"
                 style="resize: none"
                 class="h-full w-full"
+                maxlength="20000"
                 formControlName="content"
               ></textarea>
               <label for="on_label">Contenido</label>

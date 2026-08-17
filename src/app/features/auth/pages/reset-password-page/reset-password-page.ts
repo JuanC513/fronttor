@@ -3,13 +3,12 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { RouterLink } from '@angular/router';
 import { AuthService } from '@core/services/auth/auth-service';
 import { authErrorMessage } from '@features/auth/utils/auth-error-messages';
+import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from '@features/auth/utils/auth-input-limits';
 import { passwordsMatch } from '@features/auth/utils/passwords-match.validator';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { PasswordModule } from 'primeng/password';
 import { filter, take } from 'rxjs/operators';
-
-const MIN_PASSWORD_LENGTH = 8;
 
 /**
  * Destino del enlace "¿Olvidaste tu contraseña?".
@@ -29,6 +28,7 @@ export class ResetPasswordPage implements OnInit {
   private readonly authService = inject(AuthService);
 
   readonly minPasswordLength = MIN_PASSWORD_LENGTH;
+  readonly maxPasswordLength = MAX_PASSWORD_LENGTH;
 
   readonly checkingLink = signal(true);
   readonly linkIsValid = signal(false);
@@ -38,8 +38,15 @@ export class ResetPasswordPage implements OnInit {
 
   readonly resetForm = this.formBuilder.group(
     {
-      password: ['', [Validators.required, Validators.minLength(MIN_PASSWORD_LENGTH)]],
-      confirmPassword: ['', Validators.required],
+      password: [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(MIN_PASSWORD_LENGTH),
+          Validators.maxLength(MAX_PASSWORD_LENGTH),
+        ],
+      ],
+      confirmPassword: ['', [Validators.required, Validators.maxLength(MAX_PASSWORD_LENGTH)]],
     },
     { validators: passwordsMatch('password', 'confirmPassword') },
   );

@@ -34,7 +34,7 @@ export class ModuleFormDialog implements OnInit {
     this.isEditForm = !!id;
 
     this.moduleForm = this.formBuilder.group({
-      nombre: [undefined, Validators.required],
+      nombre: [undefined, [Validators.required, Validators.maxLength(100)]],
     });
 
     if (id) {

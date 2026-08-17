@@ -29,6 +29,7 @@
           class="w-full"
           autocomplete="email"
           placeholder="tucorreo@ejemplo.com"
+          [attr.maxlength]="maxEmailLength"
           formControlName="email"
         />
       </p-iconfield>
@@ -48,6 +49,7 @@
           [toggleMask]="true"
           placeholder="Mínimo {{ minPasswordLength }} caracteres"
           autocomplete="new-password"
+          [maxlength]="maxPasswordLength"
           promptLabel="Ingresa una contraseña"
           weakLabel="Débil"
           mediumLabel="Media"
@@ -76,6 +78,7 @@
           [toggleMask]="true"
           placeholder="Repite tu contraseña"
           autocomplete="new-password"
+          [maxlength]="maxPasswordLength"
           class="w-full"
           inputStyleClass="w-full"
         />
