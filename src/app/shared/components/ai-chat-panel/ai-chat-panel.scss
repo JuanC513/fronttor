@@ -7,8 +7,13 @@
   }
 
   .p-drawer-content {
+    background-color: var(--color-surface);
     display: flex;
-    padding-top: 0;
+    padding: 0;
+  }
+
+  .p-drawer-title {
+    color: var(--color-primary);
   }
 }
 
@@ -26,19 +31,29 @@
     gap: var(--space-sm);
     overflow-y: auto;
     min-height: 0;
+    border-top: 2px solid var(--color-border);
+    border-bottom: 2px solid var(--color-border);
+    padding-left: 1.25rem;
     padding-right: var(--space-xs);
+    padding-top: var(--space-md);
+    padding-bottom: var(--space-sm);
   }
 
   &__message {
     max-width: 90%;
     padding: var(--space-sm) var(--space-md);
     border-radius: var(--radius-lg);
+    border-top-left-radius: 0;
     background-color: var(--color-surface-container);
+    border: 1px solid var(--color-border);
     color: var(--color-text-primary);
     overflow-wrap: anywhere;
 
     &--own {
+      border-top-left-radius: var(--radius-lg);
+      border-top-right-radius: 0;
       align-self: flex-end;
+      border: none;
       background-color: var(--color-primary);
       color: var(--color-on-primary);
     }
@@ -54,9 +69,14 @@
   &__composer {
     display: flex;
     gap: var(--space-sm);
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
   }
 
   &__hint {
+    padding: 1.25rem;
+    padding-top: 0;
     color: var(--color-text-muted);
+    text-align: center;
   }
 }
