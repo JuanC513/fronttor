@@ -12,8 +12,12 @@
     padding: 0;
   }
 
-  .p-drawer-title {
+  .title-section {
     color: var(--color-primary);
+  }
+
+  .title-section .drawer-title-icon {
+    font-size: 1.75rem;
   }
 }
 

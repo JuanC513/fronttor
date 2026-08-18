@@ -2,7 +2,6 @@
   <p-drawer
     [visible]="isOpen()"
     position="right"
-    header="Tutor IA"
     styleClass="ai-chat-drawer"
     (onHide)="onHide()"
     [closeButtonProps]="{
@@ -11,6 +10,12 @@
       text: true,
     }"
   >
+    <ng-template #header>
+      <div class="title-section flex items-center gap-3">
+        <i class="drawer-title-icon pi pi-microchip-ai" aria-hidden="true"></i>
+        <div class="p-drawer-title" data-pc-section="title">Tutor IA</div>
+      </div>
+    </ng-template>
     <div class="ai-chat">
       <div
         #messageList
