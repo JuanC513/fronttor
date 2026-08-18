@@ -14,6 +14,8 @@ export class GeminiError extends Error {
   constructor(
     message: string,
     readonly detail: string,
+    /** Código HTTP que devolvió Gemini. `0` cuando el fallo es previo a la petición. */
+    readonly status = 0,
   ) {
     super(message);
   }
@@ -33,7 +35,7 @@ export async function callGemini(prompt: string, model: string = GEMINI_MODEL): 
   });
 
   if (!response.ok) {
-    throw new GeminiError('Error al llamar a Gemini', await response.text());
+    throw new GeminiError('Error al llamar a Gemini', await response.text(), response.status);
   }
 
   const data = await response.json();

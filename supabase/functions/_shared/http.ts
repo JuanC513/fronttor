@@ -20,6 +20,18 @@ export function errorResponse(err: unknown): Response {
   }
 
   if (err instanceof GeminiError) {
+    // El tier gratuito de Gemini limita las peticiones por minuto, y el chat del estudiante
+    // es mucho más intensivo. Sin este caso, quien
+    // agota la cuota ve un 502 con el volcado crudo del error de Google.
+    if (err.status === 429) {
+      return jsonResponse(
+        {
+          error: 'Hay muchas preguntas en este momento. Espera unos segundos e inténtalo de nuevo.',
+        },
+        429,
+      );
+    }
+
     return jsonResponse({ error: err.message, detail: err.detail }, 502);
   }
 

@@ -1,21 +1,31 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
+import { AiChatService } from '@domain/ai/services/ai-chat-service';
 import { MenuItem } from 'primeng/api';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
+import { ButtonModule } from 'primeng/button';
 import { DividerModule } from 'primeng/divider';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-topbar',
-  imports: [DividerModule, BreadcrumbModule],
+  imports: [DividerModule, BreadcrumbModule, ButtonModule],
   templateUrl: './topbar.html',
   styleUrl: './topbar.scss',
 })
 export class Topbar implements OnInit, OnDestroy {
   private readonly router = inject(Router);
+  private readonly chatService = inject(AiChatService);
   breadcrumbItems: MenuItem[] = [];
   home: MenuItem = { icon: 'pi pi-home', routerLink: '/home' };
+
+  /** Hay chat disponible solo si alguna vista publicó contexto. */
+  readonly chatContext = this.chatService.context;
+
+  openChat(): void {
+    this.chatService.open();
+  }
 
   private sub!: Subscription;
 

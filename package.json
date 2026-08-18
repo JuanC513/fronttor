@@ -10,7 +10,8 @@
     "lint": "ng lint",
     "format": "prettier --write \"**/*.{ts,html,scss,css,json}\"",
     "format:check": "prettier --check \"**/*.{ts,html,scss,css,json}\"",
-    "check": "npm run lint && npm run format:check",
+    "check:prompt-limits": "node scripts/check-prompt-limits-sync.mjs",
+    "check": "npm run lint && npm run format:check && npm run check:prompt-limits",
     "prepare": "husky",
     "docs": "compodoc -p tsconfig.json",
     "docs:serve": "compodoc -p tsconfig.json -s",
@@ -76,6 +77,10 @@
     "*.{ts,html,scss,css,json}": [
       "prettier --check",
       "eslint"
-    ]
+    ],
+    "supabase/functions/_shared/prompts/question-prompt.ts": "node scripts/check-prompt-limits-sync.mjs",
+    "src/app/domain/ai/services/ai-chat-service.ts": "node scripts/check-prompt-limits-sync.mjs",
+    "supabase/functions/_shared/prompts/content-prompt.ts": "node scripts/check-prompt-limits-sync.mjs",
+    "src/app/features/admin/components/block-form-dialog/block-form-dialog/block-form-dialog.ts": "node scripts/check-prompt-limits-sync.mjs"
   }
 }

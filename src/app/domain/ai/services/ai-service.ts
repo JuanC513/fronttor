@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { SupabaseService } from '@core/services/supabase/supabase-service';
+import { AnswerQuestionRequest, AnswerQuestionResponse } from '../models/answer-question-model';
 import { GenerateContentRequest, GenerateContentResponse } from '../models/generate-content-model';
 
 /**
@@ -28,6 +29,22 @@ export class AiService {
 
     if (error) throw new Error(await this.readFunctionError(error));
     return data?.contenido ?? '';
+  }
+
+  /**
+   * Resuelve una duda del estudiante sobre la lección que está viendo.
+   *
+   * @param signal Igual que en `generateBlockContent`: permite cancelar si el estudiante
+   * cierra el chat o sale de la vista mientras el tutor responde.
+   */
+  async answerQuestion(input: AnswerQuestionRequest, signal?: AbortSignal): Promise<string> {
+    const { data, error } = await this.supabase.functions.invoke<AnswerQuestionResponse>(
+      'answer-question',
+      { body: input, signal },
+    );
+
+    if (error) throw new Error(await this.readFunctionError(error));
+    return data?.respuesta ?? '';
   }
 
   /**

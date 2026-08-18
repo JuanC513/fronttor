@@ -1,3 +1,14 @@
 .p-divider-horizontal {
   margin: 0;
 }
+
+.topbar-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+
+  &__action {
+    padding-right: var(--space-md);
+    margin-left: auto;
+  }
+}

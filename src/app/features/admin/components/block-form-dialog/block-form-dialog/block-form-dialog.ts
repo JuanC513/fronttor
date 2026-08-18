@@ -78,7 +78,9 @@ export class BlockFormDialog implements OnInit, OnDestroy {
     // indicación que el admin le da a la IA.
     this.uiForm = this.formBuilder.group({
       module_id: [undefined, Validators.required],
-      // Debe coincidir con MAX_INSTRUCCION_LENGTH en supabase/functions/_shared/prompts/content-prompt.ts.
+      // Debe coincidir con MAX_INSTRUCCION_LENGTH en
+      // supabase/functions/_shared/prompts/content-prompt.ts — lo hace cumplir
+      // scripts/check-prompt-limits-sync.mjs, que corre en cada commit.
       instruccion: [undefined, Validators.maxLength(2_000)],
     });
 
