@@ -113,6 +113,13 @@ Levantar servidor local de documentación:
 npm run docs:serve
 ```
 
+## 🗄️ Base de datos
+
+El esquema de Supabase, sus políticas de acceso y los datos semilla viven en `supabase/`.
+
+Para saber qué archivo aplicar, en qué orden y qué implica ejecutarlos sobre un proyecto
+nuevo o sobre uno que ya tiene datos, ver [`supabase/README.md`](supabase/README.md).
+
 ---
 
 ## 👨‍💻 Autor

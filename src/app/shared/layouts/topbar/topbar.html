@@ -1,0 +1,22 @@
+@if (breadcrumbItems.length || chatContext()) {
+  <header>
+    <div class="topbar-bar">
+      @if (breadcrumbItems.length) {
+        <p-breadcrumb [home]="home" [model]="breadcrumbItems" />
+      }
+
+      @if (chatContext()) {
+        <p-button
+          class="topbar-bar__action"
+          label="Tutor IA"
+          icon="pi pi-sparkles"
+          severity="info"
+          variant="outlined"
+          size="small"
+          (onClick)="openChat()"
+        />
+      }
+    </div>
+    <p-divider />
+  </header>
+}

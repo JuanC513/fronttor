@@ -1,0 +1,13 @@
+.console {
+  background: #111;
+  color: #0f0;
+  padding: 10px;
+  font-family: monospace;
+  font-size: 14px;
+  height: 200px;
+  overflow-y: auto;
+}
+
+.console-line {
+  white-space: pre-wrap;
+}

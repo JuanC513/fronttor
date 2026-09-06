@@ -1,1 +1,140 @@
-/* You can add global styles to this file, and also import other style files */
+@use 'primeflex/primeflex.scss';
+@import 'primeicons/primeicons.css';
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* {
+  font-family: 'Inter', sans-serif;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  /* ─── Design tokens globales ─── */
+
+  /* Primary */
+  --color-primary: #004ac6;
+  --color-primary-hover: #003ea8;
+  --color-primary-light: #dbe1ff;
+  --color-primary-container: #2563eb;
+  --color-on-primary: #ffffff;
+
+  /* Accent */
+  --color-accent: #00687a;
+  --color-accent-light: #acedff;
+  --color-accent-container: #57dffe;
+  --color-on-accent: #001f26;
+
+  /* Semantic */
+  --color-success: #3b6d11;
+  --color-success-bg: #eaf3de;
+  --color-warning: #854f0b;
+  --color-warning-bg: #faeeda;
+  --color-error: #ba1a1a;
+  --color-error-bg: #ffdad6;
+  --color-info: #185fa5;
+  --color-info-bg: #e6f1fb;
+
+  /* Surfaces */
+  --color-surface: #faf8ff;
+  --color-surface-low: #f3f3fe;
+  --color-surface-container: #ededf9;
+  --color-surface-high: #e7e7f3;
+  --color-surface-white: #ffffff;
+
+  /* Text */
+  --color-text-primary: #191b23;
+  --color-text-secondary: #434655;
+  --color-text-muted: #737686;
+  --color-text-inverse: #f0f0fb;
+
+  /* Borders */
+  --color-border: #c3c6d7;
+  --color-border-strong: #737686;
+
+  /* Radius and Spacing */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 48px;
+
+  /* ─── Overrides PrimeNG v17+ (Aura/Lara preset) ─── */
+
+  /* Primary */
+  --p-primary-50: #eeefff !important;
+  --p-primary-100: #dbe1ff !important;
+  --p-primary-200: #b4c5ff !important;
+  --p-primary-300: #7a9eff !important;
+  --p-primary-400: #4a7af5 !important;
+  --p-primary-500: #2563eb !important;
+  --p-primary-600: #004ac6 !important;
+  --p-primary-700: #003ea8 !important;
+  --p-primary-800: #00174b !important;
+  --p-primary-900: #000d2e !important;
+
+  /* Action tokens */
+  --p-primary-color: #004ac6 !important;
+  --p-primary-hover-color: #003ea8 !important;
+  --p-primary-contrast-color: #ffffff !important;
+
+  /* Surfaces*/
+  --p-surface-0: #ffffff !important;
+  --p-surface-50: #faf8ff !important;
+  --p-surface-100: #f3f3fe !important;
+  --p-surface-200: #ededf9 !important;
+  --p-surface-300: #e7e7f3 !important;
+  --p-surface-400: #e1e2ed !important;
+  --p-surface-500: #c3c6d7 !important;
+  --p-surface-600: #737686 !important;
+  --p-surface-700: #434655 !important;
+  --p-surface-800: #2e3039 !important;
+  --p-surface-900: #191b23 !important;
+
+  /* Focus ring */
+  --p-focus-ring-color: #2563eb !important;
+  --p-focus-ring-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2) !important;
+
+  --p-floatlabel-focus-color: #var(--color-text-secondary) !important;
+}
+
+.p-button-secondary {
+  background-color: var(--color-accent) !important;
+  color: var(--color-on-primary) !important;
+}
+
+.p-dialog .p-button-secondary {
+  background-color: initial !important;
+  color: initial !important;
+}
+
+// Input error styles
+
+.p-inputtext.ng-invalid.ng-touched,
+.p-textarea.ng-invalid.ng-touched,
+.p-dropdown.ng-invalid.ng-touched,
+.p-select.ng-invalid.ng-touched {
+  border-color: var(--color-error) !important;
+  color: var(--color-error) !important;
+  box-shadow: 0 0 0 0.1rem color-mix(in srgb, var(--color-error) 20%, transparent) !important;
+}
+
+.p-floatlabel .ng-invalid.ng-touched label {
+  color: var(--color-error) !important;
+}

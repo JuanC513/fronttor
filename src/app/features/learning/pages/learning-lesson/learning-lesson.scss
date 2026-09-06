@@ -1,0 +1,46 @@
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.learning-lesson-container {
+  display: grid;
+  grid-template-areas:
+    'header'
+    'tabs'
+    'content'
+    'footer';
+  grid-template-rows: auto auto 1fr auto;
+  height: 100%;
+  overflow: hidden;
+  background-color: white;
+}
+
+.header {
+  grid-area: header;
+}
+
+.tabs {
+  grid-area: tabs;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.content {
+  grid-area: content;
+  height: 100%;
+  min-height: 0;
+}
+
+.content-empty {
+  grid-area: content;
+  min-height: 0;
+}
+
+.footer {
+  grid-area: footer;
+  border-top: 1px solid lightgray;
+}

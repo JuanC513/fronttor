@@ -1,0 +1,56 @@
+:host {
+  height: 100%;
+}
+
+:host section {
+  background-color: var(--color-surface);
+}
+
+:host ::ng-deep .p-orderlist-controls {
+  display: none !important;
+}
+
+:host ::ng-deep .p-listbox {
+  border: none !important;
+}
+
+:host ::ng-deep .cdk-drop-list {
+  max-height: none !important;
+}
+
+.select-item-container {
+  border: 1px solid;
+  border-color: var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface-container);
+}
+
+:host ::ng-deep .p-splitter {
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-color: var(--color-border);
+}
+
+.title-tab-container {
+  background-color: var(--color-surface);
+  border-bottom: 1px solid;
+  border-color: var(--color-border);
+}
+
+.publication-legend {
+  color: var(--p-text-muted-color);
+  font-size: 0.8125rem;
+
+  .is-published {
+    color: var(--color-success);
+  }
+
+  .is-hidden {
+    color: var(--color-warning);
+  }
+
+  .is-draft {
+    color: var(--color-text-muted);
+  }
+}

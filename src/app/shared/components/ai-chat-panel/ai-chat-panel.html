@@ -1,0 +1,77 @@
+@if (context(); as chatContext) {
+  <p-drawer
+    [visible]="isOpen()"
+    position="right"
+    styleClass="ai-chat-drawer"
+    (onHide)="onHide()"
+    [closeButtonProps]="{
+      outlined: true,
+      rounded: true,
+      text: true,
+    }"
+  >
+    <ng-template #header>
+      <div class="title-section flex items-center gap-3">
+        <i class="drawer-title-icon pi pi-microchip-ai" aria-hidden="true"></i>
+        <div class="p-drawer-title" data-pc-section="title">Tutor IA</div>
+      </div>
+    </ng-template>
+    <div class="ai-chat">
+      <div
+        #messageList
+        class="ai-chat__messages"
+        role="log"
+        aria-live="polite"
+        aria-label="Conversación con el tutor"
+      >
+        @for (message of messages(); track message.id) {
+          <div
+            class="ai-chat__message"
+            [class.ai-chat__message--own]="message.rol === 'estudiante'"
+          >
+            @if (message.rol === 'tutor') {
+              <app-markdown-renderer [content]="message.texto" />
+            } @else {
+              {{ message.texto }}
+            }
+          </div>
+        }
+
+        @if (isSending()) {
+          <div class="ai-chat__message ai-chat__typing">
+            <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+            Escribiendo…
+          </div>
+        }
+      </div>
+
+      @if (error(); as message) {
+        <p-message severity="error" [text]="message" styleClass="w-full" />
+      }
+
+      <div class="ai-chat__composer">
+        <textarea
+          pTextarea
+          rows="5"
+          class="w-full"
+          style="resize: none"
+          placeholder="Escribe tu duda sobre este subtema…"
+          aria-label="Escribe tu pregunta"
+          [maxlength]="maxPreguntaLength"
+          [ngModel]="draft()"
+          (ngModelChange)="draft.set($event)"
+          (keydown)="onKeydown($event)"
+        ></textarea>
+        <p-button
+          icon="pi pi-send"
+          ariaLabel="Enviar pregunta"
+          [loading]="isSending()"
+          [disabled]="!canSend"
+          (onClick)="onSend()"
+        />
+      </div>
+
+      <small class="ai-chat__hint"> La IA puede equivocarse: verifica el código. </small>
+    </div>
+  </p-drawer>
+}

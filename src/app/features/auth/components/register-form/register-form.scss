@@ -1,0 +1,37 @@
+@use '../../auth-shared' as auth;
+
+.field {
+  @include auth.auth-field;
+}
+
+.password-wrapper {
+  @include auth.auth-password-icon;
+}
+
+.confirmation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-lg) 0;
+  text-align: center;
+
+  i {
+    color: var(--color-primary);
+    font-size: 2.5rem;
+  }
+
+  h3 {
+    margin: 0;
+    color: var(--color-text-primary);
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+}

@@ -1,0 +1,197 @@
+@use '../../auth-shared' as auth;
+
+// Breakpoint a partir del cual la card se parte en dos columnas (equivale al `md` del diseño).
+$split-breakpoint: 768px;
+
+:host {
+  @include auth.auth-canvas;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-card {
+  @include auth.auth-card(1000px);
+
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Panel de marca (izquierda) ─── */
+
+.brand-panel {
+  display: none;
+  position: relative;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-xl);
+  padding: var(--space-xl);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+  overflow: hidden;
+
+  h2 {
+    margin: 0 0 var(--space-md);
+    color: var(--color-surface-white);
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  p {
+    margin: 0;
+    max-width: 24rem;
+    color: var(--color-primary-light);
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--color-surface-white);
+
+  i {
+    font-size: 1.75rem;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+}
+
+.brand-content .brand-logo {
+  margin-bottom: var(--space-xl);
+}
+
+/* Bloque decorativo tipo terminal */
+.code-card {
+  padding: var(--space-md);
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: var(--radius-md);
+  background-color: rgb(255 255 255 / 10%);
+  backdrop-filter: blur(12px);
+
+  code {
+    display: block;
+    color: var(--color-primary-light);
+    font-family: monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .token-keyword {
+    color: var(--color-accent-light);
+  }
+
+  .token-var {
+    color: var(--color-surface-white);
+  }
+}
+
+.code-dots {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+
+  span {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: var(--radius-full);
+  }
+
+  .dot-error {
+    background-color: var(--color-error);
+  }
+
+  .dot-accent {
+    background-color: var(--color-accent-container);
+  }
+
+  .dot-primary {
+    background-color: var(--color-primary-light);
+  }
+}
+
+/* ─── Panel de formularios (derecha) ─── */
+
+.form-panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  // En móvil el padding del diseño (48px) se come el ancho útil; sube a --space-xl en `md`.
+  padding: var(--space-lg);
+}
+
+.mobile-logo {
+  margin-bottom: var(--space-lg);
+  color: var(--color-primary);
+}
+
+.form-header {
+  margin-bottom: var(--space-lg);
+
+  h2 {
+    margin: 0 0 var(--space-xs);
+    color: var(--color-text-primary);
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  p {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+  }
+}
+
+.divider {
+  @include auth.auth-divider;
+
+  margin: var(--space-lg) 0;
+}
+
+.google-button {
+  @include auth.auth-provider-button;
+}
+
+// Las tabs de PrimeNG traen fondo y padding propios; aquí sobran porque la card ya los aporta.
+:host ::ng-deep {
+  .p-tabpanels {
+    padding: var(--space-lg) 0 0;
+    background: transparent;
+  }
+
+  .p-tablist-tab-list {
+    background: transparent;
+  }
+}
+
+/* ─── A partir de `md` la card se parte en dos columnas ─── */
+
+@media (min-width: $split-breakpoint) {
+  .auth-card {
+    flex-direction: row;
+  }
+
+  .brand-panel {
+    display: flex;
+  }
+
+  .form-panel {
+    padding: var(--space-xl);
+  }
+
+  .mobile-logo {
+    display: none;
+  }
+}

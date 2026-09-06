@@ -1,0 +1,30 @@
+.markdown-rendered {
+  border: 1px solid;
+  border-color: var(--color-border-strong);
+  border-radius: var(--radius-md);
+  min-width: 0;
+}
+
+// Se usa `readonly` y no `disable()` del control para bloquear los textarea durante la
+// generación: un control deshabilitado sale de `form.value` y deja de validarse, así que
+// `content` desaparecería del formulario. `readonly` impide editar sin tocar ese estado,
+// pero tampoco cambia de aspecto por sí solo — de ahí este estilo.
+:host ::ng-deep textarea[readonly] {
+  background-color: var(--color-surface-container);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.ai-panel {
+  border: 1px dashed;
+  border-color: var(--color-border-strong);
+  border-radius: var(--radius-md);
+
+  &__hint {
+    color: var(--color-text-muted);
+  }
+}
+
+:host ::ng-deep .p-dialog-footer {
+  padding-top: 1rem;
+}

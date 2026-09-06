@@ -1,0 +1,16 @@
+.publication-badge {
+  font-size: 0.875rem;
+  line-height: 1;
+
+  &.is-published {
+    color: var(--color-success);
+  }
+
+  &.is-hidden {
+    color: var(--color-warning);
+  }
+
+  &.is-draft {
+    color: var(--color-text-muted);
+  }
+}

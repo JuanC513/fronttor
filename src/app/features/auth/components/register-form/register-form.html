@@ -1,0 +1,107 @@
+@if (confirmationSent()) {
+  <div class="confirmation">
+    <i class="pi pi-envelope" aria-hidden="true"></i>
+    <h3>Revisa tu correo</h3>
+    <p>
+      Si el correo que ingresaste no tenía una cuenta, te enviamos un enlace para confirmarla.
+      Ábrelo para activar tu cuenta y empezar a aprender.
+    </p>
+    <p-button
+      label="Registrar otro correo"
+      variant="text"
+      (onClick)="confirmationSent.set(false)"
+    />
+  </div>
+} @else {
+  <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="flex flex-column gap-4">
+    @if (serverError(); as error) {
+      <p-message severity="error" [text]="error" styleClass="w-full" />
+    }
+
+    <div class="field">
+      <label for="register-email">Correo electrónico</label>
+      <p-iconfield class="w-full">
+        <p-inputicon class="pi pi-envelope" />
+        <input
+          pInputText
+          id="register-email"
+          type="email"
+          class="w-full"
+          autocomplete="email"
+          placeholder="tucorreo@ejemplo.com"
+          [attr.maxlength]="maxEmailLength"
+          formControlName="email"
+        />
+      </p-iconfield>
+      <app-field-error
+        [control]="registerForm.controls.email"
+        [customMessages]="{ required: 'Ingresa tu correo electrónico.' }"
+      />
+    </div>
+
+    <div class="field">
+      <label for="register-password">Contraseña</label>
+      <div class="password-wrapper">
+        <i class="pi pi-lock input-leading-icon" aria-hidden="true"></i>
+        <p-password
+          inputId="register-password"
+          formControlName="password"
+          [toggleMask]="true"
+          placeholder="Mínimo {{ minPasswordLength }} caracteres"
+          autocomplete="new-password"
+          [maxlength]="maxPasswordLength"
+          promptLabel="Ingresa una contraseña"
+          weakLabel="Débil"
+          mediumLabel="Media"
+          strongLabel="Fuerte"
+          class="w-full"
+          inputStyleClass="w-full"
+        />
+      </div>
+      <app-field-error
+        [control]="registerForm.controls.password"
+        [customMessages]="{
+          required: 'Ingresa una contraseña.',
+          minlength: 'La contraseña debe tener al menos ' + minPasswordLength + ' caracteres.',
+        }"
+      />
+    </div>
+
+    <div class="field">
+      <label for="register-confirm-password">Confirmar contraseña</label>
+      <div class="password-wrapper">
+        <i class="pi pi-lock input-leading-icon" aria-hidden="true"></i>
+        <p-password
+          inputId="register-confirm-password"
+          formControlName="confirmPassword"
+          [feedback]="false"
+          [toggleMask]="true"
+          placeholder="Repite tu contraseña"
+          autocomplete="new-password"
+          [maxlength]="maxPasswordLength"
+          class="w-full"
+          inputStyleClass="w-full"
+        />
+      </div>
+      <app-field-error
+        [control]="registerForm.controls.confirmPassword"
+        [customMessages]="{ required: 'Confirma tu contraseña.' }"
+      />
+      @if (
+        registerForm.controls.confirmPassword.touched &&
+        registerForm.controls.confirmPassword.valid &&
+        registerForm.hasError('passwordsMismatch')
+      ) {
+        <small class="field-error">Las contraseñas no coinciden.</small>
+      }
+    </div>
+
+    <p-button
+      type="submit"
+      label="Crear cuenta"
+      styleClass="w-full"
+      [loading]="loading()"
+      [disabled]="registerForm.invalid"
+    />
+  </form>
+}

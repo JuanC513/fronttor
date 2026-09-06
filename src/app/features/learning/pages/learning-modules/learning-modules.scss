@@ -1,0 +1,291 @@
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background-color: var(--color-surface);
+  overflow-y: auto;
+}
+
+.learning-modules {
+  margin: 0 auto;
+  padding: var(--space-lg);
+}
+
+/* ─── Encabezado de la vista ─── */
+
+.page-header {
+  margin-bottom: var(--space-lg);
+
+  h1 {
+    margin: 0 0 var(--space-xs);
+    color: var(--color-text-primary);
+  }
+
+  p {
+    color: var(--color-text-secondary);
+  }
+}
+
+/* ─── Acordeón de temas ─── */
+
+:host ::ng-deep .modules-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+
+  .p-accordionpanel {
+    border: 1px solid var(--color-border);
+    // La franja de color del diseño. `--module-accent` se asigna más abajo por posición.
+    border-left: 4px solid var(--module-accent, var(--color-primary));
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface-white);
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+    transition:
+      box-shadow 0.2s,
+      border-color 0.2s;
+
+    &:not(.p-disabled):hover {
+      box-shadow: 0 4px 12px rgb(0 0 0 / 8%);
+    }
+  }
+
+  // Degradado de azules a lo largo de los temas; el ciclo evita que se agote la paleta.
+  @each $position, $shade in (1: 700, 2: 600, 3: 500, 4: 400, 5: 300) {
+    .p-accordionpanel:nth-child(5n + #{$position}) {
+      --module-accent: var(--p-primary-#{$shade});
+    }
+  }
+
+  .p-accordionheader {
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    border: none;
+    border-radius: 0;
+    background-color: var(--color-surface-white);
+    color: var(--color-text-primary);
+
+    &:not([data-p-disabled='true']):hover {
+      background-color: var(--color-surface-low);
+    }
+  }
+
+  .p-accordionpanel-active .p-accordionheader {
+    background-color: var(--color-surface-low);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .p-accordioncontent-content {
+    padding: var(--space-md) var(--space-lg) var(--space-lg);
+    border: none;
+    background-color: var(--color-surface-white);
+  }
+
+  // Tema bloqueado: sin color y sin afordancia de clic (PrimeNG ya impide expandirlo).
+  // Apagar `--module-accent` basta para grisar la franja y el ícono a la vez.
+  .p-accordionpanel.p-disabled {
+    --module-accent: var(--color-border-strong);
+
+    background-color: var(--color-surface-container);
+    opacity: 0.65;
+
+    .p-accordionheader {
+      background-color: transparent;
+      cursor: not-allowed;
+    }
+
+    .module-name {
+      color: var(--color-text-muted);
+    }
+  }
+}
+
+// Ícono genérico de "tema": el contenido es dinámico, así que no se personaliza por módulo.
+.module-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-md);
+  background-color: color-mix(in srgb, var(--module-accent, var(--color-primary)) 12%, white);
+  color: var(--module-accent, var(--color-primary));
+  font-size: 1.25rem;
+}
+
+.module-name {
+  color: var(--color-text-primary);
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.module-meta {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+.module-toggle {
+  color: var(--color-text-muted);
+  font-size: 1rem;
+}
+
+/* ─── Tarjetas de subtema ─── */
+
+.lesson-card {
+  padding: var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  font-family: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    background-color 0.2s;
+
+  &:hover:not(:disabled) {
+    border-color: var(--color-primary);
+    background-color: var(--color-surface-white);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  &:hover:not(:disabled) .lesson-arrow {
+    transform: translateX(4px);
+  }
+}
+
+// El estado solo cambia un color, así que cada variante se limita a redefinir `--lesson-accent`.
+.lesson-card.is-completed {
+  --lesson-accent: var(--color-accent);
+}
+
+.lesson-card.is-in-progress {
+  --lesson-accent: var(--color-primary);
+}
+
+.lesson-card.is-locked {
+  --lesson-accent: var(--color-text-muted);
+
+  background-color: var(--color-surface-container);
+  color: var(--color-text-muted);
+  opacity: 0.7;
+  cursor: not-allowed;
+
+  .lesson-status {
+    font-weight: 400;
+  }
+}
+
+.lesson-icon {
+  color: var(--lesson-accent);
+  font-size: 1.25rem;
+}
+
+.lesson-status {
+  color: var(--lesson-accent);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.lesson-arrow {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  transition: transform 0.2s;
+}
+
+/* ─── Tarjeta de progreso ─── */
+
+.progress-card {
+  position: relative;
+  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-container) 100%);
+  color: var(--color-on-primary);
+  overflow: hidden;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 10%);
+
+  h2 {
+    margin: 0 0 var(--space-md);
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+}
+
+.progress-figure {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  margin: 0 0 var(--space-sm);
+}
+
+.progress-value {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.progress-caption {
+  font-size: 0.875rem;
+  opacity: 0.85;
+}
+
+// El decorativo del diseño; `pointer-events: none` para que no tape el botón.
+.progress-decor {
+  position: absolute;
+  right: -1.5rem;
+  bottom: -1.5rem;
+  font-size: 8rem;
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+:host ::ng-deep .progress-card {
+  .progress-bar {
+    display: block;
+    position: relative;
+    margin-bottom: var(--space-lg);
+  }
+
+  .p-progressbar {
+    height: 0.75rem;
+    border-radius: var(--radius-full);
+    background-color: rgb(255 255 255 / 25%);
+  }
+
+  .p-progressbar-value {
+    border-radius: var(--radius-full);
+    background-color: var(--color-surface-white);
+  }
+
+  // Botón invertido (fondo blanco sobre la tarjeta): los `severity` de PrimeNG no dan este contraste.
+  .resume-button {
+    display: block;
+    position: relative;
+
+    .p-button {
+      justify-content: center;
+      width: 100%;
+      border: none;
+      background-color: var(--color-surface-white);
+      color: var(--color-primary);
+      font-weight: 600;
+
+      &:not(:disabled):hover {
+        background-color: var(--color-primary-light);
+        color: var(--color-primary-hover);
+      }
+    }
+  }
+}
+
+/* En pantallas anchas la tarjeta de progreso acompaña al scroll de los temas. */
+@media (min-width: 992px) {
+  .progress-card {
+    position: sticky;
+    top: 0;
+  }
+}
