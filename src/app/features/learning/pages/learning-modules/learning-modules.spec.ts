@@ -16,11 +16,13 @@ describe('LearningModules', () => {
     id,
     name: `Tema ${id}`,
     order: id,
+    is_published: true,
     lessons: Array.from({ length: count }, (_, index) => ({
       id: id * 100 + index,
       name: `Subtema ${index}`,
       order: index,
       module_id: id,
+      is_published: true,
       blocks: [{ count: blocksPerLesson }],
     })),
   });

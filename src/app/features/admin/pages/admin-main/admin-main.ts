@@ -12,6 +12,13 @@ import { ModuleWithLessons } from '@domain/learning/models/module-with-lessons';
 import { LessonService } from '@domain/learning/services/lesson-service';
 import { Block } from '@domain/learning/models/block-model';
 import { BlockService } from '@domain/learning/services/block-service';
+import {
+  PublicationStatus,
+  resolveBlockStatus,
+  resolveLessonStatus,
+  resolveModuleStatus,
+} from '@domain/learning/utils/publication-state';
+import { PublicationBadge } from '@shared/components/publication-badge/publication-badge';
 
 @Component({
   selector: 'app-admin-main',
@@ -23,6 +30,7 @@ import { BlockService } from '@domain/learning/services/block-service';
     OrderListModule,
     ListboxModule,
     FormsModule,
+    PublicationBadge,
   ],
   templateUrl: './admin-main.html',
   styleUrl: './admin-main.scss',
@@ -91,6 +99,38 @@ export class AdminMain implements OnInit {
     }
 
     return this.blocksList().filter((block) => block.lesson_id === this.selectedLesson()!.id);
+  }
+
+  // Estado de publicación de cada fila del listado. Se deriva de lo que ya está cargado
+  // (`modules()` trae los subtemas anidados y `blocksList()` todos los bloques), así que no cuesta
+  // ninguna consulta extra.
+
+  moduleStatus(module: ModuleWithLessons): PublicationStatus {
+    return resolveModuleStatus({
+      module,
+      lessons: module.lessons ?? [],
+      blocks: this.blocksList(),
+    });
+  }
+
+  lessonStatus(lesson: Lesson): PublicationStatus {
+    const module = this.selectedModule();
+    if (!module) return { state: 'draft' };
+
+    return resolveLessonStatus({
+      lesson,
+      module,
+      siblingLessons: module.lessons ?? [],
+      blocks: this.blocksList(),
+    });
+  }
+
+  blockStatus(block: Block): PublicationStatus {
+    const module = this.selectedModule();
+    const lesson = this.selectedLesson();
+    if (!module || !lesson) return { state: 'draft' };
+
+    return resolveBlockStatus({ block, lesson, module, siblingBlocks: this.currentBlocks });
   }
 
   async fetchModules() {

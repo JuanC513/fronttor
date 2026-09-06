@@ -1,3 +1,5 @@
+<p-confirmpopup />
+
 <p-dialog
   [header]="isEditForm ? 'Editar tema' : 'Crear tema'"
   [modal]="true"
@@ -5,10 +7,7 @@
   [style]="{ width: '25rem' }"
   (onHide)="closeDialog()"
 >
-  <span class="p-text-secondary block mb-6">{{
-    isEditForm ? 'Edita el tema seleccionado' : 'Crea un nuevo tema'
-  }}</span>
-  <form [formGroup]="moduleForm" (ngSubmit)="onSubmit()" class="flex flex-column gap-5">
+  <form [formGroup]="moduleForm" (ngSubmit)="onSubmit()" class="flex flex-column gap-4 pt-2">
     <div>
       <p-floatlabel variant="on">
         <input
@@ -26,13 +25,28 @@
         [customMessages]="{ required: 'Ingresa un nombre para el tema.' }"
       />
     </div>
+    <app-publication-field
+      [control]="isPublishedControl"
+      [isEditForm]="isEditForm"
+      [impact]="impact()"
+      [highlight]="isConfirming()"
+      entityLabel="el tema"
+    />
     <div class="flex justify-content-end gap-2">
-      <p-button label="Cancelar" variant="outlined" severity="danger" (click)="closeDialog()" />
       <p-button
-        [label]="isEditForm ? 'Actualizar' : 'Crear'"
-        type="submit"
-        [disabled]="moduleForm.invalid"
+        label="Cancelar"
+        variant="outlined"
+        severity="danger"
+        [disabled]="isConfirming()"
+        (click)="closeDialog()"
       />
+      <span #saveAnchor>
+        <p-button
+          [label]="isEditForm ? 'Actualizar' : 'Crear'"
+          type="submit"
+          [disabled]="moduleForm.invalid || isConfirming()"
+        />
+      </span>
     </div>
   </form>
 </p-dialog>

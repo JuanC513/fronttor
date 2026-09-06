@@ -1,15 +1,32 @@
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+  viewChild,
+} from '@angular/core';
+import {
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AiService } from '@domain/ai/services/ai-service';
+import { Block } from '@domain/learning/models/block-model';
 import { Lesson } from '@domain/learning/models/lesson-model';
 import { ModuleWithLessons } from '@domain/learning/models/module-with-lessons';
 import { BlockService } from '@domain/learning/services/block-service';
 import { LessonService } from '@domain/learning/services/lesson-service';
 import { ModuleService } from '@domain/learning/services/module-service';
+import { describeBlockImpact } from '@domain/learning/utils/publication-state';
 import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
-import { ConfirmPopupModule } from 'primeng/confirmpopup';
+import { ConfirmPopup, ConfirmPopupModule } from 'primeng/confirmpopup';
 import { DialogModule } from 'primeng/dialog';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { InputTextModule } from 'primeng/inputtext';
@@ -18,6 +35,8 @@ import { SelectModule } from 'primeng/select';
 import { MarkdownRenderer } from '@shared/components/markdown-renderer/markdown-renderer';
 import { MarkdownCheatsheet } from '@shared/components/markdown-cheatsheet/markdown-cheatsheet';
 import { FieldError } from '@shared/components/field-error/field-error';
+import { publicationConfirmation } from '@shared/components/publication-field/publication-confirm';
+import { PublicationField } from '@shared/components/publication-field/publication-field';
 import { TextareaModule } from 'primeng/textarea';
 
 @Component({
@@ -35,6 +54,7 @@ import { TextareaModule } from 'primeng/textarea';
     FieldError,
     MessageModule,
     ConfirmPopupModule,
+    PublicationField,
   ],
   providers: [ConfirmationService],
   templateUrl: './block-form-dialog.html',
@@ -57,6 +77,56 @@ export class BlockFormDialog implements OnInit, OnDestroy {
   uiForm!: FormGroup;
   isEditForm!: boolean;
 
+  /** Ancla del `ConfirmPopup` de guardado: el diálogo se envía con Enter además de con el botón. */
+  private readonly saveAnchor = viewChild<ElementRef<HTMLElement>>('saveAnchor');
+  private readonly confirmPopup = viewChild(ConfirmPopup);
+
+  /**
+   * Si el `ConfirmPopup` está abierto, para inhabilitar los botones del formulario y dejar
+   * activos solo los suyos.
+   *
+   * Se lee de su propia visibilidad y no de un indicador propio porque el popup también se
+   * cierra con clic fuera, Escape, scroll y al cambiar el tamaño de la ventana, y esas vías
+   * no invocan `reject`: un indicador manual se quedaría encendido y los botones,
+   * inhabilitados para siempre.
+   */
+  readonly isConfirming = computed(() => this.confirmPopup()?.computedVisible() ?? false);
+
+  /**
+   * Este formulario comparte el `ConfirmPopup` con la confirmación de reemplazar contenido por
+   * el de la IA, y solo la de publicación debe realzar el aviso del interruptor.
+   *
+   * Basta con anotar cuál se abrió, sin reiniciarlo después: solo se lee mientras el popup
+   * está abierto, y para eso ya está `isConfirming`.
+   */
+  private readonly confirmingPublication = signal(false);
+  readonly isConfirmingPublication = computed(
+    () => this.isConfirming() && this.confirmingPublication(),
+  );
+
+  /** El bloque tal como está guardado, para comparar contra lo que hay en el formulario. */
+  private readonly savedBlock = signal<Block | null>(null);
+  private readonly siblingBlocks = signal<Block[]>([]);
+  private readonly pendingPublished = signal(false);
+
+  readonly impact = computed(() => {
+    const block = this.savedBlock();
+    if (!block) return null;
+
+    const lesson = this.lessonsSource().find((item) => item.id === block.lesson_id);
+    const module = this.modulesList().find((item) => item.id === lesson?.module_id);
+    if (!lesson || !module) return null;
+
+    return describeBlockImpact(
+      { block, lesson, module, siblingBlocks: this.siblingBlocks() },
+      this.pendingPublished(),
+    );
+  });
+
+  get isPublishedControl(): FormControl<boolean> {
+    return this.blockForm.controls['is_published'] as FormControl<boolean>;
+  }
+
   readonly showAiPanel = signal(false);
   readonly isGenerating = signal(false);
   readonly generationError = signal<string | null>(null);
@@ -73,7 +143,11 @@ export class BlockFormDialog implements OnInit, OnDestroy {
       // El tope es generoso a propósito: es markdown de un bloque completo, con ejemplos
       // de código incluidos, no una sola idea corta.
       content: [undefined, [Validators.required, Validators.maxLength(20_000)]],
+      // Nace en borrador: nada llega al estudiante sin un acto deliberado de publicar.
+      is_published: [false],
     });
+
+    this.isPublishedControl.valueChanges.subscribe((value) => this.pendingPublished.set(!!value));
     // `uiForm` agrupa lo que no se persiste: el tema (solo filtra los subtemas) y la
     // indicación que el admin le da a la IA.
     this.uiForm = this.formBuilder.group({
@@ -118,6 +192,11 @@ export class BlockFormDialog implements OnInit, OnDestroy {
   private async loadBlock(id: number): Promise<void> {
     try {
       const data = await this.blockService.getById(id);
+      // Los hermanos hacen falta para saber si es el último bloque publicado del subtema, que es
+      // el caso en el que despublicarlo se lleva el subtema entero por delante.
+      this.savedBlock.set(data);
+      this.siblingBlocks.set(await this.blockService.getAllByLessonId(data.lesson_id));
+      this.pendingPublished.set(data.is_published);
       this.blockForm.patchValue(data);
       const currentModuleId = this.lessonsList().find((l) => l.id === data.lesson_id)?.module_id;
       this.uiForm.patchValue({ module_id: currentModuleId }, { emitEvent: false });
@@ -169,6 +248,7 @@ export class BlockFormDialog implements OnInit, OnDestroy {
       return;
     }
 
+    this.confirmingPublication.set(false);
     this.confirmationService.confirm({
       target: event.target as EventTarget,
       message: 'Ya escribiste contenido en este bloque. ¿Reemplazarlo por el que genere la IA?',
@@ -248,36 +328,36 @@ export class BlockFormDialog implements OnInit, OnDestroy {
     this.router.navigate(['/admin']);
   }
 
+  /** Solo se confirma lo que deja de verse; publicar o editar el contenido se guardan sin más. */
   onSubmit() {
     // El botón ya está deshabilitado mientras se genera, pero el `(ngSubmit)` del form
     // también se dispara con Enter desde los inputs; guardar aquí evitaría persistir un
     // contenido que la IA está a punto de reemplazar.
     if (this.isGenerating()) return;
+    if (this.blockForm.invalid) return;
 
-    if (this.blockForm.valid) {
-      if (this.isEditForm) {
-        const id = this.activatedRoute.snapshot.paramMap.get('id');
-        this.blockService
-          .update(
-            Number(id),
-            this.blockForm.value.name,
-            this.blockForm.value.content,
-            this.blockForm.value.lesson_id,
-          )
-          .then(() => {
-            this.router.navigate(['/admin']);
-          });
-      } else {
-        this.blockService
-          .insert(
-            this.blockForm.value.name,
-            this.blockForm.value.content,
-            this.blockForm.value.lesson_id,
-          )
-          .then(() => {
-            this.router.navigate(['/admin']);
-          });
-      }
+    const impact = this.impact();
+    if (!impact?.hides) {
+      void this.save();
+      return;
     }
+
+    this.confirmingPublication.set(true);
+    this.confirmationService.confirm(
+      publicationConfirmation(this.saveAnchor()?.nativeElement, () => void this.save()),
+    );
+  }
+
+  private async save(): Promise<void> {
+    const { name, content, lesson_id, is_published } = this.blockForm.value;
+
+    if (this.isEditForm) {
+      const id = this.activatedRoute.snapshot.paramMap.get('id');
+      await this.blockService.update(Number(id), name, content, lesson_id, is_published);
+    } else {
+      await this.blockService.insert(name, content, lesson_id, is_published);
+    }
+
+    this.router.navigate(['/admin']);
   }
 }

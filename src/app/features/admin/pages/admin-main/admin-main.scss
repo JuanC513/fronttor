@@ -37,3 +37,20 @@
   border-bottom: 1px solid;
   border-color: var(--color-border);
 }
+
+.publication-legend {
+  color: var(--p-text-muted-color);
+  font-size: 0.8125rem;
+
+  .is-published {
+    color: var(--color-success);
+  }
+
+  .is-hidden {
+    color: var(--color-warning);
+  }
+
+  .is-draft {
+    color: var(--color-text-muted);
+  }
+}

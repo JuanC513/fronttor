@@ -1,3 +1,5 @@
+<p-confirmpopup />
+
 <p-dialog
   [header]="isEditForm ? 'Editar subtema' : 'Crear subtema'"
   [modal]="true"
@@ -5,11 +7,8 @@
   [style]="{ width: '30rem' }"
   (onHide)="closeDialog()"
 >
-  <span class="flex flex-column gap-5">
-    <span class="p-text-secondary block">{{
-      isEditForm ? 'Edita el subtema seleccionado' : 'Crea un nuevo subtema'
-    }}</span>
-    <form [formGroup]="lessonForm" (ngSubmit)="onSubmit()" class="flex flex-column gap-5">
+  <span class="flex flex-column">
+    <form [formGroup]="lessonForm" (ngSubmit)="onSubmit()" class="flex flex-column gap-4 pt-2">
       <div>
         <p-floatlabel variant="on">
           <p-select
@@ -48,13 +47,28 @@
           [customMessages]="{ required: 'Ingresa un nombre para el subtema.' }"
         />
       </div>
+      <app-publication-field
+        [control]="isPublishedControl"
+        [isEditForm]="isEditForm"
+        [impact]="impact()"
+        [highlight]="isConfirming()"
+        entityLabel="el subtema"
+      />
       <div class="flex justify-content-end gap-2">
-        <p-button label="Cancelar" variant="outlined" severity="danger" (click)="closeDialog()" />
         <p-button
-          [label]="isEditForm ? 'Actualizar' : 'Crear'"
-          type="submit"
-          [disabled]="lessonForm.invalid"
+          label="Cancelar"
+          variant="outlined"
+          severity="danger"
+          [disabled]="isConfirming()"
+          (click)="closeDialog()"
         />
+        <span #saveAnchor>
+          <p-button
+            [label]="isEditForm ? 'Actualizar' : 'Crear'"
+            type="submit"
+            [disabled]="lessonForm.invalid || isConfirming()"
+          />
+        </span>
       </div>
     </form>
   </span>

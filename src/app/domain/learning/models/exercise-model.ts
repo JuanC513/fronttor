@@ -19,6 +19,8 @@ export interface Exercise {
   // Un ejercicio sin criterios nunca se aprueba
   criteria: ExerciseCriterion[];
   source: ExerciseSource;
+  // Nace en borrador; solo los publicados cuentan para completar el subtema
+  is_published: boolean;
   order: number;
   created_at: string;
 }

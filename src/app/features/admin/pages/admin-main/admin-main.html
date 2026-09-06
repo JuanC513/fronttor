@@ -7,6 +7,18 @@
         \n¡Haz clic en algún elemento para editar!`
       }}
     </p>
+    <div class="publication-legend flex flex-wrap align-items-center gap-3">
+      <span class="flex align-items-center gap-2">
+        <i class="pi pi-check-circle is-published"></i> Publicado
+      </span>
+      <span class="flex align-items-center gap-2">
+        <i class="pi pi-exclamation-triangle is-hidden"></i> Publicado pero no se muestra
+      </span>
+      <span class="flex align-items-center gap-2">
+        <i class="pi pi-eye-slash is-draft"></i> Borrador
+      </span>
+      <p>El contenido se crea como borrador: publícalo desde su formulario cuando esté listo.</p>
+    </div>
   </span>
 
   @if (error()) {
@@ -49,7 +61,10 @@
                   >
                     <ng-template #item let-module let-index="index">
                       <div class="flex align-items-center justify-content-between w-full h-full">
-                        <span>{{ index + 1 + '. ' + module.name }}</span>
+                        <span class="flex align-items-center gap-2">
+                          <app-publication-badge [status]="moduleStatus(module)" />
+                          {{ index + 1 + '. ' + module.name }}
+                        </span>
                         <p-button
                           icon="pi pi-pen-to-square"
                           link
@@ -132,9 +147,12 @@
                       >
                         <ng-template #item let-submodule let-index="index">
                           <div class="flex align-items-center justify-content-between w-full">
-                            <span>{{
-                              selectedModule()!.order + '.' + (index + 1) + '. ' + submodule.name
-                            }}</span>
+                            <span class="flex align-items-center gap-2">
+                              <app-publication-badge [status]="lessonStatus(submodule)" />
+                              {{
+                                selectedModule()!.order + '.' + (index + 1) + '. ' + submodule.name
+                              }}
+                            </span>
                             <p-button
                               icon="pi pi-pen-to-square"
                               link
@@ -232,9 +250,10 @@
                       >
                         <ng-template #item let-block let-index="index">
                           <div class="flex align-items-center justify-content-between w-full">
-                            <span>{{
-                              selectedLesson()!.order + '.' + (index + 1) + '. ' + block.name
-                            }}</span>
+                            <span class="flex align-items-center gap-2">
+                              <app-publication-badge [status]="blockStatus(block)" />
+                              {{ selectedLesson()!.order + '.' + (index + 1) + '. ' + block.name }}
+                            </span>
                             <p-button
                               icon="pi pi-pen-to-square"
                               link

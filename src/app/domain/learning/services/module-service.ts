@@ -42,11 +42,21 @@ export class ModuleService {
    * Árbol de contenido para la vista de estudiante: los mismos temas y subtemas que
    * {@link getAllWithLessons}, más el conteo de bloques de cada subtema para poder descartar lo que
    * todavía no es consumible.
+   *
+   * Solo devuelve lo publicado, y el filtro va en la consulta y no en el componente para que el
+   * contenido en preparación ni siquiera llegue al navegador.
+   *
+   * Ojo con el comportamiento de PostgREST: filtrar un recurso embebido vacía su array pero
+   * conserva la fila padre. Un tema sin subtemas publicados vuelve con `lessons: []`, y de
+   * descartarlo se encarga la vista, que ya lo hacía antes de que existiera `is_published`.
    */
   async getLearningTree(): Promise<ModuleWithLessonCounts[]> {
     const { data, error } = await this.supabase
       .from('modules')
       .select(`*, lessons(*, blocks(count))`)
+      .eq('is_published', true)
+      .eq('lessons.is_published', true)
+      .eq('lessons.blocks.is_published', true)
       .order(this.orderColumn, { ascending: true })
       .order(this.orderColumn, { ascending: true, referencedTable: 'lessons' });
 
@@ -61,15 +71,22 @@ export class ModuleService {
     return data as Module;
   }
 
-  async insert(name: string): Promise<void> {
-    const { error } = await this.supabase.rpc('insert_module', { p_name: name });
+  async insert(name: string, isPublished: boolean): Promise<void> {
+    const { error } = await this.supabase.rpc('insert_module', {
+      p_name: name,
+      p_is_published: isPublished,
+    });
 
     if (error) throw new Error(error.message);
     this.notifyRefresh();
   }
 
-  async update(id: number, name: string): Promise<void> {
-    const { error } = await this.supabase.rpc('update_module', { p_id: id, p_name: name });
+  async update(id: number, name: string, isPublished: boolean): Promise<void> {
+    const { error } = await this.supabase.rpc('update_module', {
+      p_id: id,
+      p_name: name,
+      p_is_published: isPublished,
+    });
 
     if (error) throw new Error(error.message);
     this.notifyRefresh();

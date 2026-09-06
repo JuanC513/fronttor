@@ -16,21 +16,30 @@ describe('LearningLesson', () => {
     content: `# Contenido ${id}`,
     order: id,
     lesson_id: 1,
+    is_published: true,
   });
 
   /** Monta el componente con los tres servicios espiados y la ruta `/modules/1/lessons/1`. */
   const setup = async (blocks: Block[], failing = false) => {
     const moduleService = jasmine.createSpyObj<ModuleService>('ModuleService', ['getById']);
     const lessonService = jasmine.createSpyObj<LessonService>('LessonService', ['getById']);
-    const blockService = jasmine.createSpyObj<BlockService>('BlockService', ['getAllByLessonId']);
+    const blockService = jasmine.createSpyObj<BlockService>('BlockService', [
+      'getPublishedByLessonId',
+    ]);
 
-    moduleService.getById.and.resolveTo({ id: 1, name: 'Tema 1', order: 1 });
-    lessonService.getById.and.resolveTo({ id: 1, name: 'Subtema 1', order: 1, module_id: 1 });
+    moduleService.getById.and.resolveTo({ id: 1, name: 'Tema 1', order: 1, is_published: true });
+    lessonService.getById.and.resolveTo({
+      id: 1,
+      name: 'Subtema 1',
+      order: 1,
+      module_id: 1,
+      is_published: true,
+    });
 
     if (failing) {
-      blockService.getAllByLessonId.and.rejectWith(new Error('boom'));
+      blockService.getPublishedByLessonId.and.rejectWith(new Error('boom'));
     } else {
-      blockService.getAllByLessonId.and.resolveTo(blocks);
+      blockService.getPublishedByLessonId.and.resolveTo(blocks);
     }
 
     TestBed.configureTestingModule({

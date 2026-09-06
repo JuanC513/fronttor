@@ -7,8 +7,8 @@
   [style]="{ width: '80rem' }"
   (onHide)="closeDialog()"
 >
-  <span class="flex flex-column gap-5">
-    <form [formGroup]="blockForm" (ngSubmit)="onSubmit()" class="flex flex-column gap-5 mt-2">
+  <span class="flex flex-column">
+    <form [formGroup]="blockForm" (ngSubmit)="onSubmit()" class="flex flex-column gap-4 pt-2">
       <span class="flex gap-3">
         <div class="w-full">
           <p-floatlabel variant="on" [formGroup]="uiForm" class="w-full">
@@ -155,14 +155,29 @@
           </div>
         </span>
       </span>
+      <app-publication-field
+        [control]="isPublishedControl"
+        [isEditForm]="isEditForm"
+        [impact]="impact()"
+        [highlight]="isConfirmingPublication()"
+        entityLabel="el bloque"
+      />
     </form>
   </span>
   <ng-template #footer class="pt-2">
-    <p-button label="Cancelar" variant="outlined" severity="danger" (click)="closeDialog()" />
     <p-button
-      [label]="isEditForm ? 'Actualizar' : 'Crear'"
-      (onClick)="onSubmit()"
-      [disabled]="blockForm.invalid || isGenerating()"
+      label="Cancelar"
+      variant="outlined"
+      severity="danger"
+      [disabled]="isConfirming()"
+      (click)="closeDialog()"
     />
+    <span #saveAnchor>
+      <p-button
+        [label]="isEditForm ? 'Actualizar' : 'Crear'"
+        (onClick)="onSubmit()"
+        [disabled]="blockForm.invalid || isGenerating() || isConfirming()"
+      />
+    </span>
   </ng-template>
 </p-dialog>

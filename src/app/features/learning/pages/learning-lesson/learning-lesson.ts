@@ -63,11 +63,24 @@ export class LearningLesson implements OnInit, OnDestroy {
     this.chatService.clearContext();
   }
 
+  /**
+   * El listado de subtemas ya solo ofrece contenido publicado, pero a esta vista también se llega
+   * escribiendo la URL. Sin esta comprobación, un subtema en preparación se mostraría entero a
+   * quien acertara con el identificador.
+   */
   async fetchData(moduleId: number, lessonId: number) {
     try {
       const moduleData = await this.moduleService.getById(moduleId);
       const currentLesson = await this.lessonService.getById(lessonId);
-      const currentBlocks = await this.blockService.getAllByLessonId(lessonId);
+      const currentBlocks = await this.blockService.getPublishedByLessonId(lessonId);
+
+      // Sin bloques publicados no se corta aquí: de eso se encarga el estado vacío de la
+      // plantilla, que distingue "no tiene contenido todavía" de "está oculto a propósito".
+      if (!moduleData.is_published || !currentLesson.is_published) {
+        this.error.set('Este contenido todavía no está disponible.');
+        return;
+      }
+
       this.currentModule.set(moduleData);
       this.currentLesson.set(currentLesson);
       this.currentBlocks.set(currentBlocks);

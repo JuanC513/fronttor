@@ -22,9 +22,10 @@ npx supabase db dump --linked --schema public -f supabase/schema-actual.sql
 1. `schema-actual.sql` — solo en un proyecto nuevo
 2. `migrations/20260818120000_exercises_attempts_progress.sql`
 3. `migrations/20260818130000_content_and_profile_policies.sql`
-4. `seed.sql`
+4. `migrations/20260830120000_content_publication.sql`
+5. `seed.sql`
 
-El orden entre 2 y 3 **no es opcional**: la segunda migración usa la función `is_admin()`, que crea la primera.
+El orden entre 2 y 3 **no es opcional**: la segunda migración usa la función `is_admin()`, que crea la primera. La 4 tampoco es opcional después de la 2: redefine funciones que la 2 crea.
 
 ## Cómo aplicarlos
 
@@ -90,6 +91,11 @@ Es decir: las cuentas de usuario y su asociación con los roles **no se pierden*
 
   Si hace falta reaplicarla con datos cargados, ejecutar solo desde la sección 2 en adelante, saltándose la creación de `exercises`.
 
+- **`20260830120000_content_publication.sql` es seguro de reejecutar.** Añade la columna
+  `is_published` y redefine funciones, todo comprobando antes si hace falta. La publicación del
+  contenido que ya existía solo ocurre en la ejecución que crea la columna, de modo que reejecutarlo
+  **no** publica los borradores que haya en ese momento.
+
 - **`seed.sql` es seguro de reejecutar.**
 
 ## Comprobación
@@ -104,6 +110,19 @@ update  profiles set role_id = 2 where user_id = auth.uid();
 ```
 
 Y con sesión de administrador, el panel debe seguir funcionando completo: crear, editar, reordenar y borrar temas, subtemas y bloques.
+
+Además, ninguna RPC de contenido puede haber quedado duplicada por una sobrecarga. Esta consulta debe devolver exactamente ocho filas:
+
+```sql
+select proname, pg_get_function_identity_arguments(oid)
+from pg_proc
+where pronamespace = 'public'::regnamespace
+  and proname in ('insert_module','update_module','insert_lesson','update_lesson',
+                  'insert_block','update_block','insert_exercise','update_exercise')
+order by proname;
+```
+
+Si sale alguna repetida, el panel fallará al guardar con *"Could not choose the best candidate function"*.
 
 ## Sobre publicar este esquema
 

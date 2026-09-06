@@ -28,21 +28,23 @@ export class LessonService {
     return data as Lesson;
   }
 
-  async insert(name: string, moduleId: number): Promise<void> {
+  async insert(name: string, moduleId: number, isPublished: boolean): Promise<void> {
     const { error } = await this.supabase.rpc('insert_lesson', {
       p_name: name,
       p_module_id: moduleId,
+      p_is_published: isPublished,
     });
 
     if (error) throw new Error(error.message);
     this.notifyRefresh();
   }
 
-  async update(id: number, name: string, moduleId: number): Promise<void> {
+  async update(id: number, name: string, moduleId: number, isPublished: boolean): Promise<void> {
     const { error } = await this.supabase.rpc('update_lesson', {
       p_id: id,
       p_name: name,
       p_module_id: moduleId,
+      p_is_published: isPublished,
     });
 
     if (error) throw new Error(error.message);

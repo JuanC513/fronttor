@@ -1,0 +1,30 @@
+.publication-field {
+  border-top: 1px solid var(--color-border);
+  padding-top: 1rem;
+}
+
+.publication-field label {
+  font-weight: 500;
+}
+
+// El borde transparente y el relleno están siempre puestos, no solo al realzar.
+.impact {
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.75rem;
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    box-shadow 200ms ease;
+
+  &.is-highlighted {
+    border-color: var(--color-error);
+    background-color: var(--color-error-bg);
+    box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--color-error) 18%, transparent);
+
+    ::ng-deep .p-message-text {
+      color: var(--color-error);
+      font-weight: 500;
+    }
+  }
+}

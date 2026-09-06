@@ -4,4 +4,5 @@ export interface Block {
   content: string;
   order: number;
   lesson_id: number;
+  is_published: boolean;
 }
