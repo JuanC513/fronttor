@@ -16,6 +16,12 @@ export interface Exercise {
   starter_html: string;
   starter_css: string;
   starter_js: string;
+  // Codigo que SI cumple los criterios. Sirve para comprobar que estan bien escritos: un
+  // computed_style con el valor mal normalizado solo se delata al correrlo contra algo que
+  // deberia aprobarlo.
+  solution_html: string;
+  solution_css: string;
+  solution_js: string;
   // Un ejercicio sin criterios nunca se aprueba
   criteria: ExerciseCriterion[];
   source: ExerciseSource;
