@@ -1,4 +1,5 @@
 import { Block } from '../models/block-model';
+import { Exercise } from '../models/exercise-model';
 import { Lesson } from '../models/lesson-model';
 import { Module } from '../models/module-model';
 
@@ -250,5 +251,97 @@ function unchanged(): ToggleImpact {
     severity: 'info',
     hides: false,
     message: 'No se estaba mostrando, así que nada cambia para los estudiantes.',
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Ejercicios
+//
+// Se tratan aparte porque no participan en la visibilidad del subtema: eso solo lo deciden los
+// bloques. Lo que un ejercicio publicado cambia es otra cosa —pasa a ser obligatorio para
+// completar el subtema— y por eso sus avisos hablan de progreso y no de contenido oculto.
+//
+// Para los ancestros basta con mirar `is_published`, sin arrastrar los bloques hasta aquí. Que un
+// subtema publicado no se vea por no tener bloques publicados es un problema del subtema, y su
+// propia insignia ya lo dice.
+// ---------------------------------------------------------------------------
+
+/** `siblingExercises` incluye al propio ejercicio. */
+export interface ExerciseScope {
+  exercise: Exercise;
+  lesson: Lesson;
+  module: Module;
+  siblingExercises: Exercise[];
+}
+
+/**
+ * Por qué no se puede publicar este ejercicio, o `null` si sí se puede.
+ *
+ * Un ejercicio publicado sin criterios no es solo inútil: `recompute_lesson_progress` lo cuenta
+ * entre los que hay que aprobar, y como no hay nada que comprobar nunca se aprueba. El subtema
+ * queda imposible de completar para todo el mundo, sin que nada lo explique. Por eso el bloqueo
+ * está en la interfaz y no en un aviso que se pueda ignorar.
+ */
+export function exercisePublicationBlock(exercise: Pick<Exercise, 'criteria'>): string | null {
+  if (exercise.criteria.length > 0) return null;
+
+  return (
+    'Todavía no tiene criterios de validación. Sin ellos nadie puede aprobarlo, y el subtema ' +
+    'quedaría imposible de completar.'
+  );
+}
+
+export function resolveExerciseStatus({
+  exercise,
+  lesson,
+  module,
+}: ExerciseScope): PublicationStatus {
+  if (!exercise.is_published) return DRAFT;
+
+  if (!module.is_published) return hidden('Su tema está en borrador');
+  if (!lesson.is_published) return hidden('Su subtema está en borrador');
+
+  // No deberia darse, porque el formulario impide publicarlo: queda por si la fila se creo fuera
+  // de la aplicacion.
+  if (exercise.criteria.length === 0) return hidden('No tiene criterios y nadie puede aprobarlo');
+
+  return PUBLISHED;
+}
+
+export function describeExerciseImpact(scope: ExerciseScope, next: boolean): ToggleImpact | null {
+  const { exercise, siblingExercises } = scope;
+  if (next === exercise.is_published) return null;
+
+  const after = resolveExerciseStatus({ ...scope, exercise: { ...exercise, is_published: next } });
+
+  if (next) {
+    if (after.state === 'hidden') return revealed(after);
+
+    return {
+      severity: 'info',
+      hides: false,
+      message:
+        'Pasará a ser obligatorio: los estudiantes tendrán que resolverlo para completar el ' +
+        'subtema. Quienes ya lo completaron conservan su progreso.',
+    };
+  }
+
+  if (!isVisible(resolveExerciseStatus(scope))) return unchanged();
+
+  const others = siblingExercises.filter(
+    (other) => other.id !== exercise.id && other.is_published,
+  ).length;
+
+  // Sin ejercicios publicados, el subtema se completa con solo abrirlo. Es la regla de
+  // `mark_lesson_viewed`, y conviene decirla antes de que ocurra.
+  const consequence =
+    others === 0
+      ? ' Era el único publicado, así que el subtema pasará a completarse con solo abrirlo.'
+      : ` Quedan ${others} ejercicios obligatorios en el subtema.`;
+
+  return {
+    severity: 'warn',
+    hides: true,
+    message: `Dejará de mostrarse y de ser obligatorio.${consequence}`,
   };
 }

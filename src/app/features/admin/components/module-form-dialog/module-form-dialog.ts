@@ -13,6 +13,7 @@ import { Module } from '@domain/learning/models/module-model';
 import { BlockService } from '@domain/learning/services/block-service';
 import { ModuleService } from '@domain/learning/services/module-service';
 import { describeModuleImpact } from '@domain/learning/utils/publication-state';
+import { deleteConfirmation, UNPUBLISH_INSTEAD } from '@features/admin/utils/delete-confirmation';
 import { FieldError } from '@shared/components/field-error/field-error';
 import { publicationConfirmation } from '@shared/components/publication-field/publication-confirm';
 import { PublicationField } from '@shared/components/publication-field/publication-field';
@@ -22,6 +23,8 @@ import { ConfirmPopup, ConfirmPopupModule } from 'primeng/confirmpopup';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { FloatLabelModule } from 'primeng/floatlabel';
+
+type ConfirmKind = 'publication' | 'delete' | null;
 
 @Component({
   selector: 'app-module-form-dialog',
@@ -51,6 +54,7 @@ export class ModuleFormDialog implements OnInit {
 
   /** Ancla del `ConfirmPopup`: el diálogo se envía con Enter además de con el botón. */
   private readonly saveAnchor = viewChild<ElementRef<HTMLElement>>('saveAnchor');
+  private readonly deleteAnchor = viewChild<ElementRef<HTMLElement>>('deleteAnchor');
   private readonly confirmPopup = viewChild(ConfirmPopup);
 
   /**
@@ -63,6 +67,41 @@ export class ModuleFormDialog implements OnInit {
    * inhabilitados para siempre.
    */
   readonly isConfirming = computed(() => this.confirmPopup()?.computedVisible() ?? false);
+
+  /**
+   * Que confirmacion esta abierta, para que cada una resalte lo suyo.
+   *
+   * Basta con anotarla al abrirla, sin reiniciarla: solo se lee mientras el popup esta abierto, y
+   * de eso ya se encarga `isConfirming`.
+   */
+  private readonly confirmKind = signal<ConfirmKind>(null);
+
+  /** El aviso de publicacion se realza solo si el popup abierto es el suyo. */
+  readonly highlightImpact = computed(
+    () => this.isConfirming() && this.confirmKind() === 'publication',
+  );
+
+  /** Ocupa el hueco del aviso de publicacion mientras se pregunta por el borrado. */
+  readonly deleteNotice = computed(() =>
+    this.isConfirming() && this.confirmKind() === 'delete' ? this.deleteMessage() : null,
+  );
+
+  /**
+   * El borrado va en cascada hasta el final: subtemas, bloques, ejercicios y, con estos, los
+   * intentos y el progreso de los estudiantes. Nada de eso se puede recuperar.
+   */
+  private readonly deleteMessage = computed(() => {
+    const module = this.savedModule();
+    if (!module) return '';
+
+    const lessons = this.lessons().length;
+    const cascade = lessons
+      ? ` Se borrarán con él sus ${lessons} subtemas, sus bloques y sus ejercicios, junto con` +
+        ' los intentos y el progreso que los estudiantes tengan en ellos.'
+      : '';
+
+    return `Se borrará «${module.name}» de forma permanente.${cascade} ${UNPUBLISH_INSTEAD}`;
+  });
 
   /** El tema tal como está guardado, para comparar contra lo que hay en el formulario. */
   private readonly savedModule = signal<Module | null>(null);
@@ -137,9 +176,29 @@ export class ModuleFormDialog implements OnInit {
       return;
     }
 
+    this.confirmKind.set('publication');
     this.confirmationService.confirm(
       publicationConfirmation(this.saveAnchor()?.nativeElement, () => void this.save()),
     );
+  }
+
+  /**
+   * El borrado va en cascada hasta el final: subtemas, bloques, ejercicios y, con estos, los
+   * intentos y el progreso de los estudiantes. Nada de eso se puede recuperar.
+   */
+  onDelete(): void {
+    const module = this.savedModule();
+    if (!module) return;
+
+    this.confirmKind.set('delete');
+    this.confirmationService.confirm(
+      deleteConfirmation(this.deleteAnchor()?.nativeElement, () => void this.remove(module.id)),
+    );
+  }
+
+  private async remove(id: number): Promise<void> {
+    await this.moduleService.delete(id);
+    this.router.navigate(['/admin']);
   }
 
   private async save(): Promise<void> {

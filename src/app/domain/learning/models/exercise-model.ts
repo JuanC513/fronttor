@@ -30,3 +30,26 @@ export interface Exercise {
   order: number;
   created_at: string;
 }
+
+/**
+ * Campos editables de un ejercicio.
+ *
+ * Se pasan como objeto y no como argumentos sueltos: las RPC de insercion y actualizacion tienen
+ * trece y catorce parametros, y una llamada con esa cantidad de valores posicionales es ilegible y
+ * facil de descuadrar sin que el compilador lo note, porque casi todos son cadenas.
+ */
+export interface ExerciseInput {
+  lesson_id: number;
+  name: string;
+  statement: string;
+  difficulty: ExerciseDifficulty;
+  starter_html: string;
+  starter_css: string;
+  starter_js: string;
+  solution_html: string;
+  solution_css: string;
+  solution_js: string;
+  criteria: ExerciseCriterion[];
+  source: ExerciseSource;
+  is_published: boolean;
+}

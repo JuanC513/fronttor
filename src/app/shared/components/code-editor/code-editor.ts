@@ -3,11 +3,12 @@ import {
   Component,
   effect,
   ElementRef,
-  inject,
+  model,
   OnDestroy,
+  signal,
   ViewChild,
 } from '@angular/core';
-import { CodeRunnerStateService } from '@domain/code-runner/services/code-runner-state-service';
+import { CodeRunnerState } from '@domain/code-runner/models/code-runner-model';
 import type * as Monaco from 'monaco-editor';
 
 declare global {
@@ -20,6 +21,15 @@ declare global {
   }
 }
 
+type Language = keyof CodeRunnerState;
+
+/**
+ * Editor de HTML, CSS y JavaScript en pestañas, sobre Monaco.
+ *
+ * El contenido entra y sale por `value` en lugar de leerse de un servicio inyectado. Con el
+ * servicio no se podía montar más de un editor por vista —los dos compartirían el mismo texto—, y
+ * el formulario de ejercicios necesita dos: el código inicial y la solución.
+ */
 @Component({
   selector: 'app-code-editor',
   imports: [],
@@ -28,34 +38,37 @@ declare global {
   standalone: true,
 })
 export class CodeEditor implements AfterViewInit, OnDestroy {
-  private editor!: Monaco.editor.IStandaloneCodeEditor;
-  private models!: Record<'html' | 'css' | 'js', Monaco.editor.ITextModel>;
-  private readonly codeRunnerStateService = inject(CodeRunnerStateService);
+  readonly value = model.required<CodeRunnerState>();
+
+  private editor?: Monaco.editor.IStandaloneCodeEditor;
+  private models?: Record<Language, Monaco.editor.ITextModel>;
 
   @ViewChild('editorContainer', { static: true })
   editorContainer!: ElementRef<HTMLDivElement>;
 
-  activeTab: 'html' | 'css' | 'js' = 'html';
+  readonly activeTab = signal<Language>('html');
+  readonly languages: Language[] = ['html', 'css', 'js'];
 
   ngAfterViewInit(): void {
     this.loadMonaco();
   }
 
-  private stateEffect = effect(() => {
-    const state = this.codeRunnerStateService.editableState();
+  /**
+   * Refleja en el editor los cambios que vengan de fuera.
+   *
+   * La comparación previa evita el ciclo: al escribir se emite `value`, esto vuelve a entrar, y
+   * sin comprobar antes si el texto ya coincide se llamaría a `setValue` sobre el modelo que el
+   * usuario está editando, moviéndole el cursor al principio.
+   */
+  private syncFromValue = effect(() => {
+    const state = this.value();
+    const models = this.models;
+    if (!models) return;
 
-    if (!this.models) return;
-
-    if (this.models.html.getValue() !== state.html) {
-      this.models.html.setValue(state.html);
-    }
-
-    if (this.models.css.getValue() !== state.css) {
-      this.models.css.setValue(state.css);
-    }
-
-    if (this.models.js.getValue() !== state.js) {
-      this.models.js.setValue(state.js);
+    for (const language of this.languages) {
+      if (models[language].getValue() !== state[language]) {
+        models[language].setValue(state[language]);
+      }
     }
   });
 
@@ -67,18 +80,16 @@ export class CodeEditor implements AfterViewInit, OnDestroy {
 
       window.require(['vs/editor/editor.main'], () => {
         const monaco = window.monaco;
+        const state = this.value();
 
         this.models = {
-          html: monaco.editor.createModel(this.codeRunnerStateService.editableState().html, 'html'),
-          css: monaco.editor.createModel(this.codeRunnerStateService.editableState().css, 'css'),
-          js: monaco.editor.createModel(
-            this.codeRunnerStateService.editableState().js,
-            'javascript',
-          ),
+          html: monaco.editor.createModel(state.html, 'html'),
+          css: monaco.editor.createModel(state.css, 'css'),
+          js: monaco.editor.createModel(state.js, 'javascript'),
         };
 
         this.editor = monaco.editor.create(this.editorContainer.nativeElement, {
-          model: this.models.html,
+          model: this.models[this.activeTab()],
           theme: 'vs-dark',
           automaticLayout: true,
           minimap: { enabled: false },
@@ -86,8 +97,10 @@ export class CodeEditor implements AfterViewInit, OnDestroy {
         });
 
         this.editor.onDidChangeModelContent(() => {
-          const value = this.editor.getValue();
-          this.updateState(value);
+          this.value.update((current) => ({
+            ...current,
+            [this.activeTab()]: this.editor!.getValue(),
+          }));
         });
       });
     };
@@ -102,15 +115,16 @@ export class CodeEditor implements AfterViewInit, OnDestroy {
     }
   }
 
-  updateState(value: string) {
-    if (this.activeTab === 'html') this.codeRunnerStateService.updateHtml(value);
-    if (this.activeTab === 'css') this.codeRunnerStateService.updateCss(value);
-    if (this.activeTab === 'js') this.codeRunnerStateService.updateJs(value);
+  /** Monaco se carga de forma asíncrona; hasta que termine no hay editor al que cambiarle nada. */
+  changeTab(language: Language) {
+    if (!this.editor || !this.models) return;
+
+    this.activeTab.set(language);
+    this.editor.setModel(this.models[language]);
   }
 
-  changeTab(tab: 'html' | 'css' | 'js') {
-    this.activeTab = tab;
-    this.editor.setModel(this.models[tab]);
+  label(language: Language): string {
+    return language.toUpperCase();
   }
 
   ngOnDestroy(): void {

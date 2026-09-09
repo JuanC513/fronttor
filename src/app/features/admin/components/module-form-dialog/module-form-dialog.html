@@ -29,24 +29,39 @@
       [control]="isPublishedControl"
       [isEditForm]="isEditForm"
       [impact]="impact()"
-      [highlight]="isConfirming()"
+      [highlight]="highlightImpact()"
+      [deleteNotice]="deleteNotice()"
       entityLabel="el tema"
     />
-    <div class="flex justify-content-end gap-2">
-      <p-button
-        label="Cancelar"
-        variant="outlined"
-        severity="danger"
-        [disabled]="isConfirming()"
-        (click)="closeDialog()"
-      />
-      <span #saveAnchor>
-        <p-button
-          [label]="isEditForm ? 'Actualizar' : 'Crear'"
-          type="submit"
-          [disabled]="moduleForm.invalid || isConfirming()"
-        />
+    <div class="flex justify-content-between align-items-center gap-2">
+      <span #deleteAnchor>
+        @if (isEditForm) {
+          <p-button
+            label="Borrar"
+            icon="pi pi-trash"
+            severity="danger"
+            variant="outlined"
+            [disabled]="isConfirming()"
+            (onClick)="onDelete()"
+          />
+        }
       </span>
+      <div class="flex gap-2">
+        <p-button
+          label="Cancelar"
+          variant="outlined"
+          severity="danger"
+          [disabled]="isConfirming()"
+          (click)="closeDialog()"
+        />
+        <span #saveAnchor>
+          <p-button
+            [label]="isEditForm ? 'Actualizar' : 'Crear'"
+            type="submit"
+            [disabled]="moduleForm.invalid || isConfirming()"
+          />
+        </span>
+      </div>
     </div>
   </form>
 </p-dialog>

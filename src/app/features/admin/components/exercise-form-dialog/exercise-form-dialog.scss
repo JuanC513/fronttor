@@ -1,0 +1,36 @@
+.markdown-rendered {
+  border: 1px solid;
+  border-color: var(--color-border-strong);
+  border-radius: var(--radius-md);
+  min-width: 0;
+  max-height: 12rem;
+  overflow-y: auto;
+}
+
+.section-label {
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.difficulty-field {
+  min-width: 12rem;
+}
+
+.code-hint {
+  margin: 0 0 0.75rem;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+// El editor ocupa el ancho del dialogo; el ancho fijo del componente solo sirve al Playground.
+.code-section ::ng-deep .code-editor-container {
+  width: 100%;
+}
+
+.code-section ::ng-deep .editor {
+  height: 18rem;
+}
+
+:host ::ng-deep .p-dialog-footer {
+  padding-top: 1rem;
+}

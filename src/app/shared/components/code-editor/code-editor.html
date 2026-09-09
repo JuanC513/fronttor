@@ -1,9 +1,10 @@
 <div class="code-editor-container">
   <div class="tabs">
-    <button [class.active]="activeTab === 'html'" (click)="changeTab('html')">HTML</button>
-    <button (click)="changeTab('html')">HTML</button>
-    <button (click)="changeTab('css')">CSS</button>
-    <button (click)="changeTab('js')">JS</button>
+    @for (language of languages; track language) {
+      <button type="button" [class.active]="activeTab() === language" (click)="changeTab(language)">
+        {{ label(language) }}
+      </button>
+    }
   </div>
   <div #editorContainer class="editor"></div>
 </div>

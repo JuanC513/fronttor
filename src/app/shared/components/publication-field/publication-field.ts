@@ -37,4 +37,20 @@ export class PublicationField {
    * ser lo primero que se lea.
    */
   readonly highlight = input(false);
+  /**
+   * Por que no se puede publicar todavia, o `null` si se puede.
+   *
+   * Solo se encarga de explicarlo: inhabilitar el control es cosa de quien lo crea, porque el
+   * `FormControl` es suyo y deshabilitarlo desde fuera del formulario lo dejaria descuadrado.
+   */
+  readonly blockedReason = input<string | null>(null);
+  /**
+   * Lo que se va a borrar, mientras el `ConfirmPopup` de borrado esta abierto.
+   *
+   * Ocupa el mismo hueco que el aviso de publicacion, resaltado igual, en vez de ir dentro del
+   * popup: ahi el texto largo lo ensancha hasta deformarlo, y aqui queda donde el ojo ya estaba
+   * mirando. Cuando esta puesto sustituye al aviso de publicacion, porque en ese momento la
+   * pregunta es otra.
+   */
+  readonly deleteNotice = input<string | null>(null);
 }

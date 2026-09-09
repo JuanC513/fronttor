@@ -14,6 +14,7 @@ import { BlockService } from '@domain/learning/services/block-service';
 import { LessonService } from '@domain/learning/services/lesson-service';
 import { ModuleService } from '@domain/learning/services/module-service';
 import { describeLessonImpact } from '@domain/learning/utils/publication-state';
+import { deleteConfirmation, UNPUBLISH_INSTEAD } from '@features/admin/utils/delete-confirmation';
 import { FieldError } from '@shared/components/field-error/field-error';
 import { publicationConfirmation } from '@shared/components/publication-field/publication-confirm';
 import { PublicationField } from '@shared/components/publication-field/publication-field';
@@ -24,6 +25,8 @@ import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { FloatLabelModule } from 'primeng/floatlabel';
+
+type ConfirmKind = 'publication' | 'delete' | null;
 
 @Component({
   selector: 'app-lesson-form-dialog',
@@ -56,6 +59,7 @@ export class LessonFormDialog implements OnInit {
 
   /** Ancla del `ConfirmPopup`: el diálogo se envía con Enter además de con el botón. */
   private readonly saveAnchor = viewChild<ElementRef<HTMLElement>>('saveAnchor');
+  private readonly deleteAnchor = viewChild<ElementRef<HTMLElement>>('deleteAnchor');
   private readonly confirmPopup = viewChild(ConfirmPopup);
 
   /**
@@ -68,6 +72,41 @@ export class LessonFormDialog implements OnInit {
    * inhabilitados para siempre.
    */
   readonly isConfirming = computed(() => this.confirmPopup()?.computedVisible() ?? false);
+
+  /**
+   * Que confirmacion esta abierta, para que cada una resalte lo suyo.
+   *
+   * Basta con anotarla al abrirla, sin reiniciarla: solo se lee mientras el popup esta abierto, y
+   * de eso ya se encarga `isConfirming`.
+   */
+  private readonly confirmKind = signal<ConfirmKind>(null);
+
+  /** El aviso de publicacion se realza solo si el popup abierto es el suyo. */
+  readonly highlightImpact = computed(
+    () => this.isConfirming() && this.confirmKind() === 'publication',
+  );
+
+  /** Ocupa el hueco del aviso de publicacion mientras se pregunta por el borrado. */
+  readonly deleteNotice = computed(() =>
+    this.isConfirming() && this.confirmKind() === 'delete' ? this.deleteMessage() : null,
+  );
+
+  /**
+   * Arrastra bloques y ejercicios, y con los ejercicios los intentos y el progreso que los
+   * estudiantes hayan acumulado en este subtema.
+   */
+  private readonly deleteMessage = computed(() => {
+    const lesson = this.savedLesson();
+    if (!lesson) return '';
+
+    const blocks = this.blocks().filter((block) => block.lesson_id === lesson.id).length;
+    const cascade = blocks
+      ? ` Se borrarán con él sus ${blocks} bloques y sus ejercicios, junto con los intentos y el` +
+        ' progreso que los estudiantes tengan en ellos.'
+      : ' Se borrarán también sus ejercicios y el progreso de los estudiantes en este subtema.';
+
+    return `Se borrará «${lesson.name}» de forma permanente.${cascade} ${UNPUBLISH_INSTEAD}`;
+  });
 
   /** El subtema tal como está guardado, para comparar contra lo que hay en el formulario. */
   private readonly savedLesson = signal<Lesson | null>(null);
@@ -165,9 +204,29 @@ export class LessonFormDialog implements OnInit {
       return;
     }
 
+    this.confirmKind.set('publication');
     this.confirmationService.confirm(
       publicationConfirmation(this.saveAnchor()?.nativeElement, () => void this.save()),
     );
+  }
+
+  /**
+   * Arrastra bloques y ejercicios, y con los ejercicios los intentos y el progreso que los
+   * estudiantes hayan acumulado en este subtema.
+   */
+  onDelete(): void {
+    const lesson = this.savedLesson();
+    if (!lesson) return;
+
+    this.confirmKind.set('delete');
+    this.confirmationService.confirm(
+      deleteConfirmation(this.deleteAnchor()?.nativeElement, () => void this.remove(lesson.id)),
+    );
+  }
+
+  private async remove(id: number): Promise<void> {
+    await this.lessonService.delete(id);
+    this.router.navigate(['/admin']);
   }
 
   private async save(): Promise<void> {

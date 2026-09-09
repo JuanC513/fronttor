@@ -6,7 +6,7 @@
 </div>
 
 <div class="playground-content">
-  <app-code-editor></app-code-editor>
+  <app-code-editor [value]="editableState()" (valueChange)="onCodeChange($event)" />
   <div>
     <app-preview-panel></app-preview-panel>
     <app-console-panel></app-console-panel>

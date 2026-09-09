@@ -1,0 +1,136 @@
+<section class="flex flex-column h-full">
+  <span class="px-4">
+    <h1>Administración</h1>
+  </span>
+
+  <app-admin-tabs />
+
+  <div class="px-4 py-3 flex flex-wrap align-items-end justify-content-between gap-3">
+    <div class="flex flex-wrap gap-3">
+      <p-select
+        [options]="modules()"
+        [(ngModel)]="selectedModuleId"
+        (ngModelChange)="onModuleChange()"
+        optionLabel="name"
+        optionValue="id"
+        placeholder="Todos los temas"
+        [showClear]="true"
+        [filter]="true"
+        styleClass="filter-select"
+      />
+      <p-select
+        [options]="lessonOptions()"
+        [(ngModel)]="selectedLessonId"
+        (ngModelChange)="onLessonChange()"
+        optionLabel="name"
+        optionValue="id"
+        placeholder="Todos los subtemas"
+        [showClear]="true"
+        [filter]="true"
+        [disabled]="!selectedModuleId()"
+        styleClass="filter-select"
+      />
+    </div>
+
+    <div class="flex gap-2">
+      @if (!isReordering()) {
+        <span
+          [pTooltip]="
+            canReorder() ? '' : 'Filtra por un subtema: el orden es propio de cada subtema.'
+          "
+          tooltipPosition="top"
+        >
+          <p-button
+            label="Cambiar orden"
+            icon="pi pi-sort"
+            severity="secondary"
+            [disabled]="!canReorder()"
+            (onClick)="startReorder()"
+          />
+        </span>
+        <p-button icon="pi pi-plus" label="Crear ejercicio" (onClick)="createExercise()" />
+      } @else {
+        <p-button
+          label="Guardar"
+          icon="pi pi-check"
+          [disabled]="isSaving()"
+          (onClick)="saveOrder()"
+        />
+        <p-button
+          label="Cancelar"
+          icon="pi pi-times"
+          severity="danger"
+          variant="outlined"
+          [disabled]="isSaving()"
+          (onClick)="cancelReorder()"
+        />
+      }
+    </div>
+  </div>
+
+  <div class="px-4 pb-4 flex-grow-1 overflow-auto">
+    @if (error(); as message) {
+      <p-message severity="error" [text]="message" styleClass="w-full mb-3" />
+    }
+
+    @if (loading()) {
+      @for (item of skeletons; track $index) {
+        <p-skeleton height="3rem" class="mb-2" />
+      }
+    } @else if (isReordering()) {
+      <p-orderlist [value]="buffer" [dragdrop]="true" dataKey="id" [disabled]="isSaving()">
+        <ng-template #item let-exercise>
+          {{ exercise.name }}
+        </ng-template>
+      </p-orderlist>
+    } @else {
+      <p-table [value]="visibleExercises()" dataKey="id" styleClass="p-datatable-sm">
+        <ng-template #header>
+          <tr>
+            <th style="width: 4rem">#</th>
+            <th style="width: 3rem"></th>
+            <th>Nombre</th>
+            <th>Subtema</th>
+            <th style="width: 8rem">Dificultad</th>
+            <th style="width: 8rem">Criterios</th>
+            <th style="width: 5rem"></th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-exercise>
+          <tr>
+            <td>{{ exercise.order }}</td>
+            <td><app-publication-badge [status]="status(exercise)" /></td>
+            <td>{{ exercise.name }}</td>
+            <td class="lesson-cell">
+              {{ exercise.lessons.modules.name }} › {{ exercise.lessons.name }}
+            </td>
+            <td>
+              <p-tag severity="secondary" [value]="difficultyLabel(exercise.difficulty)" />
+            </td>
+            <td>
+              @if (exercise.criteria.length) {
+                {{ exercise.criteria.length }}
+              } @else {
+                <span class="no-criteria" pTooltip="Sin criterios no se puede publicar">
+                  Ninguno
+                </span>
+              }
+            </td>
+            <td>
+              <p-button icon="pi pi-pen-to-square" link (onClick)="editExercise(exercise.id)" />
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr>
+            <td colspan="7" class="text-center p-4">
+              No hay ejercicios que mostrar. Crea uno para empezar.
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    }
+  </div>
+
+  <router-outlet />
+</section>

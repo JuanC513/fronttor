@@ -34,10 +34,13 @@ import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { MarkdownRenderer } from '@shared/components/markdown-renderer/markdown-renderer';
 import { MarkdownCheatsheet } from '@shared/components/markdown-cheatsheet/markdown-cheatsheet';
+import { deleteConfirmation, UNPUBLISH_INSTEAD } from '@features/admin/utils/delete-confirmation';
 import { FieldError } from '@shared/components/field-error/field-error';
 import { publicationConfirmation } from '@shared/components/publication-field/publication-confirm';
 import { PublicationField } from '@shared/components/publication-field/publication-field';
 import { TextareaModule } from 'primeng/textarea';
+
+type ConfirmKind = 'publication' | 'delete' | 'ai' | null;
 
 @Component({
   selector: 'app-block-form-dialog',
@@ -79,6 +82,7 @@ export class BlockFormDialog implements OnInit, OnDestroy {
 
   /** Ancla del `ConfirmPopup` de guardado: el diálogo se envía con Enter además de con el botón. */
   private readonly saveAnchor = viewChild<ElementRef<HTMLElement>>('saveAnchor');
+  private readonly deleteAnchor = viewChild<ElementRef<HTMLElement>>('deleteAnchor');
   private readonly confirmPopup = viewChild(ConfirmPopup);
 
   /**
@@ -93,16 +97,30 @@ export class BlockFormDialog implements OnInit, OnDestroy {
   readonly isConfirming = computed(() => this.confirmPopup()?.computedVisible() ?? false);
 
   /**
-   * Este formulario comparte el `ConfirmPopup` con la confirmación de reemplazar contenido por
-   * el de la IA, y solo la de publicación debe realzar el aviso del interruptor.
+   * Que confirmacion esta abierta, para que cada una resalte lo suyo.
    *
-   * Basta con anotar cuál se abrió, sin reiniciarlo después: solo se lee mientras el popup
-   * está abierto, y para eso ya está `isConfirming`.
+   * Basta con anotarla al abrirla, sin reiniciarla: solo se lee mientras el popup esta abierto, y
+   * de eso ya se encarga `isConfirming`.
    */
-  private readonly confirmingPublication = signal(false);
-  readonly isConfirmingPublication = computed(
-    () => this.isConfirming() && this.confirmingPublication(),
+  private readonly confirmKind = signal<ConfirmKind>(null);
+
+  /** El aviso de publicacion se realza solo si el popup abierto es el suyo. */
+  readonly highlightImpact = computed(
+    () => this.isConfirming() && this.confirmKind() === 'publication',
   );
+
+  /** Ocupa el hueco del aviso de publicacion mientras se pregunta por el borrado. */
+  readonly deleteNotice = computed(() =>
+    this.isConfirming() && this.confirmKind() === 'delete' ? this.deleteMessage() : null,
+  );
+
+  /** Un bloque no cuelga de nada, asi que se lleva solo su contenido. */
+  private readonly deleteMessage = computed(() => {
+    const block = this.savedBlock();
+    if (!block) return '';
+
+    return `Se borrará «${block.name}» y su contenido de forma permanente. ${UNPUBLISH_INSTEAD}`;
+  });
 
   /** El bloque tal como está guardado, para comparar contra lo que hay en el formulario. */
   private readonly savedBlock = signal<Block | null>(null);
@@ -248,7 +266,7 @@ export class BlockFormDialog implements OnInit, OnDestroy {
       return;
     }
 
-    this.confirmingPublication.set(false);
+    this.confirmKind.set('ai');
     this.confirmationService.confirm({
       target: event.target as EventTarget,
       message: 'Ya escribiste contenido en este bloque. ¿Reemplazarlo por el que genere la IA?',
@@ -342,10 +360,26 @@ export class BlockFormDialog implements OnInit, OnDestroy {
       return;
     }
 
-    this.confirmingPublication.set(true);
+    this.confirmKind.set('publication');
     this.confirmationService.confirm(
       publicationConfirmation(this.saveAnchor()?.nativeElement, () => void this.save()),
     );
+  }
+
+  /** Un bloque no cuelga de nada, asi que se lleva solo su contenido. */
+  onDelete(): void {
+    const block = this.savedBlock();
+    if (!block) return;
+
+    this.confirmKind.set('delete');
+    this.confirmationService.confirm(
+      deleteConfirmation(this.deleteAnchor()?.nativeElement, () => void this.remove(block.id)),
+    );
+  }
+
+  private async remove(id: number): Promise<void> {
+    await this.blockService.delete(id);
+    this.router.navigate(['/admin']);
   }
 
   private async save(): Promise<void> {
