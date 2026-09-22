@@ -6,10 +6,10 @@ import { MessageModule } from 'primeng/message';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ModuleService } from '@domain/learning/services/module-service';
-import {
-  LessonWithBlockCount,
-  ModuleWithLessonCounts,
-} from '@domain/learning/models/module-with-lesson-counts';
+import { ProgressService } from '@domain/learning/services/progress-service';
+import { LessonProgress } from '@domain/learning/models/lesson-progress-model';
+import { lessonAvailability, orderedLessons } from '@domain/learning/utils/learning-progress';
+import { ModuleWithLessonCounts } from '@domain/learning/models/module-with-lesson-counts';
 import { Lesson } from '@domain/learning/models/lesson-model';
 
 export type LessonStatus = 'completed' | 'in-progress' | 'locked';
@@ -26,16 +26,6 @@ export interface ModuleView {
   locked: boolean;
 }
 
-/**
- * Placeholder: todavía no existe la tabla de progreso del estudiante, así que el estado de cada
- * subtema se deriva de su posición dentro del recorrido completo (los primeros N cuentan como
- * completados, el siguiente como el que está cursando y el resto quedan bloqueados).
- *
- * Al conectar el progreso real solo hay que reemplazar `resolveStatus`: el resto de la vista ya
- * trabaja sobre `LessonStatus`.
- */
-const TEMP_COMPLETED_LESSONS = 3;
-
 @Component({
   selector: 'app-learning-modules',
   imports: [AccordionModule, ButtonModule, MessageModule, ProgressBarModule, SkeletonModule],
@@ -45,8 +35,11 @@ const TEMP_COMPLETED_LESSONS = 3;
 export class LearningModules implements OnInit {
   private readonly router = inject(Router);
   private readonly moduleService = inject(ModuleService);
+  private readonly progressService = inject(ProgressService);
 
   modules = signal<ModuleWithLessonCounts[]>([]);
+  /** Filas de `lesson_progress` del estudiante. Distinto de `progress`, que es el porcentaje. */
+  lessonProgress = signal<LessonProgress[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
 
@@ -56,42 +49,40 @@ export class LearningModules implements OnInit {
   skeletons = Array(4).fill(0);
 
   /**
-   * Solo el contenido consumible: descarta los subtemas que todavía no tienen bloques y, en
-   * cascada, los temas que se quedan sin subtemas. No muestra ítems que no puedes abrirse,
-   * y "bloqueado" no funciona para esto.
-   */
-  private visibleModules = computed(() =>
-    this.modules()
-      .map((module) => ({
-        ...module,
-        lessons: (module.lessons ?? []).filter((lesson) => this.hasBlocks(lesson)),
-      }))
-      .filter((module) => module.lessons.length > 0),
-  );
-
-  /**
-   * Vista derivada de los temas: numera los subtemas de corrido (a lo largo de todos los temas)
-   * para poder asignarles un estado, y marca como bloqueado el tema cuyos subtemas lo están todos.
+   * Vista derivada de los temas, con el estado real de cada subtema.
    *
-   * Parte de `visibleModules` y no de `modules`: al filtrar antes de numerar, lo que está oculto no
-   * consume posiciones del recorrido ni entra en el denominador del progreso.
+   * La secuencia sale de `orderedLessons`, que descarta lo que todavía no tiene bloques: un
+   * subtema vacío no se muestra como bloqueado porque no lo está, es que no hay nada que leer. Y
+   * al descartarlo antes de encadenar, tampoco ocupa sitio en el recorrido ni entra en el
+   * denominador del progreso.
+   *
+   * Aquí solo se mira la disponibilidad del CONTENIDO. La de los ejercicios es más estricta y
+   * vive en la otra vista; las dos salen de la misma función.
    */
   moduleViews = computed<ModuleView[]>(() => {
-    let position = 0;
+    const lessons = orderedLessons(this.modules());
+    const availability = lessonAvailability(lessons, this.lessonProgress());
 
-    return this.visibleModules().map((module) => {
-      const lessons: LessonView[] = module.lessons.map((lesson) => ({
-        lesson,
-        status: this.resolveStatus(position++),
-      }));
+    const statusOf = (lessonId: number): LessonStatus => {
+      const state = availability.get(lessonId);
+      if (state?.completed) return 'completed';
+      return state?.content ? 'in-progress' : 'locked';
+    };
 
-      return {
-        id: module.id,
-        name: module.name,
-        lessons,
-        locked: lessons.every((item) => item.status === 'locked'),
-      };
-    });
+    return this.modules()
+      .map((module) => {
+        const views: LessonView[] = lessons
+          .filter((item) => item.moduleId === module.id)
+          .map(({ lesson }) => ({ lesson, status: statusOf(lesson.id) }));
+
+        return {
+          id: module.id,
+          name: module.name,
+          lessons: views,
+          locked: views.every((item) => item.status === 'locked'),
+        };
+      })
+      .filter((module) => module.lessons.length > 0);
   });
 
   /** Porcentaje de subtemas completados sobre el total del curso. */
@@ -120,8 +111,15 @@ export class LearningModules implements OnInit {
 
   async fetchModules() {
     try {
-      const data = await this.moduleService.getLearningTree();
+      // En paralelo: son dos lecturas independientes y la vista necesita las dos para pintar un
+      // solo estado coherente.
+      const [data, progress] = await Promise.all([
+        this.moduleService.getLearningTree(),
+        this.progressService.getMyProgress(),
+      ]);
+
       this.modules.set(data);
+      this.lessonProgress.set(progress);
       this.activePanel.set(this.resolveInitialPanel());
     } catch (err) {
       this.error.set('No se pudieron cargar los módulos. Intenta de nuevo. ' + err);
@@ -135,10 +133,7 @@ export class LearningModules implements OnInit {
     this.router.navigate([`learning/modules/${moduleId}/lessons/${item.lesson.id}`]);
   }
 
-  /**
-   * Lleva al subtema en curso. Hoy ese subtema sale del placeholder de `resolveStatus`; cuando
-   * exista el progreso real será el último que el estudiante haya abierto.
-   */
+  /** Lleva al primer subtema disponible que todavía no está completado. */
   onResumeLearning() {
     const current = this.currentLesson();
     if (!current) return;
@@ -165,17 +160,6 @@ export class LearningModules implements OnInit {
       case 'locked':
         return 'pi pi-lock';
     }
-  }
-
-  private hasBlocks(lesson: LessonWithBlockCount): boolean {
-    return (lesson.blocks?.[0]?.count ?? 0) > 0;
-  }
-
-  /** Ver {@link TEMP_COMPLETED_LESSONS}: estado simulado mientras no haya progreso persistido. */
-  private resolveStatus(position: number): LessonStatus {
-    if (position < TEMP_COMPLETED_LESSONS) return 'completed';
-    if (position === TEMP_COMPLETED_LESSONS) return 'in-progress';
-    return 'locked';
   }
 
   /** Abre el tema en curso; si no hay ninguno, el primero que no esté bloqueado. */

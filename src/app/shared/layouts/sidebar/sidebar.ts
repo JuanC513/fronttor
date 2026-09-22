@@ -26,7 +26,7 @@ export class Sidebar {
     if (this.isStudent()) {
       items.push(
         { icon: 'pi pi-graduation-cap', routerLink: '/learning', label: 'Aprender' },
-        { icon: 'pi pi-file-edit', routerLink: '/exercises', label: 'Ejercicios' },
+        { icon: 'pi pi-file-edit', routerLink: '/learning/exercises', label: 'Ejercicios' },
       );
     }
 

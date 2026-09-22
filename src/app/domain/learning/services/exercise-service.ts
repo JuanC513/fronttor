@@ -2,6 +2,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { SupabaseService } from '@core/services/supabase/supabase-service';
 import { Exercise, ExerciseInput } from '../models/exercise-model';
 import { ExerciseWithLesson } from '../models/exercise-with-lesson';
+import { StudentExercise } from '../models/student-exercise';
 
 @Injectable({
   providedIn: 'root',
@@ -52,6 +53,42 @@ export class ExerciseService {
 
     if (error) throw new Error(error.message);
     return (data as Exercise[]) ?? [];
+  }
+
+  /**
+   * Los ejercicios que el estudiante puede ver, con si ya los tiene aprobados.
+   *
+   * Método aparte y no un parámetro, igual que {@link BlockService.getPublishedByLessonId}: la
+   * separación entre la lectura del profesor y la del estudiante es el patrón del repo, y así el
+   * propósito se lee en la llamada. Ninguno de los otros métodos de este servicio filtra por
+   * publicación, porque todos son del panel.
+   *
+   * **El filtro por `user_id` no sobra.** La RLS de `exercise_attempts` tiene DOS políticas de
+   * lectura: `attempts_select_own` y `attempts_select_teacher`. Una cuenta con los dos roles
+   * —como la que se usa para probar— vería por el embed los intentos de todos los estudiantes, y
+   * cualquier ejercicio aprobado por alguien aparecería como aprobado por ella. La RLS no basta
+   * aquí; hay que acotarlo en la consulta.
+   *
+   * El embed se recorta a los intentos aprobados, así que el array llega vacío o no llega: lo que
+   * importa es su existencia, no su contenido.
+   */
+  async getPublishedForStudent(userId: string): Promise<StudentExercise[]> {
+    const { data, error } = await this.supabase
+      .from('exercises')
+      .select('id, lesson_id, name, difficulty, order, exercise_attempts(passed)')
+      .eq('is_published', true)
+      .eq('exercise_attempts.user_id', userId)
+      .eq('exercise_attempts.passed', true)
+      .order(this.orderColumn, { ascending: true });
+
+    if (error) throw new Error(error.message);
+
+    return (
+      (data as (Omit<StudentExercise, 'passed'> & { exercise_attempts: unknown[] })[]) ?? []
+    ).map(({ exercise_attempts, ...exercise }) => ({
+      ...exercise,
+      passed: (exercise_attempts ?? []).length > 0,
+    }));
   }
 
   async getById(id: number): Promise<Exercise> {
