@@ -67,8 +67,8 @@
 
 /// Campo de formulario: label arriba + control + mensaje de error debajo.
 ///
-/// El diseño usa labels estáticos sobre el control (y no el `p-floatlabel` de los formularios de
-/// admin) porque el label de la contraseña comparte fila con el enlace "¿Olvidaste tu contraseña?".
+/// El diseño usa labels estáticos sobre el control (y no el `p-floatlabel` de los formularios del
+/// panel del profesor) porque el label de la contraseña comparte fila con el enlace "¿Olvidaste tu contraseña?".
 @mixin auth-field {
   display: flex;
   flex-direction: column;

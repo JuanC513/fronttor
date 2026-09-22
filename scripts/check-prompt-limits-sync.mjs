@@ -46,7 +46,7 @@ const pairs = [
       pattern: /MAX_INSTRUCCION_LENGTH\s*=\s*([\d_]+)\s*;/,
     },
     b: {
-      file: 'src/app/features/admin/components/ai-generate-panel/ai-generate-panel.ts',
+      file: 'src/app/features/teaching/components/ai-generate-panel/ai-generate-panel.ts',
       pattern: /MAX_INSTRUCCION_LENGTH\s*=\s*([\d_]+)\s*;/,
     },
   },
@@ -59,7 +59,7 @@ const pairs = [
     // Del lado del frontend no hay una constante nombrada: el tope vive inline en el
     // validador del campo `instruccion`.
     b: {
-      file: 'src/app/features/admin/components/block-form-dialog/block-form-dialog/block-form-dialog.ts',
+      file: 'src/app/features/teaching/components/block-form-dialog/block-form-dialog/block-form-dialog.ts',
       pattern: /instruccion:\s*\[undefined,\s*Validators\.maxLength\(([\d_]+)\)\]/,
     },
   },

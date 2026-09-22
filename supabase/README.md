@@ -28,9 +28,10 @@ npx supabase db dump --linked --schema public -f supabase/schema-actual.sql
 7. `migrations/20260918120100_auth_user_trigger.sql`
 8. `migrations/20260919120000_tighten_identity_grants.sql`
 9. `migrations/20260919120100_tighten_content_grants.sql`
-10. `seed.sql`
+10. `migrations/20260921120000_rename_admin_to_teacher.sql`
+11. `seed.sql`
 
-El orden **no es opcional**: la 3 usa la función `is_admin()`, que crea la 2; la 4 redefine funciones que crea la 2; la 5 redefine las que deja la 4; la 6 redefine `is_admin()` y `handle_new_user()`, y la 7 depende de esa última.
+El orden **no es opcional**: la 3 usa la función `is_admin()`, que crea la 2; la 4 redefine funciones que crea la 2; la 5 redefine las que deja la 4; la 6 redefine `is_admin()` y `handle_new_user()`, la 7 depende de esa última, y la 10 renombra `is_admin()` a `is_teacher()` junto con el rol y las políticas.
 
 El `seed.sql` va al final por una razón que cambió con la 6: `handle_new_user()` ahora busca el rol `student` **por nombre** y lanza una excepción si no lo encuentra, así que con la tabla `roles` vacía nadie puede registrarse.
 
@@ -72,7 +73,7 @@ Queda todo montado desde cero: las tablas de contenido (`modules`, `lessons`, `b
 Lo que **no** se transfiere y hay que rehacer:
 
 - **Los usuarios.** Viven en el esquema `auth`, que gestiona Supabase y no está en el volcado. Hay que registrarse de nuevo.
-- **El primer administrador.** Todo el que se registra nace con el rol `student` y nada más. El primer `admin` se concede a mano (ver más abajo).
+- **El primer profesor.** Todo el que se registra nace con el rol `student` y nada más. El primer `teacher` se concede a mano (ver más abajo).
 - **El secreto de las Edge Functions.** Volver a configurar `GEMINI_API_KEY`.
 - **Las Edge Functions.** `npx supabase functions deploy` apuntando al proyecto nuevo.
 
@@ -120,6 +121,10 @@ Es decir: las cuentas de usuario y su asociación con los roles **no se pierden*
   `20260919120100_tighten_content_grants.sql` son seguros de reejecutar.** Solo revocan y conceden
   permisos, que es una operación idempotente por naturaleza.
 
+- **`20260921120000_rename_admin_to_teacher.sql` es seguro de reejecutar.** Renombra las políticas y
+  la función solo si todavía tienen el nombre viejo, y el `update` del catálogo no hace nada en la
+  segunda pasada.
+
 - **`seed.sql` es seguro de reejecutar.**
 
 ## Comprobación
@@ -133,13 +138,13 @@ delete  from lessons where id = 1;
 insert into user_roles (user_id, role_id) values (auth.uid(), 2);
 ```
 
-La cuarta es la que impide que alguien se nombre administrador a sí mismo. Antes era
+La cuarta es la que impide que alguien se conceda el rol de profesor a sí mismo. Antes era
 `update profiles set role_id = 2`, y lo que la bloqueaba eran los permisos de columna de `profiles`;
 desde que el rol vive en `user_roles` lo bloquean el `revoke` de esa tabla y su RLS. **Conviene
 leer el texto del error**: debe decir `permission denied for table user_roles`. Si dice
 `violates row-level security policy`, el `revoke` no se aplicó y solo queda una de las dos capas.
 
-Y con sesión de administrador, el panel debe seguir funcionando completo: crear, editar, reordenar y borrar temas, subtemas y bloques.
+Y con sesión de profesor, el panel debe seguir funcionando completo: crear, editar, reordenar y borrar temas, subtemas y bloques.
 
 Además, ninguna RPC de contenido puede haber quedado duplicada por una sobrecarga. Esta consulta debe devolver exactamente ocho filas:
 
@@ -157,7 +162,7 @@ Si sale alguna repetida, el panel fallará al guardar con *"Could not choose the
 ## Conceder roles
 
 Un usuario puede tener varios roles a la vez, y la pertenencia vive en `user_roles`. **No se
-administra desde la aplicación**: ni siquiera un administrador tiene permiso de escritura sobre esa
+administra desde la aplicación**: ni siquiera un profesor tiene permiso de escritura sobre esa
 tabla a través de la API. Se hace desde el **SQL Editor**, que corre como `postgres` y no pasa por
 la RLS.
 
@@ -166,14 +171,14 @@ la RLS.
 insert into public.user_roles (user_id, role_id)
 select p.user_id, r.id
 from public.profiles p, public.roles r
-where p.email = 'alguien@ejemplo.com' and r.name = 'admin'
+where p.email = 'alguien@ejemplo.com' and r.name = 'teacher'
 on conflict do nothing;
 
 -- Retirar.
 delete from public.user_roles ur
 using public.profiles p, public.roles r
 where ur.user_id = p.user_id and ur.role_id = r.id
-  and p.email = 'alguien@ejemplo.com' and r.name = 'admin';
+  and p.email = 'alguien@ejemplo.com' and r.name = 'teacher';
 
 -- Ver quién tiene qué.
 select p.email, array_agg(r.name order by r.name) as roles
@@ -183,10 +188,20 @@ left join public.roles r on r.id = ur.role_id
 group by 1 order by 1;
 ```
 
-> **Un administrador necesita además el rol `student`.** La vista de aprendizaje exige ese rol, así
-> que quien solo tenga `admin` no puede abrir el contenido que administra — ni siquiera para
-> comprobar cómo se ve. Al conceder `admin` a alguien, conceder los dos. La migración que creó la
+> **Un profesor necesita además el rol `student`.** La vista de aprendizaje exige ese rol, así
+> que quien solo tenga `teacher` no puede abrir el contenido que escribe — ni siquiera para
+> comprobar cómo se ve. Al conceder `teacher` a alguien, conceder los dos. La migración que creó la
 > tabla ya lo hizo con los usuarios que existían entonces, pero no puede hacerlo con los futuros.
+
+> **Sobre el nombre.** Hasta la migración 10 este rol se llamaba `admin`. Se renombró porque
+> *administrador* nombra a quien gestiona el sistema —usuarios, permisos, parámetros— y no a quien
+> escribe el contenido del curso. Las migraciones anteriores a la 10 siguen diciendo `admin`: son
+> un registro fechado, no la descripción del estado actual.
+>
+> El nombre queda libre para lo que de verdad significa. Si alguna vez hace falta un rol de
+> gestión de usuarios —por ejemplo, para que sea él quien conceda los roles en lugar de hacerlo
+> desde aquí—, el catálogo `roles` y `has_role()` ya lo soportan sin tocar el esquema: bastaría
+> `insert into roles (name) values ('admin')` y las políticas correspondientes.
 
 ## Sobre publicar este esquema
 

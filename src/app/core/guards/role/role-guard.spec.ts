@@ -52,14 +52,20 @@ describe('roleGuard', () => {
 
   afterEach(() => TestBed.resetTestingModule());
 
-  it('deja pasar a un admin a una ruta de admins', async () => {
-    const result = await runGuard({ profile: buildProfile(['admin']), allowedRoles: ['admin'] });
+  it('deja pasar a un profesor a una ruta de profesores', async () => {
+    const result = await runGuard({
+      profile: buildProfile(['teacher']),
+      allowedRoles: ['teacher'],
+    });
 
     expect(result).toBeTrue();
   });
 
-  it('manda a /home a un estudiante que intenta entrar a una ruta de admins', async () => {
-    const result = await runGuard({ profile: buildProfile(['student']), allowedRoles: ['admin'] });
+  it('manda a /home a un estudiante que intenta entrar a una ruta de profesores', async () => {
+    const result = await runGuard({
+      profile: buildProfile(['student']),
+      allowedRoles: ['teacher'],
+    });
 
     expect(urlOf(result)).toBe('/home');
   });
@@ -69,9 +75,9 @@ describe('roleGuard', () => {
    * y además quiere verlo como lo ve un estudiante. Con un solo rol había que elegir.
    */
   it('deja pasar a quien tiene los dos roles por las dos puertas', async () => {
-    const profile = buildProfile(['student', 'admin']);
+    const profile = buildProfile(['student', 'teacher']);
 
-    expect(await runGuard({ profile, allowedRoles: ['admin'] })).toBeTrue();
+    expect(await runGuard({ profile, allowedRoles: ['teacher'] })).toBeTrue();
     expect(await runGuard({ profile, allowedRoles: ['student'] })).toBeTrue();
   });
 
@@ -82,7 +88,7 @@ describe('roleGuard', () => {
   });
 
   it('manda a /login cuando no hay perfil cargado', async () => {
-    const result = await runGuard({ profile: null, allowedRoles: ['admin'] });
+    const result = await runGuard({ profile: null, allowedRoles: ['teacher'] });
 
     expect(urlOf(result)).toBe('/login');
   });

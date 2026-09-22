@@ -6,7 +6,7 @@ import { ModuleWithLessons } from '@domain/learning/models/module-with-lessons';
 import { ExerciseService } from '@domain/learning/services/exercise-service';
 import { ModuleService } from '@domain/learning/services/module-service';
 import { PublicationStatus, resolveExerciseStatus } from '@domain/learning/utils/publication-state';
-import { AdminTabs } from '@features/admin/components/admin-tabs/admin-tabs';
+import { TeachingTabs } from '@features/teaching/components/teaching-tabs/teaching-tabs';
 import { PublicationBadge } from '@shared/components/publication-badge/publication-badge';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
@@ -24,9 +24,9 @@ const DIFFICULTY_LABEL: Record<string, string> = {
 };
 
 @Component({
-  selector: 'app-admin-exercises',
+  selector: 'app-teaching-exercises',
   imports: [
-    AdminTabs,
+    TeachingTabs,
     ButtonModule,
     FormsModule,
     MessageModule,
@@ -39,10 +39,10 @@ const DIFFICULTY_LABEL: Record<string, string> = {
     TagModule,
     TooltipModule,
   ],
-  templateUrl: './admin-exercises.html',
-  styleUrl: './admin-exercises.scss',
+  templateUrl: './teaching-exercises.html',
+  styleUrl: './teaching-exercises.scss',
 })
-export class AdminExercises implements OnInit {
+export class TeachingExercises implements OnInit {
   private readonly router = inject(Router);
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly exerciseService = inject(ExerciseService);
@@ -154,13 +154,13 @@ export class AdminExercises implements OnInit {
   }
 
   createExercise(): void {
-    this.router.navigate(['admin/exercises/new'], {
+    this.router.navigate(['teaching/exercises/new'], {
       queryParams: this.selectedLessonId() ? { lessonId: this.selectedLessonId() } : {},
     });
   }
 
   editExercise(id: number): void {
-    this.router.navigate([`admin/exercises/edit/${id}`]);
+    this.router.navigate([`teaching/exercises/edit/${id}`]);
   }
 
   startReorder(): void {

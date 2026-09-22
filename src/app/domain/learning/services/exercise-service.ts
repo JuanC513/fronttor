@@ -27,7 +27,7 @@ export class ExerciseService {
   }
 
   /**
-   * Todos los ejercicios con su subtema y su tema, para el listado de administración.
+   * Todos los ejercicios con su subtema y su tema, para el listado del profesor.
    *
    * El orden es por posición dentro del subtema, así que solo tiene sentido leído por subtema: en
    * una lista mezclada de varios se ven varios «1». Es también el motivo de que reordenar exija

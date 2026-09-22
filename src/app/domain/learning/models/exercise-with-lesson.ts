@@ -3,7 +3,7 @@ import { Exercise } from './exercise-model';
 /**
  * Ejercicio con el subtema y el tema a los que pertenece.
  *
- * El listado de administración muestra y filtra por ambos, y traerlos embebidos en la misma
+ * El listado del profesor muestra y filtra por ambos, y traerlos embebidos en la misma
  * consulta evita tener que cruzar tres listas en el componente.
  */
 export interface ExerciseWithLesson extends Exercise {

@@ -1,4 +1,4 @@
-import { requireAdmin } from '../_shared/auth.ts';
+import { requireTeacher } from '../_shared/auth.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 import { callGemini, GEMINI_MODEL_CONTENIDO } from '../_shared/gemini-client.ts';
 import { errorResponse, jsonResponse } from '../_shared/http.ts';
@@ -10,8 +10,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Capa 2: generar contenido del curso queda restringido a administradores.
-    await requireAdmin(req);
+    // Capa 2: generar contenido del curso queda restringido a profesores.
+    await requireTeacher(req);
 
     const body: ContentPromptInput = await req.json();
 

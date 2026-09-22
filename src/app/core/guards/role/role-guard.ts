@@ -22,8 +22,8 @@ export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
         return router.createUrlTree(['/login']);
       }
 
-      // Basta con tener uno de los roles permitidos. Un usuario con `['student', 'admin']` pasa
-      // tanto el guard de la vista de aprendizaje como el de administración.
+      // Basta con tener uno de los roles permitidos. Un usuario con `['student', 'teacher']` pasa
+      // tanto el guard de la vista de aprendizaje como el de enseñanza.
       if (allowedRoles.some((role) => profile.roles.includes(role))) {
         return true;
       }

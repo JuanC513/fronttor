@@ -6,7 +6,7 @@ import { Module } from '../models/module-model';
 /**
  * Derivación de la visibilidad del contenido del curso.
  *
- * `is_published` es lo que el administrador **declara**. Que algo se **vea** es una consecuencia
+ * `is_published` es lo que el profesor **declara**. Que algo se **vea** es una consecuencia
  * que se calcula:
  *
  * ```
@@ -20,14 +20,14 @@ import { Module } from '../models/module-model';
  * vista de estudiante antes de que existiera `is_published`.
  *
  * Todo aquí son funciones puras: es la única parte con reglas de negocio de verdad y la consumen
- * tanto las listas del panel de administración como los avisos de los formularios, que tienen que
+ * tanto las listas del panel del profesor como los avisos de los formularios, que tienen que
  * decir exactamente lo mismo.
  */
 
 /**
  * - `published`: declarado publicado y visible para el estudiante.
  * - `hidden`: declarado publicado pero no se muestra. Es un aviso legítimo, no ruido: el
- *   administrador dijo que quería publicarlo y no está pasando.
+ *   profesor dijo que quería publicarlo y no está pasando.
  * - `draft`: declarado no publicado. Estado deliberado, no avisa de nada.
  */
 export type PublicationState = 'published' | 'hidden' | 'draft';

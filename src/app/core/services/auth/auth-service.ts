@@ -12,7 +12,7 @@ type RolesEmbed = { roles?: { name?: string } | { name?: string }[] | null }[] |
  *
  * Tolera que el nivel interno venga como objeto o como array: la cardinalidad que infiere
  * supabase-js para una relación embebida no es estable, y es el mismo cuidado que ya tiene
- * `requireAdmin` en las Edge Functions. Importa más de lo que parece porque el cliente no está
+ * `requireTeacher` en las Edge Functions. Importa más de lo que parece porque el cliente no está
  * tipado con un `Database` generado —todo lo que devuelve es `any`—, así que un cambio de forma no
  * daría error de compilación: se manifestaría como un usuario sin roles y sin nada en la consola.
  *
@@ -37,7 +37,7 @@ export class AuthService {
   profile$ = this.profileSubject.asObservable();
   initialized$ = this.initializedSubject.asObservable();
   isAuthenticated$ = this.user$.pipe(map((user) => !!user));
-  isAdmin$ = this.hasRole$('admin');
+  isTeacher$ = this.hasRole$('teacher');
   isStudent$ = this.hasRole$('student');
 
   /**

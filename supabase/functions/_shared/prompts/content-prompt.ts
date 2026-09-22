@@ -4,12 +4,12 @@ export interface ContentPromptInput {
   nombreBloque: string;
   /** Nombres de los otros bloques del mismo subtema, para no repetir lo ya cubierto. */
   bloquesExistentes?: string[];
-  /** Indicación libre del admin sobre qué debe contener el bloque. Opcional. */
+  /** Indicación libre del profesor sobre qué debe contener el bloque. Opcional. */
   instruccion?: string;
 }
 
 /**
- * Límites defensivos. Los nombres son cortos por naturaleza; la instrucción del admin
+ * Límites defensivos. Los nombres son cortos por naturaleza; la instrucción del profesor
  * se acota para que no desplace a las reglas dentro del contexto.
  */
 const MAX_NOMBRE_LENGTH = 300;
@@ -26,9 +26,9 @@ function truncate(text: string | undefined, maxLength: number): string {
  * Construye el prompt para generar el contenido markdown de un bloque de aprendizaje.
  *
  * Notas de seguridad:
- * - Todas las entradas provienen del panel de administración, así que son de CONFIANZA
+ * - Todas las entradas provienen del panel del profesor, así que son de CONFIANZA
  *   MEDIA: las escribe un usuario privilegiado, no un estudiante. Aun así se delimitan
- *   con XML y se truncan por defensa en profundidad — el rol admin podría cambiar de
+ *   con XML y se truncan por defensa en profundidad — el rol de profesor podría cambiar de
  *   manos, y el contenido de los nombres de tema/subtema es editable desde la app.
  * - Se aplica la técnica "sandwich": instrucciones al inicio y refuerzo al final.
  *

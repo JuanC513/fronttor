@@ -78,7 +78,7 @@ export class AiService {
    * `functions.invoke` no expone el cuerpo de una respuesta no-2xx: su `message` es
    * siempre el genérico "Edge Function returned a non-2xx status code", y el mensaje
    * real de la función viaja dentro de `error.context`, que es un `Response` sin leer.
-   * Sin esto, un 403 "Requiere rol de administrador" llegaría a la UI como texto inútil.
+   * Sin esto, un 403 "Requiere rol de profesor" llegaría a la UI como texto inútil.
    */
   private async readFunctionError(error: Error): Promise<string> {
     const context = (error as Error & { context?: Response }).context;

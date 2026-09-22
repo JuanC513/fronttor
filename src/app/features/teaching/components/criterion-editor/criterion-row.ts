@@ -6,7 +6,7 @@ import {
   CriterionFormValue,
   metaFor,
   suggestDescription,
-} from '@features/admin/utils/criterion-fields';
+} from '@features/teaching/utils/criterion-fields';
 
 const MAX_FIELD_LENGTH = 200;
 
@@ -65,7 +65,7 @@ export function buildCriterionRow(
 /**
  * Rellena la descripción mientras siga sin tocar.
  *
- * `pristine` ya lleva ese estado, no hace falta inventar otro: en cuanto el administrador escribe
+ * `pristine` ya lleva ese estado, no hace falta inventar otro: en cuanto el profesor escribe
  * algo suyo, el control queda sucio y aquí se deja de escribir.
  *
  * `emitEvent: false` es lo que corta el ciclo, porque escribir la descripción vuelve a disparar los

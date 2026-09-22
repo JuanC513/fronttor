@@ -14,7 +14,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 })
 export class Sidebar {
   private readonly authService = inject(AuthService);
-  private isAdmin = toSignal(this.authService.isAdmin$, { initialValue: false });
+  private isTeacher = toSignal(this.authService.isTeacher$, { initialValue: false });
   private isStudent = toSignal(this.authService.isStudent$, { initialValue: false });
 
   readonly mainItems = computed<MenuItem[]>(() => {
@@ -45,11 +45,11 @@ export class Sidebar {
     const showLabel = !this.popupMenuMode();
     const items: MenuItem[] = [];
 
-    if (this.isAdmin()) {
+    if (this.isTeacher()) {
       items.push({
-        label: 'Administración',
+        label: 'Enseñar',
         icon: 'pi pi-user-edit',
-        routerLink: '/admin',
+        routerLink: '/teaching',
       });
     }
 
