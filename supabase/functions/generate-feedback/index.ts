@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Capa 1: cualquier usuario con sesión (estudiante o admin) puede pedir retroalimentación.
+    // Capa 1: cualquier usuario con sesión (estudiante o profesor) puede pedir retroalimentación.
     await requireUser(req);
 
     const body: FeedbackPromptInput = await req.json();

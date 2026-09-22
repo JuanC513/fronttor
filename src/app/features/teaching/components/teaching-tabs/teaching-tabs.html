@@ -1,0 +1,4 @@
+<nav class="teaching-tabs flex gap-2 px-4" aria-label="Secciones de enseñanza">
+  <a routerLink="/teaching" [class.is-active]="!onExercises()">Contenido</a>
+  <a routerLink="/teaching/exercises" [class.is-active]="onExercises()">Ejercicios</a>
+</nav>

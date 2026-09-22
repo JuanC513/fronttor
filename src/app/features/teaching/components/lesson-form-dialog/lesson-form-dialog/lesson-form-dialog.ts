@@ -14,7 +14,10 @@ import { BlockService } from '@domain/learning/services/block-service';
 import { LessonService } from '@domain/learning/services/lesson-service';
 import { ModuleService } from '@domain/learning/services/module-service';
 import { describeLessonImpact } from '@domain/learning/utils/publication-state';
-import { deleteConfirmation, UNPUBLISH_INSTEAD } from '@features/admin/utils/delete-confirmation';
+import {
+  deleteConfirmation,
+  UNPUBLISH_INSTEAD,
+} from '@features/teaching/utils/delete-confirmation';
 import { FieldError } from '@shared/components/field-error/field-error';
 import { publicationConfirmation } from '@shared/components/publication-field/publication-confirm';
 import { PublicationField } from '@shared/components/publication-field/publication-field';
@@ -191,7 +194,7 @@ export class LessonFormDialog implements OnInit {
   }
 
   closeDialog() {
-    this.router.navigate(['/admin']);
+    this.router.navigate(['/teaching']);
   }
 
   /** Solo se confirma lo que deja de verse; publicar o editar el nombre se guardan sin más. */
@@ -226,7 +229,7 @@ export class LessonFormDialog implements OnInit {
 
   private async remove(id: number): Promise<void> {
     await this.lessonService.delete(id);
-    this.router.navigate(['/admin']);
+    this.router.navigate(['/teaching']);
   }
 
   private async save(): Promise<void> {
@@ -239,6 +242,6 @@ export class LessonFormDialog implements OnInit {
       await this.lessonService.insert(name, module_id, is_published);
     }
 
-    this.router.navigate(['/admin']);
+    this.router.navigate(['/teaching']);
   }
 }

@@ -34,7 +34,10 @@ import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { MarkdownRenderer } from '@shared/components/markdown-renderer/markdown-renderer';
 import { MarkdownCheatsheet } from '@shared/components/markdown-cheatsheet/markdown-cheatsheet';
-import { deleteConfirmation, UNPUBLISH_INSTEAD } from '@features/admin/utils/delete-confirmation';
+import {
+  deleteConfirmation,
+  UNPUBLISH_INSTEAD,
+} from '@features/teaching/utils/delete-confirmation';
 import { FieldError } from '@shared/components/field-error/field-error';
 import { publicationConfirmation } from '@shared/components/publication-field/publication-confirm';
 import { PublicationField } from '@shared/components/publication-field/publication-field';
@@ -167,7 +170,7 @@ export class BlockFormDialog implements OnInit, OnDestroy {
 
     this.isPublishedControl.valueChanges.subscribe((value) => this.pendingPublished.set(!!value));
     // `uiForm` agrupa lo que no se persiste: el tema (solo filtra los subtemas) y la
-    // indicación que el admin le da a la IA.
+    // indicación que el profesor le da a la IA.
     this.uiForm = this.formBuilder.group({
       module_id: [undefined, Validators.required],
       // Debe coincidir con MAX_INSTRUCCION_LENGTH en
@@ -353,7 +356,7 @@ export class BlockFormDialog implements OnInit, OnDestroy {
   }
 
   closeDialog() {
-    this.router.navigate(['/admin']);
+    this.router.navigate(['/teaching']);
   }
 
   /** Solo se confirma lo que deja de verse; publicar o editar el contenido se guardan sin más. */
@@ -389,7 +392,7 @@ export class BlockFormDialog implements OnInit, OnDestroy {
 
   private async remove(id: number): Promise<void> {
     await this.blockService.delete(id);
-    this.router.navigate(['/admin']);
+    this.router.navigate(['/teaching']);
   }
 
   private async save(): Promise<void> {
@@ -402,6 +405,6 @@ export class BlockFormDialog implements OnInit, OnDestroy {
       await this.blockService.insert(name, content, lesson_id, is_published);
     }
 
-    this.router.navigate(['/admin']);
+    this.router.navigate(['/teaching']);
   }
 }

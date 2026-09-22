@@ -37,7 +37,7 @@ export class BlockService {
    * Los bloques que el estudiante puede leer de un subtema.
    *
    * Es un método aparte de {@link getAllByLessonId} y no un parámetro booleano a propósito: la
-   * separación entre la lectura de administración y la del estudiante ya es el patrón del repo
+   * separación entre la lectura del profesor y la del estudiante ya es el patrón del repo
    * (`getAllWithLessons` frente a `getLearningTree`), y así el propósito se lee en la llamada.
    */
   async getPublishedByLessonId(lessonId: number): Promise<Block[]> {

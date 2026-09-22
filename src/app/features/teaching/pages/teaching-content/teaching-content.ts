@@ -18,11 +18,11 @@ import {
   resolveLessonStatus,
   resolveModuleStatus,
 } from '@domain/learning/utils/publication-state';
-import { AdminTabs } from '@features/admin/components/admin-tabs/admin-tabs';
+import { TeachingTabs } from '@features/teaching/components/teaching-tabs/teaching-tabs';
 import { PublicationBadge } from '@shared/components/publication-badge/publication-badge';
 
 @Component({
-  selector: 'app-admin-main',
+  selector: 'app-teaching-content',
   imports: [
     SkeletonModule,
     ButtonModule,
@@ -32,12 +32,12 @@ import { PublicationBadge } from '@shared/components/publication-badge/publicati
     ListboxModule,
     FormsModule,
     PublicationBadge,
-    AdminTabs,
+    TeachingTabs,
   ],
-  templateUrl: './admin-main.html',
-  styleUrl: './admin-main.scss',
+  templateUrl: './teaching-content.html',
+  styleUrl: './teaching-content.scss',
 })
-export class AdminMain implements OnInit {
+export class TeachingContent implements OnInit {
   private readonly router = inject(Router);
   private readonly moduleService = inject(ModuleService);
   private readonly lessonService = inject(LessonService);
@@ -182,11 +182,11 @@ export class AdminMain implements OnInit {
   }
 
   createModule() {
-    this.router.navigate(['admin/module/new']);
+    this.router.navigate(['teaching/module/new']);
   }
 
   editModule(id: number) {
-    this.router.navigate([`admin/module/edit/${id}`]);
+    this.router.navigate([`teaching/module/edit/${id}`]);
   }
 
   // Lesson
@@ -197,13 +197,13 @@ export class AdminMain implements OnInit {
   createLesson() {
     const moduleId = this.selectedModule()?.id;
 
-    this.router.navigate(['admin/lesson/new'], {
+    this.router.navigate(['teaching/lesson/new'], {
       queryParams: moduleId ? { moduleId } : {},
     });
   }
 
   editLesson(id: number) {
-    this.router.navigate([`admin/lesson/edit/${id}`]);
+    this.router.navigate([`teaching/lesson/edit/${id}`]);
   }
 
   startLessonsReorder() {
@@ -238,20 +238,20 @@ export class AdminMain implements OnInit {
     const lessonId = this.selectedLesson()?.id;
     if (!lessonId) return;
 
-    this.router.navigate(['admin/exercises'], { queryParams: { lessonId } });
+    this.router.navigate(['teaching/exercises'], { queryParams: { lessonId } });
   }
 
   createBlock() {
     const moduleId = this.selectedModule()?.id;
     const lessonId = this.selectedLesson()?.id;
 
-    this.router.navigate(['admin/block/new'], {
+    this.router.navigate(['teaching/block/new'], {
       queryParams: moduleId && lessonId ? { moduleId, lessonId } : {},
     });
   }
 
   editBlock(id: number) {
-    this.router.navigate([`admin/block/edit/${id}`]);
+    this.router.navigate([`teaching/block/edit/${id}`]);
   }
 
   startBlocksReorder() {

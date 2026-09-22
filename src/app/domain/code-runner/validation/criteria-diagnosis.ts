@@ -1,7 +1,7 @@
 import { CriterionResult } from './probe-model';
 
 /**
- * Lectura cruzada de las dos ejecuciones que hace el administrador al comprobar un ejercicio.
+ * Lectura cruzada de las dos ejecuciones que hace el profesor al comprobar un ejercicio.
  *
  * Correrlo contra la solución detecta el criterio mal escrito. Pero hay un segundo error igual de
  * silencioso: **un criterio que el código inicial ya cumple**. Ese ejercicio pide algo que el

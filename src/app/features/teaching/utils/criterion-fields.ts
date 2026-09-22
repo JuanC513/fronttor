@@ -109,7 +109,7 @@ const quote = (text: unknown): string => `«${String(text ?? '')}»`;
  *
  * La descripción es obligatoria en todos los tipos y es lo que el estudiante lee como lista de
  * comprobación, pero escribir siete a mano cansa y acaban quedándose en blanco. Esta es un punto
- * de partida razonable; el formulario deja de rellenarla en cuanto el administrador escribe la
+ * de partida razonable; el formulario deja de rellenarla en cuanto el profesor escribe la
  * suya.
  */
 export function suggestDescription(raw: CriterionFormValue): string {

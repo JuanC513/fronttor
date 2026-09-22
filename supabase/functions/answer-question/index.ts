@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Capa 1: cualquier usuario con sesión (estudiante o admin) puede preguntar.
+    // Capa 1: cualquier usuario con sesión (estudiante o profesor) puede preguntar.
     await requireUser(req);
 
     const body: QuestionPromptInput = await req.json();

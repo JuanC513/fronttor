@@ -53,26 +53,26 @@ describe('AuthService', () => {
 
   it('lee todos los roles concedidos', async () => {
     const service = await buildService({
-      data: profileRow([{ roles: { name: 'student' } }, { roles: { name: 'admin' } }]),
+      data: profileRow([{ roles: { name: 'student' } }, { roles: { name: 'teacher' } }]),
     });
 
-    expect(service.getCurrentProfile()?.roles).toEqual(['student', 'admin']);
-    expect(await firstValueFrom(service.isAdmin$)).toBeTrue();
+    expect(service.getCurrentProfile()?.roles).toEqual(['student', 'teacher']);
+    expect(await firstValueFrom(service.isTeacher$)).toBeTrue();
     expect(await firstValueFrom(service.isStudent$)).toBeTrue();
   });
 
   it('tolera que el rol venga envuelto en un array', async () => {
     // supabase-js infiere la cardinalidad de una relación embebida, y no siempre la misma.
-    const service = await buildService({ data: profileRow([{ roles: [{ name: 'admin' }] }]) });
+    const service = await buildService({ data: profileRow([{ roles: [{ name: 'teacher' }] }]) });
 
-    expect(service.getCurrentProfile()?.roles).toEqual(['admin']);
+    expect(service.getCurrentProfile()?.roles).toEqual(['teacher']);
   });
 
   it('un perfil sin roles no es nadie, en vez de romper', async () => {
     const service = await buildService({ data: profileRow([]) });
 
     expect(service.getCurrentProfile()?.roles).toEqual([]);
-    expect(await firstValueFrom(service.isAdmin$)).toBeFalse();
+    expect(await firstValueFrom(service.isTeacher$)).toBeFalse();
     expect(await firstValueFrom(service.isStudent$)).toBeFalse();
   });
 
@@ -81,6 +81,6 @@ describe('AuthService', () => {
     const service = await buildService({ error: { message: 'boom' } });
 
     expect(service.getCurrentProfile()).toBeNull();
-    expect(await firstValueFrom(service.isAdmin$)).toBeFalse();
+    expect(await firstValueFrom(service.isTeacher$)).toBeFalse();
   });
 });

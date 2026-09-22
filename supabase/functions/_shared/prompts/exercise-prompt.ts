@@ -25,7 +25,7 @@ export interface ExercisePromptInput {
   inicial?: ExerciseCode;
   solucion?: ExerciseCode;
   criterios?: unknown[];
-  /** Indicación libre del admin sobre qué quiere de esta parte. Opcional. */
+  /** Indicación libre del profesor sobre qué quiere de esta parte. Opcional. */
   instruccion?: string;
 }
 
@@ -173,9 +173,9 @@ const ETIQUETA_POR_PARTE: Record<ExercisePart, string> = {
 /**
  * Construye el prompt para generar una parte de un ejercicio.
  *
- * Notas de seguridad: todas las entradas vienen del panel de administración, así que son de
+ * Notas de seguridad: todas las entradas vienen del panel del profesor, así que son de
  * CONFIANZA MEDIA —las escribe un usuario privilegiado, no un estudiante—, pero se delimitan con
- * XML y se truncan igual, por defensa en profundidad: el rol admin puede cambiar de manos y los
+ * XML y se truncan igual, por defensa en profundidad: el rol de profesor puede cambiar de manos y los
  * nombres de tema y subtema son editables desde la aplicación.
  *
  * Se aplica la técnica "sandwich": reglas al inicio y recordatorio al final, con el contenido no

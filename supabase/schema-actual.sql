@@ -220,15 +220,19 @@ $$;
 ALTER FUNCTION "public"."insert_module"("p_name" "text", "p_is_published" boolean) OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."is_admin"() RETURNS boolean
+CREATE OR REPLACE FUNCTION "public"."is_teacher"() RETURNS boolean
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
-  select public.has_role('admin');
+  select public.has_role('teacher');
 $$;
 
 
-ALTER FUNCTION "public"."is_admin"() OWNER TO "postgres";
+ALTER FUNCTION "public"."is_teacher"() OWNER TO "postgres";
+
+
+COMMENT ON FUNCTION "public"."is_teacher"() IS 'Criterio unico de "puede gestionar el contenido del curso". La invocan las 15 policies de escritura y las Edge Functions por RPC.';
+
 
 
 CREATE OR REPLACE FUNCTION "public"."mark_lesson_viewed"("p_lesson_id" integer) RETURNS "void"
@@ -959,7 +963,7 @@ CREATE POLICY "ai_interactions_insert_own" ON "public"."ai_interactions" FOR INS
 
 
 
-CREATE POLICY "ai_interactions_select_admin" ON "public"."ai_interactions" FOR SELECT TO "authenticated" USING ("public"."is_admin"());
+CREATE POLICY "ai_interactions_select_teacher" ON "public"."ai_interactions" FOR SELECT TO "authenticated" USING ("public"."is_teacher"());
 
 
 
@@ -967,22 +971,22 @@ CREATE POLICY "attempts_insert_own" ON "public"."exercise_attempts" FOR INSERT T
 
 
 
-CREATE POLICY "attempts_select_admin" ON "public"."exercise_attempts" FOR SELECT TO "authenticated" USING ("public"."is_admin"());
-
-
-
 CREATE POLICY "attempts_select_own" ON "public"."exercise_attempts" FOR SELECT TO "authenticated" USING (("user_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "attempts_select_teacher" ON "public"."exercise_attempts" FOR SELECT TO "authenticated" USING ("public"."is_teacher"());
 
 
 
 ALTER TABLE "public"."blocks" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "blocks_delete_admin" ON "public"."blocks" FOR DELETE TO "authenticated" USING ("public"."is_admin"());
+CREATE POLICY "blocks_delete_teacher" ON "public"."blocks" FOR DELETE TO "authenticated" USING ("public"."is_teacher"());
 
 
 
-CREATE POLICY "blocks_insert_admin" ON "public"."blocks" FOR INSERT TO "authenticated" WITH CHECK ("public"."is_admin"());
+CREATE POLICY "blocks_insert_teacher" ON "public"."blocks" FOR INSERT TO "authenticated" WITH CHECK ("public"."is_teacher"());
 
 
 
@@ -990,7 +994,7 @@ CREATE POLICY "blocks_select_authenticated" ON "public"."blocks" FOR SELECT TO "
 
 
 
-CREATE POLICY "blocks_update_admin" ON "public"."blocks" FOR UPDATE TO "authenticated" USING ("public"."is_admin"()) WITH CHECK ("public"."is_admin"());
+CREATE POLICY "blocks_update_teacher" ON "public"."blocks" FOR UPDATE TO "authenticated" USING ("public"."is_teacher"()) WITH CHECK ("public"."is_teacher"());
 
 
 
@@ -1000,11 +1004,11 @@ ALTER TABLE "public"."exercise_attempts" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."exercises" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "exercises_delete_admin" ON "public"."exercises" FOR DELETE TO "authenticated" USING ("public"."is_admin"());
+CREATE POLICY "exercises_delete_teacher" ON "public"."exercises" FOR DELETE TO "authenticated" USING ("public"."is_teacher"());
 
 
 
-CREATE POLICY "exercises_insert_admin" ON "public"."exercises" FOR INSERT TO "authenticated" WITH CHECK ("public"."is_admin"());
+CREATE POLICY "exercises_insert_teacher" ON "public"."exercises" FOR INSERT TO "authenticated" WITH CHECK ("public"."is_teacher"());
 
 
 
@@ -1012,7 +1016,7 @@ CREATE POLICY "exercises_select_authenticated" ON "public"."exercises" FOR SELEC
 
 
 
-CREATE POLICY "exercises_update_admin" ON "public"."exercises" FOR UPDATE TO "authenticated" USING ("public"."is_admin"()) WITH CHECK ("public"."is_admin"());
+CREATE POLICY "exercises_update_teacher" ON "public"."exercises" FOR UPDATE TO "authenticated" USING ("public"."is_teacher"()) WITH CHECK ("public"."is_teacher"());
 
 
 
@@ -1022,11 +1026,11 @@ ALTER TABLE "public"."lesson_progress" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."lessons" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "lessons_delete_admin" ON "public"."lessons" FOR DELETE TO "authenticated" USING ("public"."is_admin"());
+CREATE POLICY "lessons_delete_teacher" ON "public"."lessons" FOR DELETE TO "authenticated" USING ("public"."is_teacher"());
 
 
 
-CREATE POLICY "lessons_insert_admin" ON "public"."lessons" FOR INSERT TO "authenticated" WITH CHECK ("public"."is_admin"());
+CREATE POLICY "lessons_insert_teacher" ON "public"."lessons" FOR INSERT TO "authenticated" WITH CHECK ("public"."is_teacher"());
 
 
 
@@ -1034,18 +1038,18 @@ CREATE POLICY "lessons_select_authenticated" ON "public"."lessons" FOR SELECT TO
 
 
 
-CREATE POLICY "lessons_update_admin" ON "public"."lessons" FOR UPDATE TO "authenticated" USING ("public"."is_admin"()) WITH CHECK ("public"."is_admin"());
+CREATE POLICY "lessons_update_teacher" ON "public"."lessons" FOR UPDATE TO "authenticated" USING ("public"."is_teacher"()) WITH CHECK ("public"."is_teacher"());
 
 
 
 ALTER TABLE "public"."modules" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "modules_delete_admin" ON "public"."modules" FOR DELETE TO "authenticated" USING ("public"."is_admin"());
+CREATE POLICY "modules_delete_teacher" ON "public"."modules" FOR DELETE TO "authenticated" USING ("public"."is_teacher"());
 
 
 
-CREATE POLICY "modules_insert_admin" ON "public"."modules" FOR INSERT TO "authenticated" WITH CHECK ("public"."is_admin"());
+CREATE POLICY "modules_insert_teacher" ON "public"."modules" FOR INSERT TO "authenticated" WITH CHECK ("public"."is_teacher"());
 
 
 
@@ -1053,7 +1057,7 @@ CREATE POLICY "modules_select_authenticated" ON "public"."modules" FOR SELECT TO
 
 
 
-CREATE POLICY "modules_update_admin" ON "public"."modules" FOR UPDATE TO "authenticated" USING ("public"."is_admin"()) WITH CHECK ("public"."is_admin"());
+CREATE POLICY "modules_update_teacher" ON "public"."modules" FOR UPDATE TO "authenticated" USING ("public"."is_teacher"()) WITH CHECK ("public"."is_teacher"());
 
 
 
@@ -1068,11 +1072,11 @@ CREATE POLICY "profiles_update_own" ON "public"."profiles" FOR UPDATE TO "authen
 
 
 
-CREATE POLICY "progress_select_admin" ON "public"."lesson_progress" FOR SELECT TO "authenticated" USING ("public"."is_admin"());
-
-
-
 CREATE POLICY "progress_select_own" ON "public"."lesson_progress" FOR SELECT TO "authenticated" USING (("user_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "progress_select_teacher" ON "public"."lesson_progress" FOR SELECT TO "authenticated" USING ("public"."is_teacher"());
 
 
 
@@ -1156,8 +1160,8 @@ GRANT ALL ON FUNCTION "public"."insert_module"("p_name" "text", "p_is_published"
 
 
 
-GRANT ALL ON FUNCTION "public"."is_admin"() TO "authenticated";
-GRANT ALL ON FUNCTION "public"."is_admin"() TO "service_role";
+GRANT ALL ON FUNCTION "public"."is_teacher"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."is_teacher"() TO "service_role";
 
 
 
@@ -1229,8 +1233,8 @@ GRANT ALL ON FUNCTION "public"."update_module"("p_id" integer, "p_name" "text", 
 
 
 
-GRANT ALL ON TABLE "public"."ai_interactions" TO "authenticated";
 GRANT ALL ON TABLE "public"."ai_interactions" TO "service_role";
+GRANT SELECT,INSERT ON TABLE "public"."ai_interactions" TO "authenticated";
 
 
 
@@ -1240,9 +1244,8 @@ GRANT ALL ON SEQUENCE "public"."ai_interactions_id_seq" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."blocks" TO "anon";
-GRANT ALL ON TABLE "public"."blocks" TO "authenticated";
 GRANT ALL ON TABLE "public"."blocks" TO "service_role";
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE "public"."blocks" TO "authenticated";
 
 
 
@@ -1252,8 +1255,8 @@ GRANT ALL ON SEQUENCE "public"."blocks_id_seq" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."exercise_attempts" TO "authenticated";
 GRANT ALL ON TABLE "public"."exercise_attempts" TO "service_role";
+GRANT SELECT,INSERT ON TABLE "public"."exercise_attempts" TO "authenticated";
 
 
 
@@ -1263,9 +1266,8 @@ GRANT ALL ON SEQUENCE "public"."exercise_attempts_id_seq" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."exercises" TO "anon";
-GRANT ALL ON TABLE "public"."exercises" TO "authenticated";
 GRANT ALL ON TABLE "public"."exercises" TO "service_role";
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE "public"."exercises" TO "authenticated";
 
 
 
@@ -1275,8 +1277,8 @@ GRANT ALL ON SEQUENCE "public"."exercises_id_seq" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."lesson_progress" TO "authenticated";
 GRANT ALL ON TABLE "public"."lesson_progress" TO "service_role";
+GRANT SELECT ON TABLE "public"."lesson_progress" TO "authenticated";
 
 
 
@@ -1286,9 +1288,8 @@ GRANT ALL ON SEQUENCE "public"."lesson_progress_id_seq" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."lessons" TO "anon";
-GRANT ALL ON TABLE "public"."lessons" TO "authenticated";
 GRANT ALL ON TABLE "public"."lessons" TO "service_role";
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE "public"."lessons" TO "authenticated";
 
 
 
@@ -1298,9 +1299,8 @@ GRANT ALL ON SEQUENCE "public"."lessons_id_seq" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."modules" TO "anon";
-GRANT ALL ON TABLE "public"."modules" TO "authenticated";
 GRANT ALL ON TABLE "public"."modules" TO "service_role";
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE "public"."modules" TO "authenticated";
 
 
 
@@ -1310,8 +1310,8 @@ GRANT ALL ON SEQUENCE "public"."modules_id_seq" TO "service_role";
 
 
 
-GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE "public"."profiles" TO "authenticated";
 GRANT ALL ON TABLE "public"."profiles" TO "service_role";
+GRANT SELECT ON TABLE "public"."profiles" TO "authenticated";
 
 
 
@@ -1319,8 +1319,8 @@ GRANT UPDATE("profile_description") ON TABLE "public"."profiles" TO "authenticat
 
 
 
-GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE "public"."roles" TO "authenticated";
 GRANT ALL ON TABLE "public"."roles" TO "service_role";
+GRANT SELECT ON TABLE "public"."roles" TO "authenticated";
 
 
 

@@ -3,7 +3,7 @@ import { PublicationStatus } from '@domain/learning/utils/publication-state';
 import { TooltipModule } from 'primeng/tooltip';
 
 /**
- * Indicador de publicación de un tema, subtema o bloque en el panel de administración.
+ * Indicador de publicación de un tema, subtema o bloque en el panel del profesor.
  *
  * Es solo un icono, el detalle va en el tooltip, que es donde importa: "no visible" no es
  * un motivo sino varios, y saber cuál es lo único accionable.

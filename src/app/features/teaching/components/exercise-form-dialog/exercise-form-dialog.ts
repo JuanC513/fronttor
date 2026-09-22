@@ -51,11 +51,14 @@ import { MarkdownRenderer } from '@shared/components/markdown-renderer/markdown-
 import {
   AiGeneratePanel,
   GenerateRequest,
-} from '@features/admin/components/ai-generate-panel/ai-generate-panel';
-import { buildCriterionRow } from '@features/admin/components/criterion-editor/criterion-row';
-import { CriterionEditor } from '@features/admin/components/criterion-editor/criterion-editor';
-import { CriterionFormValue, toCriterion } from '@features/admin/utils/criterion-fields';
-import { deleteConfirmation, UNPUBLISH_INSTEAD } from '@features/admin/utils/delete-confirmation';
+} from '@features/teaching/components/ai-generate-panel/ai-generate-panel';
+import { buildCriterionRow } from '@features/teaching/components/criterion-editor/criterion-row';
+import { CriterionEditor } from '@features/teaching/components/criterion-editor/criterion-editor';
+import { CriterionFormValue, toCriterion } from '@features/teaching/utils/criterion-fields';
+import {
+  deleteConfirmation,
+  UNPUBLISH_INSTEAD,
+} from '@features/teaching/utils/delete-confirmation';
 import { publicationConfirmation } from '@shared/components/publication-field/publication-confirm';
 import { PreviewPanel } from '@shared/components/preview-panel/preview-panel';
 import { PublicationField } from '@shared/components/publication-field/publication-field';
@@ -554,7 +557,7 @@ export class ExerciseFormDialog implements OnInit, OnDestroy {
   }
 
   closeDialog(): void {
-    this.router.navigate(['/admin/exercises']);
+    this.router.navigate(['/teaching/exercises']);
   }
 
   /**

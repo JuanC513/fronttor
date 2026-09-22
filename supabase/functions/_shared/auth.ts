@@ -4,7 +4,7 @@ import { createClient, SupabaseClient } from 'jsr:@supabase/supabase-js@2';
  * Seguridad de las Edge Functions en dos capas:
  *
  *   Capa 1 — autenticación  (`requireUser`):  quien llama es un usuario real con sesión.
- *   Capa 2 — autorización   (`requireAdmin`): además, ese usuario tiene rol admin.
+ *   Capa 2 — autorización   (`requireTeacher`): además, ese usuario tiene rol profesor.
  *
  * Por qué la verificación vive aquí y no se delega a `verify_jwt`:
  * el chequeo de plataforma solo comprueba que EXISTA un header de autorización, no que
@@ -61,24 +61,24 @@ export async function requireUser(req: Request): Promise<AuthenticatedUser> {
   return { id: data.user.id, client };
 }
 
-/** Capa 2: exige además rol admin. */
-export async function requireAdmin(req: Request): Promise<AuthenticatedUser> {
+/** Capa 2: exige además rol de profesor. */
+export async function requireTeacher(req: Request): Promise<AuthenticatedUser> {
   const user = await requireUser(req);
 
-  // Se delega en `is_admin()` en lugar de repetir aquí el join contra las tablas de roles. Es la
+  // Se delega en `is_teacher()` en lugar de repetir aquí el join contra las tablas de roles. Es la
   // MISMA función que evalúa cada policy de RLS al escribir contenido, así que el criterio de quién
-  // es administrador no puede divergir entre lo que autoriza esta capa y lo que permite la base.
+  // gestiona el contenido no puede divergir entre lo que autoriza esta capa y lo que permite la base.
   //
   // Además es `security definer`: no depende de los permisos que tenga `authenticated` sobre las
   // tablas de roles, que son deliberadamente mínimos.
-  const { data, error } = await user.client.rpc('is_admin');
+  const { data, error } = await user.client.rpc('is_teacher');
 
   if (error) {
     throw new AuthError('No se pudo verificar el rol del usuario', 403);
   }
 
   if (data !== true) {
-    throw new AuthError('Requiere rol de administrador', 403);
+    throw new AuthError('Requiere rol de profesor', 403);
   }
 
   return user;

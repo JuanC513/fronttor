@@ -5,7 +5,7 @@ import {
   CRITERION_TYPES,
   CriterionTypeMeta,
   metaFor,
-} from '@features/admin/utils/criterion-fields';
+} from '@features/teaching/utils/criterion-fields';
 import { FieldError } from '@shared/components/field-error/field-error';
 import { ButtonModule } from 'primeng/button';
 import { FloatLabelModule } from 'primeng/floatlabel';
@@ -72,7 +72,7 @@ export class CriterionEditor {
    * arrastrar el control anterior dejaría un «3» de texto donde se espera un 3. Rehacerla es más
    * corto de leer y no deja estados intermedios posibles.
    *
-   * Lo único que sobrevive es la descripción, y solo si la escribió el administrador.
+   * Lo único que sobrevive es la descripción, y solo si la escribió el profesor.
    */
   onTypeChange(index: number, row: FormGroup): void {
     const description = row.controls['description'];

@@ -5,7 +5,7 @@ export interface GenerateContentRequest {
   nombreBloque: string;
   /** Nombres de los otros bloques del subtema, para que la IA no repita lo ya cubierto. */
   bloquesExistentes?: string[];
-  /** Indicación libre del admin sobre qué debe contener el bloque. */
+  /** Indicación libre del profesor sobre qué debe contener el bloque. */
   instruccion?: string;
 }
 

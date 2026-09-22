@@ -55,10 +55,11 @@ export const routes: Routes = [
           import('@features/profile/pages/profile-page/profile-page').then((m) => m.ProfilePage),
       },
       {
-        path: 'admin',
+        path: 'teaching',
         canActivate: [roleGuard],
-        data: { roles: ['admin'] as UserRole[] },
-        loadChildren: () => import('@features/admin/admin.routes').then((m) => m.ADMIN_ROUTES),
+        data: { roles: ['teacher'] as UserRole[] },
+        loadChildren: () =>
+          import('@features/teaching/teaching.routes').then((m) => m.TEACHING_ROUTES),
       },
       {
         path: '**',
