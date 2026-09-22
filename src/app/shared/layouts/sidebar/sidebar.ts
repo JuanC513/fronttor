@@ -24,8 +24,14 @@ export class Sidebar {
     // El recorrido del curso pertenece a la vista del estudiante, que ahora exige ese rol. Sin
     // esta condición el menú ofrecería puertas que el guard cierra a continuación.
     if (this.isStudent()) {
+      // Ambos enlaces apuntan a rutas concretas y hermanas, no a la raíz de la feature. PrimeNG
+      // marca el ítem activo por PREFIJO de ruta (`routerLinkActiveOptions: { exact: false }`),
+      // así que un enlace a `/learning` se encendería también estando en `/learning/exercises`.
+      // Apuntando a `/learning/modules`, cada ítem se enciende solo en lo suyo y «Aprender» sigue
+      // activo dentro de una lección, cuya URL cuelga de él. Es la diferencia con forzar
+      // `exact: true`, que apagaría «Aprender» justo cuando el estudiante está leyendo.
       items.push(
-        { icon: 'pi pi-graduation-cap', routerLink: '/learning', label: 'Aprender' },
+        { icon: 'pi pi-graduation-cap', routerLink: '/learning/modules', label: 'Aprender' },
         { icon: 'pi pi-file-edit', routerLink: '/learning/exercises', label: 'Ejercicios' },
       );
     }
