@@ -18,6 +18,7 @@ import {
   resolveLessonStatus,
   resolveModuleStatus,
 } from '@domain/learning/utils/publication-state';
+import { AdminTabs } from '@features/admin/components/admin-tabs/admin-tabs';
 import { PublicationBadge } from '@shared/components/publication-badge/publication-badge';
 
 @Component({
@@ -31,6 +32,7 @@ import { PublicationBadge } from '@shared/components/publication-badge/publicati
     ListboxModule,
     FormsModule,
     PublicationBadge,
+    AdminTabs,
   ],
   templateUrl: './admin-main.html',
   styleUrl: './admin-main.scss',
@@ -230,6 +232,14 @@ export class AdminMain implements OnInit {
   isBlockReordering = signal(false);
   isBlockSaving = signal(false);
   blocksBuffer: Block[] = [];
+
+  /** Lleva al listado de ejercicios ya filtrado por el subtema seleccionado. */
+  viewExercises() {
+    const lessonId = this.selectedLesson()?.id;
+    if (!lessonId) return;
+
+    this.router.navigate(['admin/exercises'], { queryParams: { lessonId } });
+  }
 
   createBlock() {
     const moduleId = this.selectedModule()?.id;

@@ -34,10 +34,13 @@ import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { MarkdownRenderer } from '@shared/components/markdown-renderer/markdown-renderer';
 import { MarkdownCheatsheet } from '@shared/components/markdown-cheatsheet/markdown-cheatsheet';
+import { deleteConfirmation, UNPUBLISH_INSTEAD } from '@features/admin/utils/delete-confirmation';
 import { FieldError } from '@shared/components/field-error/field-error';
 import { publicationConfirmation } from '@shared/components/publication-field/publication-confirm';
 import { PublicationField } from '@shared/components/publication-field/publication-field';
 import { TextareaModule } from 'primeng/textarea';
+
+type ConfirmKind = 'publication' | 'delete' | 'ai' | null;
 
 @Component({
   selector: 'app-block-form-dialog',
@@ -79,6 +82,7 @@ export class BlockFormDialog implements OnInit, OnDestroy {
 
   /** Ancla del `ConfirmPopup` de guardado: el diálogo se envía con Enter además de con el botón. */
   private readonly saveAnchor = viewChild<ElementRef<HTMLElement>>('saveAnchor');
+  private readonly deleteAnchor = viewChild<ElementRef<HTMLElement>>('deleteAnchor');
   private readonly confirmPopup = viewChild(ConfirmPopup);
 
   /**
@@ -93,16 +97,30 @@ export class BlockFormDialog implements OnInit, OnDestroy {
   readonly isConfirming = computed(() => this.confirmPopup()?.computedVisible() ?? false);
 
   /**
-   * Este formulario comparte el `ConfirmPopup` con la confirmación de reemplazar contenido por
-   * el de la IA, y solo la de publicación debe realzar el aviso del interruptor.
+   * Que confirmacion esta abierta, para que cada una resalte lo suyo.
    *
-   * Basta con anotar cuál se abrió, sin reiniciarlo después: solo se lee mientras el popup
-   * está abierto, y para eso ya está `isConfirming`.
+   * Basta con anotarla al abrirla, sin reiniciarla: solo se lee mientras el popup esta abierto, y
+   * de eso ya se encarga `isConfirming`.
    */
-  private readonly confirmingPublication = signal(false);
-  readonly isConfirmingPublication = computed(
-    () => this.isConfirming() && this.confirmingPublication(),
+  private readonly confirmKind = signal<ConfirmKind>(null);
+
+  /** El aviso de publicacion se realza solo si el popup abierto es el suyo. */
+  readonly highlightImpact = computed(
+    () => this.isConfirming() && this.confirmKind() === 'publication',
   );
+
+  /** Ocupa el hueco del aviso de publicacion mientras se pregunta por el borrado. */
+  readonly deleteNotice = computed(() =>
+    this.isConfirming() && this.confirmKind() === 'delete' ? this.deleteMessage() : null,
+  );
+
+  /** Un bloque no cuelga de nada, asi que se lleva solo su contenido. */
+  private readonly deleteMessage = computed(() => {
+    const block = this.savedBlock();
+    if (!block) return '';
+
+    return `Se borrará «${block.name}» y su contenido de forma permanente. ${UNPUBLISH_INSTEAD}`;
+  });
 
   /** El bloque tal como está guardado, para comparar contra lo que hay en el formulario. */
   private readonly savedBlock = signal<Block | null>(null);
@@ -158,9 +176,6 @@ export class BlockFormDialog implements OnInit, OnDestroy {
       instruccion: [undefined, Validators.maxLength(2_000)],
     });
 
-    this.loadModules();
-    this.loadLessons();
-
     this.uiForm.get('module_id')?.valueChanges.subscribe((value) => {
       if (value) {
         if (value === this.selectedModuleId()) return;
@@ -173,8 +188,17 @@ export class BlockFormDialog implements OnInit, OnDestroy {
       }
     });
 
+    // Se esperan las dos cargas antes de aplicar ningún valor al formulario.
+    //
+    // No es un detalle de estilo: el suscriptor de arriba filtra los subtemas leyendo
+    // `lessonsSource()`, y si todavía está vacío cuando llega el tema, deja la lista en cero. Acto
+    // seguido `loadLessons()` resuelve y la rellena ENTERA, sin filtrar, de modo que el desplegable
+    // acababa ofreciendo los subtemas de todos los temas mientras el selector de arriba mostraba
+    // uno solo — y se podía elegir un subtema que no le pertenece.
+    await Promise.all([this.loadModules(), this.loadLessons()]);
+
     if (id) {
-      this.loadBlock(Number(id));
+      await this.loadBlock(Number(id));
     } else {
       const { moduleId, lessonId } = this.activatedRoute.snapshot.queryParams;
 
@@ -198,8 +222,12 @@ export class BlockFormDialog implements OnInit, OnDestroy {
       this.siblingBlocks.set(await this.blockService.getAllByLessonId(data.lesson_id));
       this.pendingPublished.set(data.is_published);
       this.blockForm.patchValue(data);
-      const currentModuleId = this.lessonsList().find((l) => l.id === data.lesson_id)?.module_id;
+      const currentModuleId = this.lessonsSource().find((l) => l.id === data.lesson_id)?.module_id;
+      // Sin emitir: el suscriptor de `module_id` limpia el subtema al cambiar de tema, y aquí el
+      // subtema es justo el del bloque que se está editando. A cambio hay que filtrar la lista a
+      // mano, que es lo que el suscriptor habría hecho.
       this.uiForm.patchValue({ module_id: currentModuleId }, { emitEvent: false });
+      this.lessonsList.set(this.lessonsSource().filter((l) => l.module_id === currentModuleId));
       this.selectedModuleId.set(currentModuleId);
     } catch (err) {
       console.error('No se pudo cargar el bloque. Intenta de nuevo. ' + err);
@@ -248,7 +276,7 @@ export class BlockFormDialog implements OnInit, OnDestroy {
       return;
     }
 
-    this.confirmingPublication.set(false);
+    this.confirmKind.set('ai');
     this.confirmationService.confirm({
       target: event.target as EventTarget,
       message: 'Ya escribiste contenido en este bloque. ¿Reemplazarlo por el que genere la IA?',
@@ -342,10 +370,26 @@ export class BlockFormDialog implements OnInit, OnDestroy {
       return;
     }
 
-    this.confirmingPublication.set(true);
+    this.confirmKind.set('publication');
     this.confirmationService.confirm(
       publicationConfirmation(this.saveAnchor()?.nativeElement, () => void this.save()),
     );
+  }
+
+  /** Un bloque no cuelga de nada, asi que se lleva solo su contenido. */
+  onDelete(): void {
+    const block = this.savedBlock();
+    if (!block) return;
+
+    this.confirmKind.set('delete');
+    this.confirmationService.confirm(
+      deleteConfirmation(this.deleteAnchor()?.nativeElement, () => void this.remove(block.id)),
+    );
+  }
+
+  private async remove(id: number): Promise<void> {
+    await this.blockService.delete(id);
+    this.router.navigate(['/admin']);
   }
 
   private async save(): Promise<void> {

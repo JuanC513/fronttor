@@ -2,6 +2,10 @@ import { inject, Injectable } from '@angular/core';
 import { SupabaseService } from '@core/services/supabase/supabase-service';
 import { AnswerQuestionRequest, AnswerQuestionResponse } from '../models/answer-question-model';
 import { GenerateContentRequest, GenerateContentResponse } from '../models/generate-content-model';
+import {
+  GenerateExerciseRequest,
+  GenerateExerciseResponse,
+} from '../models/generate-exercise-model';
 
 /**
  * Punto único de acceso a las capacidades de IA, expuestas como Edge Functions.
@@ -29,6 +33,29 @@ export class AiService {
 
     if (error) throw new Error(await this.readFunctionError(error));
     return data?.contenido ?? '';
+  }
+
+  /**
+   * Genera una parte de un ejercicio: enunciado, código inicial, solución o criterios.
+   *
+   * Devuelve la respuesta sin interpretar. El enunciado llega como markdown y el resto como datos
+   * ya analízados, pero darles forma es cosa de quien llama: el formulario sabe que los criterios
+   * se recortan con `toCriterion` y el código se vuelca en sus tres campos.
+   *
+   * @param signal Igual que en `generateBlockContent`: la generación tarda varios segundos y hay
+   * que poder abandonarla si se cierra el diálogo.
+   */
+  async generateExercisePart(
+    input: GenerateExerciseRequest,
+    signal?: AbortSignal,
+  ): Promise<GenerateExerciseResponse> {
+    const { data, error } = await this.supabase.functions.invoke<GenerateExerciseResponse>(
+      'generate-exercise',
+      { body: input, signal },
+    );
+
+    if (error) throw new Error(await this.readFunctionError(error));
+    return data ?? {};
   }
 
   /**

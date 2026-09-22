@@ -21,6 +21,8 @@
     </div>
   </span>
 
+  <app-admin-tabs />
+
   @if (error()) {
     Error
   }
@@ -162,7 +164,15 @@
                           </div>
                         </ng-template>
                       </p-listbox>
-                      <div class="ml-auto p-2">
+                      <div class="ml-auto p-2 flex gap-2">
+                        <p-button
+                          label="Ver ejercicios"
+                          icon="pi pi-file-edit"
+                          severity="secondary"
+                          variant="outlined"
+                          [disabled]="!selectedLesson() || isReorderingOrSaving"
+                          (onClick)="viewExercises()"
+                        />
                         <p-button
                           label="Cambiar orden"
                           icon="pi pi-sort"

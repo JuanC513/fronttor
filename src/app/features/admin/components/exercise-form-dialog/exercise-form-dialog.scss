@@ -1,0 +1,99 @@
+.markdown-rendered {
+  border: 1px solid;
+  border-color: var(--color-border-strong);
+  border-radius: var(--radius-md);
+  min-width: 0;
+  max-height: 16rem;
+  overflow-y: auto;
+}
+
+.difficulty-field {
+  min-width: 12rem;
+}
+
+.code-hint {
+  margin: 0 0 0.75rem;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+.tab-count {
+  margin-left: 0.4rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background-color: var(--color-surface-high);
+  font-size: 0.75rem;
+}
+
+// Altura fija para que cambiar de pestaña no mueva el pie del diálogo.
+.exercise-tabs ::ng-deep .p-tabpanels {
+  min-height: 26rem;
+}
+
+// El ancho fijo del editor solo sirve al Playground.
+.exercise-tabs ::ng-deep .code-editor-container {
+  width: 100%;
+}
+
+.exercise-tabs ::ng-deep .editor {
+  height: 20rem;
+}
+
+.check-section {
+  border-top: 1px solid var(--color-border);
+}
+
+.check-table {
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  th,
+  td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    color: var(--color-text-secondary);
+    font-weight: 600;
+  }
+
+  .col-flag {
+    width: 6rem;
+    text-align: center;
+  }
+
+  .pi-check {
+    color: var(--color-success);
+  }
+
+  .pi-times {
+    color: var(--color-text-muted);
+  }
+
+  tr.is-wrong td {
+    color: var(--color-error);
+  }
+
+  tr.is-wrong .pi-times.wrong {
+    color: var(--color-error);
+  }
+}
+
+// La vista previa se reserva el sitio desde el principio, pero solo se enseña cuando hay algo que
+// mirar: el iframe existe desde que se monta el panel.
+.preview-slot ::ng-deep iframe {
+  height: 12rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.preview-slot.is-hidden {
+  display: none;
+}
+
+:host ::ng-deep .p-dialog-footer {
+  padding-top: 1rem;
+}

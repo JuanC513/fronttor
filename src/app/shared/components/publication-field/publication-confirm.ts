@@ -21,6 +21,9 @@ export function publicationConfirmation(
     icon: 'pi pi-exclamation-triangle',
     acceptLabel: 'Guardar de todos modos',
     rejectLabel: 'Cancelar',
+    // Explicito para que no herede el rojo del popup de borrado: cuando una confirmacion no
+    // define este objeto, el boton conserva el aspecto de la anterior. Guardar no es destructivo.
+    acceptButtonProps: { severity: 'primary' },
     rejectButtonProps: { variant: 'outlined' },
     accept,
   };

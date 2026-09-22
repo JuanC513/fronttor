@@ -1,0 +1,20 @@
+:host {
+  height: 100%;
+}
+
+:host section {
+  background-color: var(--color-surface);
+}
+
+.lesson-cell {
+  color: var(--color-text-secondary);
+}
+
+.no-criteria {
+  color: var(--color-warning);
+  cursor: help;
+}
+
+::ng-deep .filter-select {
+  min-width: 14rem;
+}

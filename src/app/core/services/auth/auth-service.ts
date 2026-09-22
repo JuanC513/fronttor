@@ -4,6 +4,27 @@ import { BehaviorSubject, map } from 'rxjs';
 import { User } from '@supabase/supabase-js';
 import { Profile, UserRole } from '@core/interfaces/profile';
 
+/** Forma cruda del embed `user_roles(roles(name))` tal y como llega de PostgREST. */
+type RolesEmbed = { roles?: { name?: string } | { name?: string }[] | null }[] | null | undefined;
+
+/**
+ * Traduce el embed anidado a la lista de nombres de rol.
+ *
+ * Tolera que el nivel interno venga como objeto o como array: la cardinalidad que infiere
+ * supabase-js para una relación embebida no es estable, y es el mismo cuidado que ya tiene
+ * `requireAdmin` en las Edge Functions. Importa más de lo que parece porque el cliente no está
+ * tipado con un `Database` generado —todo lo que devuelve es `any`—, así que un cambio de forma no
+ * daría error de compilación: se manifestaría como un usuario sin roles y sin nada en la consola.
+ *
+ * Un perfil sin filas en `user_roles` devuelve una lista vacía, que los guards tratan como sin
+ * acceso. Es la respuesta segura ante un embed que no llegó.
+ */
+function readRoles(embed: RolesEmbed): UserRole[] {
+  return (embed ?? [])
+    .map((row) => (Array.isArray(row.roles) ? row.roles[0]?.name : row.roles?.name))
+    .filter((name): name is string => !!name) as UserRole[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -16,7 +37,19 @@ export class AuthService {
   profile$ = this.profileSubject.asObservable();
   initialized$ = this.initializedSubject.asObservable();
   isAuthenticated$ = this.user$.pipe(map((user) => !!user));
-  isAdmin$ = this.profile$.pipe(map((profile) => profile?.role === 'admin'));
+  isAdmin$ = this.hasRole$('admin');
+  isStudent$ = this.hasRole$('student');
+
+  /**
+   * Si el usuario tiene concedido un rol concreto.
+   *
+   * Desde que un usuario puede tener varios, preguntar por uno deja de ser una comparación y pasa
+   * a ser una búsqueda. Tenerlo aquí evita que cada consumidor repita el `includes` y decida por su
+   * cuenta qué hacer cuando todavía no hay perfil cargado.
+   */
+  hasRole$(role: UserRole) {
+    return this.profile$.pipe(map((profile) => profile?.roles.includes(role) ?? false));
+  }
 
   getCurrentUser() {
     return this.userSubject.value;
@@ -61,8 +94,10 @@ export class AuthService {
       .from('profiles')
       .select(
         `*,
-        roles(
-          name
+        user_roles(
+          roles(
+            name
+          )
         )
         `,
       )
@@ -78,10 +113,9 @@ export class AuthService {
       return;
     }
 
-    const profile: Profile = {
-      ...data,
-      role: data.roles?.name as UserRole,
-    };
+    const { user_roles, ...columns } = data;
+    const profile: Profile = { ...columns, roles: readRoles(user_roles) };
+
     this.profileSubject.next(profile);
   }
 

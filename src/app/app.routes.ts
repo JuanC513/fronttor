@@ -37,6 +37,8 @@ export const routes: Routes = [
       },
       {
         path: 'learning',
+        canActivate: [roleGuard],
+        data: { roles: ['student'] as UserRole[] },
         loadChildren: () =>
           import('@features/learning/learning.routes').then((m) => m.LEARNING_ROUTES),
       },

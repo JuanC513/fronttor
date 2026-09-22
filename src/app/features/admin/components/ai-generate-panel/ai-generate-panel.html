@@ -1,0 +1,35 @@
+<div class="ai-panel flex flex-column gap-3 p-3">
+  <p-floatlabel variant="on" class="w-full">
+    <textarea
+      pTextarea
+      [id]="'aiInstruction-' + key()"
+      rows="2"
+      style="resize: none"
+      class="w-full"
+      [attr.maxlength]="maxLength"
+      [readonly]="loading()"
+      [ngModel]="instruccion()"
+      (ngModelChange)="instruccion.set($event)"
+    ></textarea>
+    <label [for]="'aiInstruction-' + key()">{{ placeholder() }}</label>
+  </p-floatlabel>
+
+  <span class="flex align-items-center gap-3 flex-wrap">
+    <p-button
+      #generateButton
+      [label]="label()"
+      icon="pi pi-sparkles"
+      [loading]="loading()"
+      [disabled]="disabled() || !!blockedReason()"
+      (onClick)="onGenerate()"
+    />
+    <small class="ai-panel__hint">{{ hint() }}</small>
+  </span>
+
+  @if (blockedReason(); as reason) {
+    <p-message severity="info" [text]="reason" styleClass="w-full" />
+  }
+  @if (error(); as message) {
+    <p-message severity="error" [text]="message" styleClass="w-full" />
+  }
+</div>

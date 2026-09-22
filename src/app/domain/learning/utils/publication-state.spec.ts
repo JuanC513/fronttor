@@ -1,11 +1,16 @@
 import { Block } from '../models/block-model';
+import { Exercise } from '../models/exercise-model';
 import { Lesson } from '../models/lesson-model';
 import { Module } from '../models/module-model';
 import {
   describeBlockImpact,
+  describeExerciseImpact,
   describeLessonImpact,
   describeModuleImpact,
+  ExerciseScope,
+  exercisePublicationBlock,
   resolveBlockStatus,
+  resolveExerciseStatus,
   resolveLessonStatus,
   resolveModuleStatus,
 } from './publication-state';
@@ -231,5 +236,100 @@ describe('describeBlockImpact', () => {
 
     expect(impact.message).not.toContain('único bloque publicado');
     expect(impact.message).toContain('seguirá visible');
+  });
+});
+
+describe('ejercicios', () => {
+  const exercise = (over: Partial<Exercise> = {}): Exercise => ({
+    id: 500,
+    lesson_id: 10,
+    name: 'Crear una lista',
+    statement: '...',
+    difficulty: 'media',
+    starter_html: '',
+    starter_css: '',
+    starter_js: '',
+    solution_html: '',
+    solution_css: '',
+    solution_js: '',
+    criteria: [{ type: 'element_exists', selector: 'li', description: 'Hay lista' }],
+    source: 'manual',
+    is_published: true,
+    order: 1,
+    created_at: '2026-01-01T00:00:00Z',
+    ...over,
+  });
+
+  const scope = (over: Partial<ExerciseScope> = {}): ExerciseScope => ({
+    exercise: exercise(),
+    lesson: lesson(),
+    module: module(),
+    siblingExercises: [exercise()],
+    ...over,
+  });
+
+  describe('exercisePublicationBlock', () => {
+    it('impide publicar sin criterios', () => {
+      // Es el caso grave: `recompute_lesson_progress` cuenta el ejercicio entre los que hay que
+      // aprobar, y sin criterios nunca se aprueba, así que el subtema no se completa jamás.
+      expect(exercisePublicationBlock({ criteria: [] })).toContain('criterios');
+    });
+
+    it('deja publicar en cuanto hay uno', () => {
+      expect(exercisePublicationBlock({ criteria: exercise().criteria })).toBeNull();
+    });
+  });
+
+  describe('resolveExerciseStatus', () => {
+    it('es visible con criterios y sus ancestros publicados', () => {
+      expect(resolveExerciseStatus(scope()).state).toBe('published');
+    });
+
+    it('queda en borrador mientras no se publique', () => {
+      const status = resolveExerciseStatus(scope({ exercise: exercise({ is_published: false }) }));
+      expect(status.state).toBe('draft');
+    });
+
+    it('avisa cuando su subtema o su tema están en borrador', () => {
+      expect(resolveExerciseStatus(scope({ lesson: lesson({ is_published: false }) })).reason).toBe(
+        'Su subtema está en borrador',
+      );
+      expect(resolveExerciseStatus(scope({ module: module({ is_published: false }) })).reason).toBe(
+        'Su tema está en borrador',
+      );
+    });
+
+    it('marca como no visible el publicado sin criterios que venga de fuera de la aplicación', () => {
+      const roto = resolveExerciseStatus(scope({ exercise: exercise({ criteria: [] }) }));
+      expect(roto.reason).toContain('nadie puede aprobarlo');
+    });
+  });
+
+  describe('describeExerciseImpact', () => {
+    it('al publicar habla de obligatoriedad, no de contenido oculto', () => {
+      const borrador = scope({ exercise: exercise({ is_published: false }) });
+      const impact = describeExerciseImpact(borrador, true)!;
+
+      expect(impact.hides).toBeFalse();
+      expect(impact.message).toContain('obligatorio');
+      expect(impact.message).toContain('conservan su progreso');
+    });
+
+    it('avisa de que el subtema pasará a completarse solo con abrirlo', () => {
+      // Es la regla de `mark_lesson_viewed` cuando no queda ningún ejercicio publicado.
+      const impact = describeExerciseImpact(scope(), false)!;
+
+      expect(impact.hides).toBeTrue();
+      expect(impact.message).toContain('con solo abrirlo');
+    });
+
+    it('cuenta los que siguen siendo obligatorios si quedan otros', () => {
+      const conOtro = scope({
+        siblingExercises: [exercise(), exercise({ id: 501 }), exercise({ id: 502 })],
+      });
+      const impact = describeExerciseImpact(conOtro, false)!;
+
+      expect(impact.message).toContain('Quedan 2 ejercicios');
+    });
   });
 });

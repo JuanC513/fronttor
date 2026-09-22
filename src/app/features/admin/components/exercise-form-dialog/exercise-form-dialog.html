@@ -1,0 +1,363 @@
+<p-confirmpopup />
+
+<p-dialog
+  [header]="isEditForm ? 'Editar ejercicio' : 'Crear ejercicio'"
+  [modal]="true"
+  [visible]="true"
+  [style]="{ width: '80rem' }"
+  (onHide)="closeDialog()"
+>
+  <span class="flex flex-column">
+    <form [formGroup]="exerciseForm" class="flex flex-column gap-4 pt-2">
+      <span class="flex gap-3">
+        <div class="w-full">
+          <p-floatlabel variant="on" [formGroup]="uiForm" class="w-full">
+            <p-select
+              id="moduleList"
+              class="w-full"
+              appendTo="body"
+              [options]="modulesList()"
+              optionLabel="name"
+              optionValue="id"
+              [filter]="true"
+              [checkmark]="true"
+              [showClear]="true"
+              formControlName="module_id"
+            />
+            <label for="moduleList">Selecciona un tema</label>
+          </p-floatlabel>
+          <app-field-error
+            [control]="uiForm.controls['module_id']"
+            [customMessages]="{ required: 'Selecciona un tema.' }"
+          />
+        </div>
+        <div class="w-full">
+          <p-floatlabel variant="on" class="w-full">
+            <p-select
+              id="lessonList"
+              class="w-full"
+              appendTo="body"
+              [options]="lessonsList()"
+              optionLabel="name"
+              optionValue="id"
+              [filter]="true"
+              [checkmark]="true"
+              [showClear]="true"
+              formControlName="lesson_id"
+            />
+            <label for="lessonList">Selecciona un subtema</label>
+          </p-floatlabel>
+          <app-field-error
+            [control]="exerciseForm.controls['lesson_id']"
+            [customMessages]="{ required: 'Selecciona un subtema.' }"
+          />
+        </div>
+      </span>
+
+      <span class="flex gap-3">
+        <div class="w-full">
+          <p-floatlabel variant="on">
+            <input
+              pInputText
+              id="exerciseName"
+              class="flex-auto w-full"
+              autocomplete="off"
+              maxlength="100"
+              formControlName="name"
+            />
+            <label for="exerciseName">Nombre</label>
+          </p-floatlabel>
+          <app-field-error
+            [control]="exerciseForm.controls['name']"
+            [customMessages]="{ required: 'Ingresa un nombre para el ejercicio.' }"
+          />
+        </div>
+        <div class="difficulty-field">
+          <p-floatlabel variant="on" class="w-full">
+            <p-select
+              id="difficulty"
+              class="w-full"
+              appendTo="body"
+              [options]="difficulties"
+              optionLabel="label"
+              optionValue="value"
+              formControlName="difficulty"
+            />
+            <label for="difficulty">Dificultad</label>
+          </p-floatlabel>
+        </div>
+      </span>
+
+      <div class="exercise-tabs">
+        <p-tabs value="statement">
+          <p-tablist>
+            <p-tab value="statement">Enunciado</p-tab>
+            <p-tab value="starter">Código inicial</p-tab>
+            <p-tab value="solution">Solución de referencia</p-tab>
+            <p-tab value="criteria">
+              Criterios
+              @if (criteriaArray.length) {
+                <span class="tab-count">{{ criteriaArray.length }}</span>
+              }
+            </p-tab>
+          </p-tablist>
+          <p-tabpanels>
+            <p-tabpanel value="statement">
+              <div class="tab-header flex justify-content-between align-items-center gap-3 mb-3">
+                <app-markdown-cheatsheet />
+                <p-button
+                  [label]="showAiPanel() ? 'Ocultar asistente' : 'Generar con IA'"
+                  icon="pi pi-sparkles"
+                  severity="secondary"
+                  variant="outlined"
+                  size="small"
+                  [disabled]="!!generatingPart() || isConfirming()"
+                  (onClick)="toggleAiPanel()"
+                />
+              </div>
+
+              @if (showAiPanel()) {
+                <div class="mb-3">
+                  <app-ai-generate-panel
+                    key="statement"
+                    label="Generar enunciado"
+                    placeholder="¿Qué debe pedir el ejercicio? (opcional)"
+                    hint="Tiene en cuenta el tema, el subtema y lo que ya haya escrito en el ejercicio."
+                    [loading]="generatingPart() === 'statement'"
+                    [disabled]="!!generatingPart() || isConfirming()"
+                    [blockedReason]="generationBlock()"
+                    [error]="generationError()"
+                    (generate)="onGenerateClick('statement', $event)"
+                  />
+                </div>
+              }
+              <span class="flex gap-1 w-full">
+                <div class="w-6">
+                  <p-floatlabel variant="on" class="w-full h-full">
+                    <textarea
+                      pTextarea
+                      id="statement"
+                      rows="10"
+                      style="resize: none"
+                      class="h-full w-full"
+                      [attr.maxlength]="maxStatementLength"
+                      formControlName="statement"
+                    ></textarea>
+                    <label for="statement">Enunciado</label>
+                  </p-floatlabel>
+                  <app-field-error
+                    [control]="exerciseForm.controls['statement']"
+                    [customMessages]="{ required: 'Escribe el enunciado del ejercicio.' }"
+                  />
+                </div>
+                <div class="markdown-rendered w-6 p-4">
+                  <app-markdown-renderer [content]="exerciseForm.get('statement')?.value || ''" />
+                </div>
+              </span>
+            </p-tabpanel>
+
+            <p-tabpanel value="starter">
+              <div class="tab-header flex justify-content-between align-items-center gap-3 mb-3">
+                <p class="code-hint m-0">
+                  Desde aquí parte el estudiante. Los ids y las clases que dejes son a los que
+                  podrán apuntar los criterios.
+                </p>
+                <p-button
+                  [label]="showAiPanel() ? 'Ocultar asistente' : 'Generar con IA'"
+                  icon="pi pi-sparkles"
+                  severity="secondary"
+                  variant="outlined"
+                  size="small"
+                  [disabled]="!!generatingPart() || isConfirming()"
+                  (onClick)="toggleAiPanel()"
+                />
+              </div>
+
+              @if (showAiPanel()) {
+                <div class="mb-3">
+                  <app-ai-generate-panel
+                    key="starter"
+                    label="Generar código inicial"
+                    placeholder="¿Qué debe traer y qué debe faltar? (opcional)"
+                    hint="Deja el trabajo sin hacer: es de donde parte el estudiante."
+                    [loading]="generatingPart() === 'starter'"
+                    [disabled]="!!generatingPart() || isConfirming()"
+                    [blockedReason]="generationBlock()"
+                    [error]="generationError()"
+                    (generate)="onGenerateClick('starter', $event)"
+                  />
+                </div>
+              }
+              <app-code-editor [(value)]="starterCode" />
+            </p-tabpanel>
+
+            <p-tabpanel value="solution">
+              <div class="tab-header flex justify-content-between align-items-center gap-3 mb-3">
+                <p class="code-hint m-0">
+                  Un código que sí resuelve el ejercicio. Es con lo que se comprueba que los
+                  criterios están bien escritos; el estudiante no lo ve mientras resuelve.
+                </p>
+                <p-button
+                  [label]="showAiPanel() ? 'Ocultar asistente' : 'Generar con IA'"
+                  icon="pi pi-sparkles"
+                  severity="secondary"
+                  variant="outlined"
+                  size="small"
+                  [disabled]="!!generatingPart() || isConfirming()"
+                  (onClick)="toggleAiPanel()"
+                />
+              </div>
+
+              @if (showAiPanel()) {
+                <div class="mb-3">
+                  <app-ai-generate-panel
+                    key="solution"
+                    label="Generar solución"
+                    placeholder="¿Cómo debería resolverse? (opcional)"
+                    hint="Parte del código inicial y conserva sus ids y clases."
+                    [loading]="generatingPart() === 'solution'"
+                    [disabled]="!!generatingPart() || isConfirming()"
+                    [blockedReason]="generationBlock()"
+                    [error]="generationError()"
+                    (generate)="onGenerateClick('solution', $event)"
+                  />
+                </div>
+              }
+              <app-code-editor [(value)]="solutionCode" />
+            </p-tabpanel>
+
+            <p-tabpanel value="criteria">
+              <div class="tab-header flex justify-content-end mb-3">
+                <p-button
+                  [label]="showAiPanel() ? 'Ocultar asistente' : 'Generar con IA'"
+                  icon="pi pi-sparkles"
+                  severity="secondary"
+                  variant="outlined"
+                  size="small"
+                  [disabled]="!!generatingPart() || isConfirming()"
+                  (onClick)="toggleAiPanel()"
+                />
+              </div>
+
+              @if (showAiPanel()) {
+                <div class="mb-3">
+                  <app-ai-generate-panel
+                    key="criteria"
+                    label="Generar criterios"
+                    placeholder="¿Qué se debería comprobar? (opcional)"
+                    hint="Se derivan de la solución escrita, y se comprueban solos al terminar."
+                    [loading]="generatingPart() === 'criteria'"
+                    [disabled]="!!generatingPart() || isConfirming()"
+                    [blockedReason]="generationBlock()"
+                    [error]="generationError()"
+                    (generate)="onGenerateClick('criteria', $event)"
+                  />
+                </div>
+              }
+              <app-criterion-editor [criteria]="criteriaArray" />
+              <div class="check-section mt-4 pt-3">
+                <div class="flex align-items-center gap-3 flex-wrap">
+                  <p-button
+                    label="Probar criterios"
+                    icon="pi pi-play"
+                    severity="secondary"
+                    [loading]="isTesting()"
+                    [disabled]="!criteriaArray.length || criteriaArray.invalid || isSaving()"
+                    (onClick)="runChecks()"
+                  />
+                  <small class="code-hint m-0">
+                    Los corre contra el código inicial y contra la solución, y compara las dos
+                    lecturas.
+                  </small>
+                </div>
+
+                @if (testError(); as message) {
+                  <p-message severity="error" [text]="message" styleClass="w-full mt-3" />
+                }
+
+                @if (checks(); as results) {
+                  <table class="check-table w-full mt-3">
+                    <thead>
+                      <tr>
+                        <th>Criterio</th>
+                        <th class="col-flag">Solución</th>
+                        <th class="col-flag">Inicial</th>
+                        <th>Diagnóstico</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (check of results; track $index) {
+                        <tr [class.is-wrong]="check.verdict !== 'ok'">
+                          <td>{{ check.description }}</td>
+                          <td class="col-flag">
+                            <i
+                              [class]="check.solution ? 'pi pi-check ok' : 'pi pi-times wrong'"
+                            ></i>
+                          </td>
+                          <td class="col-flag">
+                            <i [class]="check.starter ? 'pi pi-check' : 'pi pi-times'"></i>
+                          </td>
+                          <td>{{ verdictMessage[check.verdict] }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+
+                  <p class="code-hint mt-3 mb-2">Así queda la solución de referencia:</p>
+                }
+
+                <div class="preview-slot" [class.is-hidden]="!checks()">
+                  <app-preview-panel />
+                </div>
+              </div>
+            </p-tabpanel>
+          </p-tabpanels>
+        </p-tabs>
+      </div>
+
+      <app-publication-field
+        [control]="isPublishedControl"
+        [isEditForm]="isEditForm"
+        [impact]="impact()"
+        [highlight]="highlightImpact()"
+        [deleteNotice]="deleteNotice()"
+        [blockedReason]="publicationBlock()"
+        entityLabel="el ejercicio"
+      />
+    </form>
+  </span>
+
+  <ng-template #footer>
+    <div class="flex justify-content-between w-full">
+      <span #deleteAnchor>
+        @if (isEditForm) {
+          <p-button
+            label="Borrar"
+            icon="pi pi-trash"
+            severity="danger"
+            variant="outlined"
+            [disabled]="isConfirming() || isSaving()"
+            (onClick)="onDelete()"
+          />
+        }
+      </span>
+      <div class="flex gap-2">
+        <p-button
+          label="Cancelar"
+          variant="outlined"
+          severity="danger"
+          [disabled]="isConfirming() || isSaving()"
+          (click)="closeDialog()"
+        />
+        <span #saveAnchor>
+          <p-button
+            [label]="isEditForm ? 'Actualizar' : 'Crear'"
+            [loading]="isTesting() || isSaving()"
+            (onClick)="onSubmit()"
+            [disabled]="exerciseForm.invalid || isConfirming()"
+          />
+        </span>
+      </div>
+    </div>
+  </ng-template>
+</p-dialog>

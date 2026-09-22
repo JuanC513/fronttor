@@ -65,23 +65,19 @@ export async function requireUser(req: Request): Promise<AuthenticatedUser> {
 export async function requireAdmin(req: Request): Promise<AuthenticatedUser> {
   const user = await requireUser(req);
 
-  // Mismo join que usa `AuthService.loadProfile()` en el frontend, para que el criterio
-  // de rol sea uno solo en todo el sistema.
-  const { data, error } = await user.client
-    .from('profiles')
-    .select('roles(name)')
-    .eq('user_id', user.id)
-    .single();
+  // Se delega en `is_admin()` en lugar de repetir aquí el join contra las tablas de roles. Es la
+  // MISMA función que evalúa cada policy de RLS al escribir contenido, así que el criterio de quién
+  // es administrador no puede divergir entre lo que autoriza esta capa y lo que permite la base.
+  //
+  // Además es `security definer`: no depende de los permisos que tenga `authenticated` sobre las
+  // tablas de roles, que son deliberadamente mínimos.
+  const { data, error } = await user.client.rpc('is_admin');
 
-  if (error || !data) {
+  if (error) {
     throw new AuthError('No se pudo verificar el rol del usuario', 403);
   }
 
-  // La cardinalidad de la relación embebida varía según cómo la infiera supabase-js.
-  const roles = (data as { roles?: { name?: string } | { name?: string }[] | null }).roles;
-  const roleName = Array.isArray(roles) ? roles[0]?.name : roles?.name;
-
-  if (roleName !== 'admin') {
+  if (data !== true) {
     throw new AuthError('Requiere rol de administrador', 403);
   }
 

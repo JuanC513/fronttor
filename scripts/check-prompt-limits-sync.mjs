@@ -40,6 +40,17 @@ const pairs = [
     },
   },
   {
+    name: 'MAX_INSTRUCCION_LENGTH (ejercicios)',
+    a: {
+      file: 'supabase/functions/_shared/prompts/exercise-prompt.ts',
+      pattern: /MAX_INSTRUCCION_LENGTH\s*=\s*([\d_]+)\s*;/,
+    },
+    b: {
+      file: 'src/app/features/admin/components/ai-generate-panel/ai-generate-panel.ts',
+      pattern: /MAX_INSTRUCCION_LENGTH\s*=\s*([\d_]+)\s*;/,
+    },
+  },
+  {
     name: 'MAX_INSTRUCCION_LENGTH',
     a: {
       file: 'supabase/functions/_shared/prompts/content-prompt.ts',

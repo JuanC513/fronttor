@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { CodeEditor } from '@shared/components/code-editor/code-editor';
 import { ConsolePanel } from '@shared/components/console-panel/console-panel';
 import { PreviewPanel } from '@shared/components/preview-panel/preview-panel';
+import { CodeRunnerState } from '@domain/code-runner/models/code-runner-model';
 import { CodeRunnerStateService } from '@domain/code-runner/services/code-runner-state-service';
 
 @Component({
@@ -14,6 +15,15 @@ import { CodeRunnerStateService } from '@domain/code-runner/services/code-runner
 })
 export class PlaygroundPage {
   private readonly codeRunnerStateService = inject(CodeRunnerStateService);
+
+  readonly editableState = this.codeRunnerStateService.editableState;
+
+  /** El editor ya no escribe en el servicio por su cuenta; lo hace esta página por él. */
+  onCodeChange(state: CodeRunnerState) {
+    this.codeRunnerStateService.updateHtml(state.html);
+    this.codeRunnerStateService.updateCss(state.css);
+    this.codeRunnerStateService.updateJs(state.js);
+  }
 
   toggleMode() {
     const currentMode = this.getExecutionMode();
