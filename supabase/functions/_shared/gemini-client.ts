@@ -21,8 +21,24 @@ export class GeminiError extends Error {
   }
 }
 
+/**
+ * Ajustes de generacion de Gemini.
+ *
+ * Se usa para pedir salida estructurada: cuando la respuesta no es prosa sino datos con forma
+ * fija —los tres archivos de codigo de un ejercicio, o su lista de criterios—, `responseSchema`
+ * evita tener que analizar texto libre y confiar en que venga bien.
+ */
+export interface GeminiGenerationConfig {
+  responseMimeType?: string;
+  responseSchema?: unknown;
+}
+
 /** Único punto de llamada a la API de Gemini — Compartido por todas las funciones */
-export async function callGemini(prompt: string, model: string = GEMINI_MODEL): Promise<string> {
+export async function callGemini(
+  prompt: string,
+  model: string = GEMINI_MODEL,
+  generationConfig?: GeminiGenerationConfig,
+): Promise<string> {
   if (!GEMINI_API_KEY) {
     throw new GeminiError('GEMINI_API_KEY no configurada', '');
   }
@@ -31,7 +47,10 @@ export async function callGemini(prompt: string, model: string = GEMINI_MODEL): 
   const response = await fetch(`${url}?key=${GEMINI_API_KEY}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      ...(generationConfig ? { generationConfig } : {}),
+    }),
   });
 
   if (!response.ok) {

@@ -14,12 +14,11 @@ import { firstValueFrom, isObservable, of } from 'rxjs';
 import { roleGuard } from './role-guard';
 
 describe('roleGuard', () => {
-  const buildProfile = (role: UserRole): Profile => ({
+  const buildProfile = (roles: UserRole[]): Profile => ({
     user_id: 'usuario-1',
     email: 'alguien@ejemplo.com',
     profile_description: null,
-    role_id: role === 'admin' ? 1 : 2,
-    role,
+    roles,
   });
 
   /**
@@ -27,6 +26,10 @@ describe('roleGuard', () => {
    * que tenía este guard, que leía `profile$` sin esperar y veía el `null` inicial.
    */
   const runGuard = async (options: { profile: Profile | null; allowedRoles: UserRole[] }) => {
+    // Se reinicia aquí y no solo en el `afterEach` para poder correr el guard varias veces dentro
+    // de una misma prueba: `configureTestingModule` falla si el módulo ya está instanciado.
+    TestBed.resetTestingModule();
+
     const authService = jasmine.createSpyObj<AuthService>('AuthService', ['getCurrentProfile'], {
       initialized$: of(false, true),
     });
@@ -50,13 +53,30 @@ describe('roleGuard', () => {
   afterEach(() => TestBed.resetTestingModule());
 
   it('deja pasar a un admin a una ruta de admins', async () => {
-    const result = await runGuard({ profile: buildProfile('admin'), allowedRoles: ['admin'] });
+    const result = await runGuard({ profile: buildProfile(['admin']), allowedRoles: ['admin'] });
 
     expect(result).toBeTrue();
   });
 
   it('manda a /home a un estudiante que intenta entrar a una ruta de admins', async () => {
-    const result = await runGuard({ profile: buildProfile('student'), allowedRoles: ['admin'] });
+    const result = await runGuard({ profile: buildProfile(['student']), allowedRoles: ['admin'] });
+
+    expect(urlOf(result)).toBe('/home');
+  });
+
+  /**
+   * El caso que justifica todo el cambio a varios roles: el profesor que administra el contenido
+   * y además quiere verlo como lo ve un estudiante. Con un solo rol había que elegir.
+   */
+  it('deja pasar a quien tiene los dos roles por las dos puertas', async () => {
+    const profile = buildProfile(['student', 'admin']);
+
+    expect(await runGuard({ profile, allowedRoles: ['admin'] })).toBeTrue();
+    expect(await runGuard({ profile, allowedRoles: ['student'] })).toBeTrue();
+  });
+
+  it('manda a /home a un perfil sin ningún rol', async () => {
+    const result = await runGuard({ profile: buildProfile([]), allowedRoles: ['student'] });
 
     expect(urlOf(result)).toBe('/home');
   });

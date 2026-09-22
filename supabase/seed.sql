@@ -3,14 +3,17 @@
 --
 -- El volcado de esquema (schema-actual.sql) trae solo estructura, sin filas.
 -- Estos son los unicos datos sin los cuales la aplicacion no arranca en un
--- proyecto nuevo: `handle_new_user` inserta cada perfil con role_id = 1, asi que
--- si la tabla `roles` esta vacia, ningun usuario puede registrarse.
+-- proyecto nuevo: `handle_new_user` busca el rol llamado 'student' para
+-- concederselo a quien se registra, y lanza una excepcion si no lo encuentra.
+-- Con esta tabla vacia, nadie puede registrarse.
 --
 -- config.toml ya apunta aqui: [db.seed] sql_paths = ["./seed.sql"]
 --
--- VERIFICAR ANTES DE USAR EN UN PROYECTO NUEVO: los ids salen de que
--- handle_new_user documenta `1 = student`; el 2 para admin esta inferido. En el
--- proyecto actual conviene confirmarlo con `select * from roles;` y ajustar.
+-- Los ids de aqui son una conveniencia, no un contrato: desde
+-- 20260918120000_user_roles_many_to_many.sql, nada en el sistema depende de que
+-- student sea el 1 ni admin el 2. Tanto has_role() como el trigger y el frontend
+-- resuelven el rol POR NOMBRE, que es la unica columna con restriccion de
+-- unicidad.
 -- ============================================================================
 
 insert into public.roles (id, name)

@@ -32,6 +32,19 @@ export function errorResponse(err: unknown): Response {
       );
     }
 
+    // Gemini responde 503 cuando el modelo está saturado, y pasa con cierta frecuencia en los
+    // modelos gratuitos. Sin este caso, un fallo pasajero se ve igual que uno de configuración y
+    // nadie sabe que basta con reintentar.
+    if (err.status === 503) {
+      return jsonResponse(
+        {
+          error:
+            'El modelo está saturado en este momento. Es pasajero: vuelve a intentarlo en un minuto.',
+        },
+        503,
+      );
+    }
+
     return jsonResponse({ error: err.message, detail: err.detail }, 502);
   }
 

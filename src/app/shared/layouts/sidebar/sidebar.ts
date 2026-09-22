@@ -15,15 +15,22 @@ import { toSignal } from '@angular/core/rxjs-interop';
 export class Sidebar {
   private readonly authService = inject(AuthService);
   private isAdmin = toSignal(this.authService.isAdmin$, { initialValue: false });
+  private isStudent = toSignal(this.authService.isStudent$, { initialValue: false });
 
   readonly mainItems = computed<MenuItem[]>(() => {
     const showLabel = !this.popupMenuMode();
-    const items: MenuItem[] = [
-      { icon: 'pi pi-home', routerLink: '/home', label: 'Inicio' },
-      { icon: 'pi pi-graduation-cap', routerLink: '/learning', label: 'Aprender' },
-      { icon: 'pi pi-file-edit', routerLink: '/exercises', label: 'Ejercicios' },
-      { icon: 'pi pi-code', routerLink: '/playground', label: 'Libre' },
-    ];
+    const items: MenuItem[] = [{ icon: 'pi pi-home', routerLink: '/home', label: 'Inicio' }];
+
+    // El recorrido del curso pertenece a la vista del estudiante, que ahora exige ese rol. Sin
+    // esta condición el menú ofrecería puertas que el guard cierra a continuación.
+    if (this.isStudent()) {
+      items.push(
+        { icon: 'pi pi-graduation-cap', routerLink: '/learning', label: 'Aprender' },
+        { icon: 'pi pi-file-edit', routerLink: '/exercises', label: 'Ejercicios' },
+      );
+    }
+
+    items.push({ icon: 'pi pi-code', routerLink: '/playground', label: 'Libre' });
 
     return items.map((item) => {
       if (showLabel) return item;

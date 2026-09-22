@@ -176,9 +176,6 @@ export class BlockFormDialog implements OnInit, OnDestroy {
       instruccion: [undefined, Validators.maxLength(2_000)],
     });
 
-    this.loadModules();
-    this.loadLessons();
-
     this.uiForm.get('module_id')?.valueChanges.subscribe((value) => {
       if (value) {
         if (value === this.selectedModuleId()) return;
@@ -191,8 +188,17 @@ export class BlockFormDialog implements OnInit, OnDestroy {
       }
     });
 
+    // Se esperan las dos cargas antes de aplicar ningún valor al formulario.
+    //
+    // No es un detalle de estilo: el suscriptor de arriba filtra los subtemas leyendo
+    // `lessonsSource()`, y si todavía está vacío cuando llega el tema, deja la lista en cero. Acto
+    // seguido `loadLessons()` resuelve y la rellena ENTERA, sin filtrar, de modo que el desplegable
+    // acababa ofreciendo los subtemas de todos los temas mientras el selector de arriba mostraba
+    // uno solo — y se podía elegir un subtema que no le pertenece.
+    await Promise.all([this.loadModules(), this.loadLessons()]);
+
     if (id) {
-      this.loadBlock(Number(id));
+      await this.loadBlock(Number(id));
     } else {
       const { moduleId, lessonId } = this.activatedRoute.snapshot.queryParams;
 
@@ -216,8 +222,12 @@ export class BlockFormDialog implements OnInit, OnDestroy {
       this.siblingBlocks.set(await this.blockService.getAllByLessonId(data.lesson_id));
       this.pendingPublished.set(data.is_published);
       this.blockForm.patchValue(data);
-      const currentModuleId = this.lessonsList().find((l) => l.id === data.lesson_id)?.module_id;
+      const currentModuleId = this.lessonsSource().find((l) => l.id === data.lesson_id)?.module_id;
+      // Sin emitir: el suscriptor de `module_id` limpia el subtema al cambiar de tema, y aquí el
+      // subtema es justo el del bloque que se está editando. A cambio hay que filtrar la lista a
+      // mano, que es lo que el suscriptor habría hecho.
       this.uiForm.patchValue({ module_id: currentModuleId }, { emitEvent: false });
+      this.lessonsList.set(this.lessonsSource().filter((l) => l.module_id === currentModuleId));
       this.selectedModuleId.set(currentModuleId);
     } catch (err) {
       console.error('No se pudo cargar el bloque. Intenta de nuevo. ' + err);
