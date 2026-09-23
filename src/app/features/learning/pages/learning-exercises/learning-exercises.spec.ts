@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter, Router } from '@angular/router';
 import { AuthService } from '@core/services/auth/auth-service';
 import { LessonProgress } from '@domain/learning/models/lesson-progress-model';
 import { ModuleWithLessonCounts } from '@domain/learning/models/module-with-lesson-counts';
@@ -73,6 +74,7 @@ describe('LearningExercises', () => {
     TestBed.configureTestingModule({
       imports: [LearningExercises],
       providers: [
+        provideRouter([]),
         { provide: ModuleService, useValue: moduleService },
         { provide: ExerciseService, useValue: exerciseService },
         { provide: ProgressService, useValue: progressService },
@@ -233,6 +235,7 @@ describe('LearningExercises', () => {
     TestBed.configureTestingModule({
       imports: [LearningExercises],
       providers: [
+        provideRouter([]),
         { provide: ModuleService, useValue: moduleService },
         { provide: ExerciseService, useValue: exerciseService },
         { provide: ProgressService, useValue: progressService },
@@ -246,5 +249,38 @@ describe('LearningExercises', () => {
 
     expect(fixture.componentInstance.error()).toContain('No se pudieron cargar');
     expect(fixture.componentInstance.loading()).toBeFalse();
+  });
+
+  /* ─── Navegación a la vista de resolución ─── */
+
+  it('lleva a la vista de resolución del ejercicio', async () => {
+    const { component } = await setup({
+      modules: [buildModule(1, 1)],
+      exercises: [exercise(5, 100)],
+    });
+    const navigate = spyOn(TestBed.inject(Router), 'navigate');
+
+    component.openExercise(5);
+
+    expect(navigate).toHaveBeenCalledWith(['/learning/exercises', 5]);
+  });
+
+  /**
+   * El bloqueo lo aplica el `disabled` del botón, no el método: es la misma decisión que en la
+   * vista de contenido, y por eso se comprueba sobre el DOM y no sobre la clase.
+   */
+  it('deja pulsable el ejercicio alcanzable y deshabilitado el bloqueado', async () => {
+    const { fixture } = await setup({
+      modules: [buildModule(1, 2)],
+      exercises: [exercise(1, 100), exercise(2, 101)],
+    });
+
+    const rows = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('.exercise-row'),
+    );
+
+    expect(rows.length).toBe(2);
+    expect(rows[0].disabled).toBeFalse();
+    expect(rows[1].disabled).toBeTrue();
   });
 });

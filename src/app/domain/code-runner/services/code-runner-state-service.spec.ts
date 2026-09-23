@@ -6,7 +6,9 @@ describe('CodeRunnerStateService', () => {
   let service: CodeRunnerStateService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    // El servicio no lleva `providedIn`: se provee por componente para que cada vista con editor
+    // tenga su propio estado. Aquí hay que darlo a mano por la misma razón.
+    TestBed.configureTestingModule({ providers: [CodeRunnerStateService] });
     service = TestBed.inject(CodeRunnerStateService);
   });
 

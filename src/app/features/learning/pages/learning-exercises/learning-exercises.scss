@@ -75,14 +75,34 @@
 
 /* ─── Filas de ejercicio ─── */
 
-// Todavía no navegan: la vista de resolución llega en el siguiente paso. Se presentan como filas
-// de estado, sin cursor ni hover, para no prometer un clic que no hace nada.
+// Son botones, así que hay que apagar lo que el navegador les pone por su cuenta. A cambio salen
+// gratis el foco por teclado y el estado deshabilitado del bloqueo.
 .exercise-row {
   padding: var(--space-sm) var(--space-md);
   border: 1px solid var(--color-border);
   border-left: 3px solid var(--exercise-accent, var(--color-border-strong));
   border-radius: var(--radius-sm);
   background-color: var(--color-surface);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    box-shadow 0.15s;
+
+  &:not(:disabled):hover {
+    background-color: var(--color-surface-white);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.exercise-arrow {
+  color: var(--exercise-accent);
+  font-size: 0.875rem;
 }
 
 // Cada estado solo redefine un color, igual que las tarjetas de subtema en la otra vista.

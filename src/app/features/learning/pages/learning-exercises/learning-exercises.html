@@ -111,31 +111,46 @@
                       @if (lesson.exercises.length) {
                         <ul class="exercise-list flex flex-column gap-2 list-none m-0 p-0">
                           @for (item of lesson.exercises; track item.exercise.id) {
-                            <li
-                              class="exercise-row flex align-items-center gap-3"
-                              [class]="'is-' + item.status"
-                            >
-                              <i
-                                class="exercise-icon flex-shrink-0"
-                                [class]="statusIcon(item.status)"
-                                [attr.aria-label]="statusLabel(item.status)"
-                              ></i>
+                            <li>
+                              <!-- Un `button` y no un enlace, igual que las tarjetas de subtema:
+                                  `disabled` deja el bloqueo dicho de una vez para el ratón y para
+                                  el lector de pantalla, sin `aria-disabled` ni estilos a mano. -->
+                              <button
+                                type="button"
+                                class="exercise-row flex align-items-center gap-3 w-full text-left"
+                                [class]="'is-' + item.status"
+                                [disabled]="item.status === 'locked'"
+                                (click)="openExercise(item.exercise.id)"
+                              >
+                                <i
+                                  class="exercise-icon flex-shrink-0"
+                                  [class]="statusIcon(item.status)"
+                                  [attr.aria-label]="statusLabel(item.status)"
+                                ></i>
 
-                              <span class="exercise-name flex-1 min-w-0">
-                                {{ item.exercise.name }}
-                              </span>
+                                <span class="exercise-name flex-1 min-w-0">
+                                  {{ item.exercise.name }}
+                                </span>
 
-                              @if (item.status === 'new') {
-                                <!-- Se deduce de la regla de completado: si el subtema está
-                                    completado, todos sus ejercicios estaban aprobados, así que uno
-                                    sin aprobar solo puede haber llegado después. -->
-                                <p-tag severity="info" value="Nuevo" />
-                              }
+                                @if (item.status === 'new') {
+                                  <!-- Se deduce de la regla de completado: si el subtema está
+                                      completado, todos sus ejercicios estaban aprobados, así que uno
+                                      sin aprobar solo puede haber llegado después. -->
+                                  <p-tag severity="info" value="Nuevo" />
+                                }
 
-                              <p-tag
-                                severity="secondary"
-                                [value]="difficultyLabel(item.exercise.difficulty)"
-                              />
+                                <p-tag
+                                  severity="secondary"
+                                  [value]="difficultyLabel(item.exercise.difficulty)"
+                                />
+
+                                @if (item.status !== 'locked') {
+                                  <i
+                                    class="exercise-arrow pi pi-arrow-right"
+                                    aria-hidden="true"
+                                  ></i>
+                                }
+                              </button>
                             </li>
                           }
                         </ul>

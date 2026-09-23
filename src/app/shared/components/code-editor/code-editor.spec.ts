@@ -13,6 +13,11 @@ describe('CodeEditor', () => {
 
     fixture = TestBed.createComponent(CodeEditor);
     component = fixture.componentInstance;
+
+    // `value` es un `model.required`, así que hay que darle uno antes del primer ciclo: el efecto
+    // que sincroniza el editor lo lee, y sin valor lanza NG0952 en vez de montar el componente.
+    fixture.componentRef.setInput('value', { html: '', css: '', js: '' });
+
     fixture.detectChanges();
   });
 

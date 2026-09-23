@@ -1,4 +1,5 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { AccordionModule } from 'primeng/accordion';
 import { MessageModule } from 'primeng/message';
 import { ProgressBarModule } from 'primeng/progressbar';
@@ -64,6 +65,7 @@ export interface ModuleExercisesView {
   styleUrl: './learning-exercises.scss',
 })
 export class LearningExercises implements OnInit {
+  private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   private readonly moduleService = inject(ModuleService);
   private readonly exerciseService = inject(ExerciseService);
@@ -173,6 +175,17 @@ export class LearningExercises implements OnInit {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  /**
+   * Abre la vista de resolución.
+   *
+   * El bloqueo lo aplica el `disabled` del botón, no este método: es coherente con cómo lo hace la
+   * vista de contenido, y deja claro que —igual que allí— es una barrera de interfaz. Entrar por
+   * URL a un ejercicio bloqueado sigue funcionando.
+   */
+  openExercise(exerciseId: number) {
+    void this.router.navigate(['/learning/exercises', exerciseId]);
   }
 
   difficultyLabel(difficulty: ExerciseDifficulty): string {

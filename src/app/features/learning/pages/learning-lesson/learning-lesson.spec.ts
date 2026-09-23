@@ -6,6 +6,8 @@ import { Block } from '@domain/learning/models/block-model';
 import { BlockService } from '@domain/learning/services/block-service';
 import { LessonService } from '@domain/learning/services/lesson-service';
 import { ModuleService } from '@domain/learning/services/module-service';
+import { ProgressService } from '@domain/learning/services/progress-service';
+import { SupabaseService } from '@core/services/supabase/supabase-service';
 
 import { LearningLesson } from './learning-lesson';
 
@@ -26,6 +28,14 @@ describe('LearningLesson', () => {
     const blockService = jasmine.createSpyObj<BlockService>('BlockService', [
       'getPublishedByLessonId',
     ]);
+
+    // Sin doblarlo, la vista llama al servicio real: cliente de Supabase, red y prueba colgada
+    // hasta el tiempo limite de Jasmine. Marcar la visita es un efecto del montaje, no algo que
+    // estas pruebas provoquen a proposito.
+    const progressService = jasmine.createSpyObj<ProgressService>('ProgressService', [
+      'markLessonViewed',
+    ]);
+    progressService.markLessonViewed.and.resolveTo();
 
     moduleService.getById.and.resolveTo({ id: 1, name: 'Tema 1', order: 1, is_published: true });
     lessonService.getById.and.resolveTo({
@@ -51,6 +61,12 @@ describe('LearningLesson', () => {
         { provide: ModuleService, useValue: moduleService },
         { provide: LessonService, useValue: lessonService },
         { provide: BlockService, useValue: blockService },
+        { provide: ProgressService, useValue: progressService },
+        // La vista inyecta AiChatService, que arrastra al cliente real de Supabase. Ese cliente
+        // arranca su maquinaria de sesion —locks del navegador incluidos— y deja promesas vivas,
+        // asi que la zona nunca se estabiliza y `whenStable()` agota el tiempo de Jasmine. Nada de
+        // lo que se prueba aqui llega a usarlo.
+        { provide: SupabaseService, useValue: { client: {} } },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: { paramMap: convertToParamMap({ moduleId: '1', lessonId: '1' }) } },
