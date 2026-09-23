@@ -95,6 +95,43 @@
   }
 }
 
+// El criterio que la pista señala. Es un realce, no un estado más: el color de fondo lo sigue
+// poniendo `is-failed`, y esto solo dice «empieza por aquí».
+.criterion-row.is-focused {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+  font-weight: 600;
+}
+
+/* ─── La ayuda del tutor ─── */
+
+.hint-card {
+  padding: var(--space-md);
+  border: 1px solid var(--color-accent-container);
+  border-left: 3px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-white);
+}
+
+// La de un envío anterior se presenta apagada: sigue siendo útil, pero no acaba de llegar.
+.hint-card.is-previous {
+  border-left-color: var(--color-border-strong);
+  background-color: var(--color-surface-low);
+}
+
+.hint-title {
+  margin-bottom: var(--space-sm);
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.hint-card.is-previous .hint-title {
+  color: var(--color-text-muted);
+}
+
 /* ─── Taller ─── */
 
 // El editor y la vista previa son componentes compartidos con el panel del profesor, y sus tamaños

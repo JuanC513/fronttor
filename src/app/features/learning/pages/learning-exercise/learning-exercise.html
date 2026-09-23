@@ -72,6 +72,7 @@
                   class="criterion-row flex align-items-start gap-2"
                   [class.is-passed]="criterion.passed === true"
                   [class.is-failed]="criterion.passed === false"
+                  [class.is-focused]="criterion.focused"
                 >
                   <i
                     class="criterion-icon flex-shrink-0"
@@ -121,6 +122,25 @@
           <p-message severity="error" [text]="message" styleClass="w-full" />
         }
 
+        <!-- ─── La ayuda del tutor ─── -->
+        @if (help(); as ayuda) {
+          <aside class="hint-card" [class.is-previous]="ayuda.fromPreviousAttempt">
+            <p class="hint-title flex align-items-center gap-2 m-0">
+              <i class="pi pi-lightbulb" aria-hidden="true"></i>
+              @if (ayuda.fromPreviousAttempt) {
+                La ayuda que te di en tu último envío
+              } @else {
+                Una pista
+              }
+            </p>
+            <app-markdown-renderer [content]="ayuda.text" />
+          </aside>
+        }
+
+        @if (helpError(); as message) {
+          <p-message severity="warn" [text]="message" styleClass="w-full" />
+        }
+
         <div class="actions flex justify-content-between align-items-center gap-2">
           <p-button
             #resetAnchor
@@ -132,13 +152,29 @@
             (onClick)="onReset()"
           />
 
-          <p-button
-            label="Enviar"
-            icon="pi pi-send"
-            [loading]="submitting()"
-            [disabled]="unsolvable()"
-            (onClick)="submit()"
-          />
+          <span class="flex align-items-center gap-2">
+            <!-- Solo tras un fallo: con los criterios en verde no hay nada que preguntar, y antes
+                del primer envío la IA no tendría sobre qué opinar. -->
+            @if (canAskHelp()) {
+              <p-button
+                label="Pedir ayuda"
+                icon="pi pi-sparkles"
+                variant="outlined"
+                severity="help"
+                [loading]="askingHelp()"
+                [disabled]="submitting()"
+                (onClick)="askForHelp()"
+              />
+            }
+
+            <p-button
+              label="Enviar"
+              icon="pi pi-send"
+              [loading]="submitting()"
+              [disabled]="unsolvable() || askingHelp()"
+              (onClick)="submit()"
+            />
+          </span>
         </div>
       </div>
     </div>

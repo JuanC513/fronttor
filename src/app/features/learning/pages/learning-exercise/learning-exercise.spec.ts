@@ -5,6 +5,8 @@ import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/route
 import { MarkdownModule } from 'ngx-markdown';
 import { ConfirmationService } from 'primeng/api';
 import { AuthService } from '@core/services/auth/auth-service';
+import { FeedbackHint } from '@domain/ai/models/generate-feedback-model';
+import { AiService } from '@domain/ai/services/ai-service';
 import { ValidationOutcome } from '@domain/code-runner/validation/probe-model';
 import { ExerciseCriterion } from '@domain/learning/models/exercise-criterion-model';
 import { StudentExerciseDetail } from '@domain/learning/models/student-exercise-detail';
@@ -50,6 +52,8 @@ describe('LearningExercise', () => {
     failing?: boolean;
     userId?: string | null;
     exerciseId?: string;
+    hint?: FeedbackHint;
+    attemptId?: number;
   }) => {
     const exerciseService = jasmine.createSpyObj<ExerciseService>('ExerciseService', [
       'getForStudent',
@@ -64,9 +68,14 @@ describe('LearningExercise', () => {
     const attemptService = jasmine.createSpyObj<AttemptService>('AttemptService', [
       'submitAttempt',
       'getLastAttempt',
+      'setFeedback',
     ]);
-    attemptService.submitAttempt.and.resolveTo();
+    attemptService.submitAttempt.and.resolveTo(options.attemptId ?? 42);
+    attemptService.setFeedback.and.resolveTo();
     attemptService.getLastAttempt.and.resolveTo(options.draft ?? null);
+
+    const aiService = jasmine.createSpyObj<AiService>('AiService', ['generateFeedback']);
+    aiService.generateFeedback.and.resolveTo(options.hint ?? { criterio: 0, pista: 'Una pista' });
 
     const userId = options.userId === undefined ? 'usuario-1' : options.userId;
     const authService = jasmine.createSpyObj<AuthService>('AuthService', ['getCurrentUser']);
@@ -80,6 +89,7 @@ describe('LearningExercise', () => {
         importProvidersFrom(MarkdownModule.forRoot()),
         { provide: ExerciseService, useValue: exerciseService },
         { provide: AttemptService, useValue: attemptService },
+        { provide: AiService, useValue: aiService },
         { provide: AuthService, useValue: authService },
         {
           provide: ActivatedRoute,
@@ -95,7 +105,13 @@ describe('LearningExercise', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    return { fixture, component: fixture.componentInstance, exerciseService, attemptService };
+    return {
+      fixture,
+      component: fixture.componentInstance,
+      exerciseService,
+      attemptService,
+      aiService,
+    };
   };
 
   /**
@@ -140,7 +156,9 @@ describe('LearningExercise', () => {
   it('muestra los criterios sin veredicto antes del primer envío', async () => {
     const { component } = await setup({});
 
-    expect(component.criteria()).toEqual([{ description: 'Existe un h1', passed: null }]);
+    expect(component.criteria()).toEqual([
+      { description: 'Existe un h1', passed: null, focused: false },
+    ]);
   });
 
   it('enviar valida y registra el intento con su resultado', async () => {
@@ -172,7 +190,9 @@ describe('LearningExercise', () => {
     expect(attemptService.submitAttempt).toHaveBeenCalled();
     expect(attemptService.submitAttempt.calls.mostRecent().args[0].passed).toBeFalse();
     expect(component.passed()).toBeFalse();
-    expect(component.criteria()).toEqual([{ description: 'Existe un h1', passed: false }]);
+    expect(component.criteria()).toEqual([
+      { description: 'Existe un h1', passed: false, focused: false },
+    ]);
   });
 
   /**
@@ -233,10 +253,11 @@ describe('LearningExercise', () => {
 
   /* ─── El borrador: el último envío ─── */
 
-  const draftOf = (html: string): AttemptDraft => ({
+  const draftOf = (html: string, feedback: string | null = null): AttemptDraft => ({
     code: { html, css: '', js: '' },
     passed: false,
     createdAt: '2026-09-22T10:00:00Z',
+    feedback,
   });
 
   /**
@@ -291,6 +312,227 @@ describe('LearningExercise', () => {
 
     expect(component.code().html).toBe('<!-- aquí -->');
     expect(component.draft()).toBeNull();
+  });
+
+  /* ─── La ayuda del tutor ─── */
+
+  /** Un envío fallido con dos criterios, uno cumplido y otro no. Es el escenario de la ayuda. */
+  const setupFailed = async (options: { hint?: FeedbackHint } = {}) => {
+    const harness = await setup({
+      exercise: buildExercise({
+        criteria: [criterion('Existe un h1'), criterion('Existe un nav')],
+      }),
+      hint: options.hint,
+    });
+
+    stubValidation(
+      harness.fixture,
+      outcome({
+        passed: false,
+        results: [
+          { description: 'Existe un h1', passed: true },
+          { description: 'Existe un nav', passed: false },
+        ],
+      }),
+    );
+
+    await harness.component.submit();
+    return harness;
+  };
+
+  it('no ofrece ayuda antes de enviar nada', async () => {
+    const { component } = await setup({});
+
+    expect(component.canAskHelp()).toBeFalse();
+  });
+
+  it('no ofrece ayuda cuando el envío aprueba', async () => {
+    const { fixture, component } = await setup({});
+    stubValidation(fixture, outcome());
+
+    await component.submit();
+
+    expect(component.canAskHelp()).toBeFalse();
+  });
+
+  it('ofrece ayuda tras un envío fallido', async () => {
+    const { component } = await setupFailed();
+
+    expect(component.canAskHelp()).toBeTrue();
+  });
+
+  it('manda al modelo los criterios con su resultado, y el código que se envió', async () => {
+    const { component, aiService } = await setupFailed();
+
+    await component.askForHelp();
+
+    expect(aiService.generateFeedback).toHaveBeenCalled();
+    const [request] = aiService.generateFeedback.calls.mostRecent().args;
+
+    expect(request.criterios).toEqual([
+      { description: 'Existe un h1', passed: true },
+      { description: 'Existe un nav', passed: false },
+    ]);
+    expect(request.html).toBe('<!-- aquí -->');
+    expect(request.exerciseId).toBe(7);
+    expect(request.agotoTiempo).toBeFalse();
+  });
+
+  /**
+   * Una pista por envío. Cada clic de más es otra llamada al modelo sobre el mismo código: gasta
+   * cuota y puede devolver consejos que se contradigan sobre algo que no ha cambiado.
+   */
+  it('deja de ofrecer ayuda una vez que la ha dado', async () => {
+    const { component } = await setupFailed({ hint: { criterio: 2, pista: 'Te falta el nav.' } });
+
+    await component.askForHelp();
+
+    expect(component.canAskHelp()).toBeFalse();
+  });
+
+  it('vuelve a ofrecerla tras un envío nuevo', async () => {
+    const { component } = await setupFailed({ hint: { criterio: 2, pista: 'Te falta el nav.' } });
+    await component.askForHelp();
+
+    await component.submit();
+
+    expect(component.canAskHelp()).toBeTrue();
+  });
+
+  /** Si el modelo contesta en blanco no hay nada que enseñar, así que se puede reintentar. */
+  it('sigue ofreciendo ayuda si la pista llegó vacía', async () => {
+    const { component } = await setupFailed({ hint: { criterio: 0, pista: '' } });
+
+    await component.askForHelp();
+
+    expect(component.canAskHelp()).toBeTrue();
+  });
+
+  it('pinta la pista y resalta el criterio que señala', async () => {
+    const { component } = await setupFailed({ hint: { criterio: 2, pista: 'Te falta el nav.' } });
+
+    await component.askForHelp();
+
+    expect(component.help()).toEqual({ text: 'Te falta el nav.', fromPreviousAttempt: false });
+    expect(component.criteria().map((row) => row.focused)).toEqual([false, true]);
+  });
+
+  /**
+   * La pista se conserva porque suele seguir siendo útil; lo que se descarta es el resaltado. El
+   * modelo elige ese número y nada garantiza que apunte a donde dice.
+   */
+  it('muestra la pista sin resaltar nada si el criterio señalado no falló', async () => {
+    const { component } = await setupFailed({
+      hint: { criterio: 1, pista: 'Revisa el título.' },
+    });
+
+    await component.askForHelp();
+
+    expect(component.help()?.text).toBe('Revisa el título.');
+    expect(component.criteria().every((row) => !row.focused)).toBeTrue();
+  });
+
+  it('archiva la pista contra el intento que la provocó, no contra el ejercicio', async () => {
+    const { component, attemptService } = await setupFailed({
+      hint: { criterio: 2, pista: 'Te falta el nav.' },
+    });
+
+    await component.askForHelp();
+
+    // 42 es el id que devolvió `submitAttempt`, no el 7 del ejercicio.
+    expect(attemptService.setFeedback).toHaveBeenCalledWith(42, 'Te falta el nav.');
+  });
+
+  /** La pista está en pantalla, que es lo que el estudiante pidió; archivarla es cosa nuestra. */
+  it('sigue mostrando la pista aunque no se pueda archivar', async () => {
+    const { component, attemptService } = await setupFailed({
+      hint: { criterio: 2, pista: 'Te falta el nav.' },
+    });
+    attemptService.setFeedback.and.rejectWith(new Error('sin conexión'));
+
+    await component.askForHelp();
+
+    expect(component.help()?.text).toBe('Te falta el nav.');
+    expect(component.helpError()).toBeNull();
+  });
+
+  it('muestra el error del modelo sin romper la vista', async () => {
+    const { component, aiService } = await setupFailed();
+    aiService.generateFeedback.and.rejectWith(new Error('El modelo está saturado.'));
+
+    await component.askForHelp();
+
+    expect(component.helpError()).toContain('saturado');
+    expect(component.help()).toBeNull();
+    expect(component.canAskHelp()).toBeTrue();
+  });
+
+  it('borra la pista al volver a enviar: era sobre el código anterior', async () => {
+    const { component } = await setupFailed({ hint: { criterio: 2, pista: 'Te falta el nav.' } });
+    await component.askForHelp();
+    expect(component.help()).not.toBeNull();
+
+    await component.submit();
+
+    expect(component.help()).toBeNull();
+    expect(component.criteria().every((row) => !row.focused)).toBeTrue();
+  });
+
+  it('avisa al modelo cuando el envío agotó el tiempo', async () => {
+    const { fixture, component, aiService } = await setup({});
+    stubValidation(
+      fixture,
+      outcome({
+        passed: false,
+        timedOut: true,
+        results: [{ description: 'Existe un h1', passed: false }],
+      }),
+    );
+    await component.submit();
+
+    await component.askForHelp();
+
+    expect(aiService.generateFeedback.calls.mostRecent().args[0].agotoTiempo).toBeTrue();
+  });
+
+  /** Lo que justifica persistirla: al volver, la ayuda sigue ahí, y se presenta como lo que es. */
+  it('restaura la ayuda del envío anterior al abrir el ejercicio', async () => {
+    const { component } = await setup({
+      draft: draftOf('<h1>lo mío</h1>', 'Te faltaba el nav.'),
+    });
+
+    expect(component.help()).toEqual({
+      text: 'Te faltaba el nav.',
+      fromPreviousAttempt: true,
+    });
+  });
+
+  it('la pista de esta sesión sustituye a la del envío anterior', async () => {
+    const harness = await setup({
+      exercise: buildExercise({
+        criteria: [criterion('Existe un h1'), criterion('Existe un nav')],
+      }),
+      draft: draftOf('<h1>lo mío</h1>', 'Te faltaba el nav.'),
+      hint: { criterio: 2, pista: 'Ahora te falta cerrarlo.' },
+    });
+    stubValidation(
+      harness.fixture,
+      outcome({
+        passed: false,
+        results: [
+          { description: 'Existe un h1', passed: true },
+          { description: 'Existe un nav', passed: false },
+        ],
+      }),
+    );
+
+    await harness.component.submit();
+    await harness.component.askForHelp();
+
+    expect(harness.component.help()).toEqual({
+      text: 'Ahora te falta cerrarlo.',
+      fromPreviousAttempt: false,
+    });
   });
 
   /* ─── El aviso del resultado ─── */

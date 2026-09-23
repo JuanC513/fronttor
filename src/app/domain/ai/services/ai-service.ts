@@ -3,6 +3,11 @@ import { SupabaseService } from '@core/services/supabase/supabase-service';
 import { AnswerQuestionRequest, AnswerQuestionResponse } from '../models/answer-question-model';
 import { GenerateContentRequest, GenerateContentResponse } from '../models/generate-content-model';
 import {
+  FeedbackHint,
+  GenerateFeedbackRequest,
+  GenerateFeedbackResponse,
+} from '../models/generate-feedback-model';
+import {
   GenerateExerciseRequest,
   GenerateExerciseResponse,
 } from '../models/generate-exercise-model';
@@ -72,6 +77,29 @@ export class AiService {
 
     if (error) throw new Error(await this.readFunctionError(error));
     return data?.respuesta ?? '';
+  }
+
+  /**
+   * Pide una pista sobre un envío que no cumplió los criterios.
+   *
+   * Devuelve la pista sin validar: el `criterio` que trae lo eligió el modelo, y comprobar que
+   * apunta a uno que de verdad falló es cosa de `resolveHintFocus`. Aquí solo se desenvuelve, como
+   * en los otros tres métodos.
+   *
+   * @param signal Igual que en `generateBlockContent`: el estudiante puede irse de la vista
+   * mientras el tutor piensa, y esa petición ya no le sirve a nadie.
+   */
+  async generateFeedback(
+    input: GenerateFeedbackRequest,
+    signal?: AbortSignal,
+  ): Promise<FeedbackHint> {
+    const { data, error } = await this.supabase.functions.invoke<GenerateFeedbackResponse>(
+      'generate-feedback',
+      { body: input, signal },
+    );
+
+    if (error) throw new Error(await this.readFunctionError(error));
+    return data?.feedback ?? { pista: '' };
   }
 
   /**

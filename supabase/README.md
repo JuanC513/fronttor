@@ -29,9 +29,10 @@ npx supabase db dump --linked --schema public -f supabase/schema-actual.sql
 8. `migrations/20260919120000_tighten_identity_grants.sql`
 9. `migrations/20260919120100_tighten_content_grants.sql`
 10. `migrations/20260921120000_rename_admin_to_teacher.sql`
-11. `seed.sql`
+11. `migrations/20260922120000_attempt_feedback.sql`
+12. `seed.sql`
 
-El orden **no es opcional**: la 3 usa la función `is_admin()`, que crea la 2; la 4 redefine funciones que crea la 2; la 5 redefine las que deja la 4; la 6 redefine `is_admin()` y `handle_new_user()`, la 7 depende de esa última, y la 10 renombra `is_admin()` a `is_teacher()` junto con el rol y las políticas.
+El orden **no es opcional**: la 3 usa la función `is_admin()`, que crea la 2; la 4 redefine funciones que crea la 2; la 5 redefine las que deja la 4; la 6 redefine `is_admin()` y `handle_new_user()`, la 7 depende de esa última, la 10 renombra `is_admin()` a `is_teacher()` junto con el rol y las políticas, y la 11 recrea `submit_exercise_attempt`, que existe desde la 2.
 
 El `seed.sql` va al final por una razón que cambió con la 6: `handle_new_user()` ahora busca el rol `student` **por nombre** y lanza una excepción si no lo encuentra, así que con la tabla `roles` vacía nadie puede registrarse.
 
@@ -124,6 +125,18 @@ Es decir: las cuentas de usuario y su asociación con los roles **no se pierden*
 - **`20260921120000_rename_admin_to_teacher.sql` es seguro de reejecutar.** Renombra las políticas y
   la función solo si todavía tienen el nombre viejo, y el `update` del catálogo no hace nada en la
   segunda pasada.
+
+- **`20260922120000_attempt_feedback.sql` es seguro de reejecutar.** Suelta y recrea las dos
+  funciones con `drop function if exists`, y los revoke/grant son idempotentes por naturaleza.
+
+  Es la única migración que **suelta una función que ya estaba en uso**: `submit_exercise_attempt`
+  pasa de `returns void` a `returns integer`, y `create or replace` no puede cambiar el tipo de
+  retorno. Es seguro porque esa función no tiene dependientes —ninguna política, vista ni trigger la
+  nombra—, a diferencia de `is_admin()` en la 10, donde el `drop` se habría llevado por delante 15
+  políticas. Al soltarla se pierden sus permisos, y por eso la migración los vuelve a conceder.
+
+  **Después de aplicarla hay que redesplegar las Edge Functions**, porque el cliente de Angular pasa
+  a esperar el id del intento.
 
 - **`seed.sql` es seguro de reejecutar.**
 

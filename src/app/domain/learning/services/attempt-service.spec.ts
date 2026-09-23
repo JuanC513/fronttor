@@ -18,7 +18,9 @@ describe('AttemptService', () => {
    * Se dobla `SupabaseService` y no el cliente entero: la superficie que toca este servicio es
    * exactamente `client.rpc`, y doblar más sería describir un contrato que no usa.
    */
-  const setup = (result: { error: { message: string } | null } = { error: null }) => {
+  const setup = (
+    result: { data?: unknown; error: { message: string } | null } = { data: 42, error: null },
+  ) => {
     rpc = jasmine.createSpy('rpc').and.resolveTo(result);
 
     TestBed.configureTestingModule({
@@ -71,6 +73,13 @@ describe('AttemptService', () => {
     expect(service.refreshTrigger()).toBeGreaterThan(before);
   });
 
+  /** El id es lo que después permite archivar la pista en el intento correcto. */
+  it('devuelve el id con el que quedó registrado el intento', async () => {
+    setup({ data: 77, error: null });
+
+    expect(await service.submitAttempt(submission)).toBe(77);
+  });
+
   it('relanza el error de Supabase con su mensaje', async () => {
     setup({ error: { message: 'El ejercicio no existe' } });
 
@@ -87,6 +96,29 @@ describe('AttemptService', () => {
     await expectAsync(service.submitAttempt(submission)).toBeRejected();
 
     expect(service.refreshTrigger()).toBe(before);
+  });
+
+  /* ─── La retroalimentación ─── */
+
+  describe('setFeedback', () => {
+    it('apunta al intento, no al ejercicio', async () => {
+      setup();
+
+      await service.setFeedback(77, 'Te falta el nav.');
+
+      expect(rpc).toHaveBeenCalledWith('set_attempt_feedback', {
+        p_attempt_id: 77,
+        p_feedback: 'Te falta el nav.',
+      });
+    });
+
+    it('relanza el error de Supabase con su mensaje', async () => {
+      setup({ error: { message: 'No autenticado' } });
+
+      await expectAsync(service.setFeedback(77, 'Te falta el nav.')).toBeRejectedWithError(
+        'No autenticado',
+      );
+    });
   });
 
   /* ─── El último envío ─── */
@@ -127,6 +159,7 @@ describe('AttemptService', () => {
       submitted_js: '',
       passed: false,
       created_at: '2026-09-22T10:00:00Z',
+      feedback: 'Te falta el nav.',
     };
 
     it('devuelve el código del último envío', async () => {
@@ -138,6 +171,7 @@ describe('AttemptService', () => {
         code: { html: '<h1>Hola</h1>', css: 'h1 { color: red }', js: '' },
         passed: false,
         createdAt: '2026-09-22T10:00:00Z',
+        feedback: 'Te falta el nav.',
       });
     });
 
@@ -181,7 +215,7 @@ describe('AttemptService', () => {
       await service.getLastAttempt(7, 'usuario-1');
 
       expect(calls.find((call) => call.method === 'select')?.args[0]).toBe(
-        'submitted_html, submitted_css, submitted_js, passed, created_at',
+        'submitted_html, submitted_css, submitted_js, passed, created_at, feedback',
       );
     });
 

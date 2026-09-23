@@ -16,6 +16,8 @@ export interface AttemptDraft {
   code: CodeRunnerState;
   passed: boolean;
   createdAt: string;
+  /** La pista que la IA dio sobre este envío, si el estudiante llegó a pedirla. */
+  feedback: string | null;
 }
 
 /**
@@ -45,14 +47,19 @@ export class AttemptService {
   }
 
   /**
-   * Registra un envío.
+   * Registra un envío y devuelve el id con el que quedó guardado.
    *
    * Se guardan todos, no solo el que aprueba: el historial es lo que después permite hablar del
    * progreso real del estudiante. La RPC se encarga sola de marcar el subtema como empezado y, si
    * el intento aprueba, de recalcular si queda completado.
+   *
+   * **El id es lo que permite archivar después la retroalimentación en el intento correcto.**
+   * Entre enviar y recibir la pista del modelo pasan segundos, tiempo de sobra para que el
+   * estudiante reenvíe; sin el id habría que buscar «su intento más reciente» y la pista del envío
+   * anterior acabaría colgada del nuevo.
    */
-  async submitAttempt(submission: AttemptSubmission): Promise<void> {
-    const { error } = await this.supabase.rpc('submit_exercise_attempt', {
+  async submitAttempt(submission: AttemptSubmission): Promise<number> {
+    const { data, error } = await this.supabase.rpc('submit_exercise_attempt', {
       p_exercise_id: submission.exerciseId,
       p_html: submission.code.html,
       p_css: submission.code.css,
@@ -63,6 +70,8 @@ export class AttemptService {
 
     if (error) throw new Error(error.message);
     this.notifyRefresh();
+
+    return data as number;
   }
 
   /**
@@ -81,7 +90,7 @@ export class AttemptService {
   async getLastAttempt(exerciseId: number, userId: string): Promise<AttemptDraft | null> {
     const { data, error } = await this.supabase
       .from('exercise_attempts')
-      .select('submitted_html, submitted_css, submitted_js, passed, created_at')
+      .select('submitted_html, submitted_css, submitted_js, passed, created_at, feedback')
       .eq('exercise_id', exerciseId)
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
@@ -97,12 +106,36 @@ export class AttemptService {
       submitted_js: string;
       passed: boolean;
       created_at: string;
+      feedback: string | null;
     };
 
     return {
       code: { html: row.submitted_html, css: row.submitted_css, js: row.submitted_js },
       passed: row.passed,
       createdAt: row.created_at,
+      feedback: row.feedback,
     };
+  }
+
+  /**
+   * Guarda la pista de la IA contra el último envío del estudiante a ese ejercicio.
+   *
+   * Va por RPC y no por un `update` porque no hay ninguna vía directa: `authenticated` tiene sobre
+   * `exercise_attempts` solo `SELECT, INSERT`, y tampoco existe una política de update. Las dos
+   * cosas faltan a propósito —un intento enviado es el registro de lo que hizo el estudiante y no
+   * se reescribe—, así que la única excepción contemplada es esta, y vive del lado del servidor.
+   *
+   * Recibe el id del intento y no el del ejercicio. Es la diferencia entre archivar la pista donde
+   * corresponde y adivinar: «el último intento de este ejercicio» deja de ser el correcto en cuanto
+   * el estudiante reenvía mientras el modelo piensa, y ahí el profesor leería una retroalimentación
+   * que no describe el código de esa fila.
+   */
+  async setFeedback(attemptId: number, feedback: string): Promise<void> {
+    const { error } = await this.supabase.rpc('set_attempt_feedback', {
+      p_attempt_id: attemptId,
+      p_feedback: feedback,
+    });
+
+    if (error) throw new Error(error.message);
   }
 }
