@@ -1,14 +1,48 @@
-<div>
-  <button (click)="toggleMode()">Modo: {{ getExecutionMode() }}</button>
-  @if (getExecutionMode() === 'manual') {
-    <button (click)="run()">Run</button>
-  }
-</div>
+<p-confirmpopup />
 
-<div class="playground-content">
-  <app-code-editor [value]="editableState()" (valueChange)="onCodeChange($event)" />
-  <div>
-    <app-preview-panel></app-preview-panel>
-    <app-console-panel></app-console-panel>
+<section class="playground">
+  <header class="playground-header flex flex-wrap align-items-end justify-content-between gap-3">
+    <div class="min-w-0">
+      <h1>Práctica libre</h1>
+      <p class="m-0">Escribe HTML, CSS y JavaScript, y mira el resultado al lado instante.</p>
+    </div>
+
+    <div class="toolbar flex align-items-center gap-3">
+      <span class="auto-run flex align-items-center gap-2">
+        <p-toggleswitch
+          inputId="auto-run"
+          [ngModel]="autoRun()"
+          (ngModelChange)="onAutoRunChange($event)"
+        />
+        <label for="auto-run">Ejecución automática</label>
+      </span>
+
+      <p-button label="Ejecutar" icon="pi pi-play" size="small" (onClick)="run()" />
+
+      <p-button
+        #clearAnchor
+        label="Limpiar"
+        icon="pi pi-trash"
+        size="small"
+        variant="outlined"
+        severity="secondary"
+        (onClick)="onClear()"
+      />
+    </div>
+  </header>
+
+  <!-- El editor a la izquierda y el resultado a la derecha: se escribe y se ve el efecto al lado,
+      sin bajar la vista. Por debajo de 1024px se apilan (ver el SCSS). -->
+  <div class="workspace">
+    <app-code-editor
+      class="editor-slot"
+      [value]="editableState()"
+      (valueChange)="onCodeChange($event)"
+    />
+
+    <div class="output-column flex flex-column gap-3 min-w-0">
+      <app-preview-panel class="preview-slot" />
+      <app-console-panel class="console-slot" />
+    </div>
   </div>
-</div>
+</section>

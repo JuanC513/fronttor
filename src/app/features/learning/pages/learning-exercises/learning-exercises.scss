@@ -1,0 +1,162 @@
+@use '../../learning-shared' as learning;
+
+:host {
+  @include learning.page-shell;
+}
+
+.learning-exercises {
+  margin: 0 auto;
+  padding: var(--space-lg);
+}
+
+/* ─── Encabezado de la vista ─── */
+
+.page-header {
+  @include learning.page-header;
+}
+
+/* ─── Acordeón de temas ─── */
+
+:host ::ng-deep .modules-accordion {
+  @include learning.modules-accordion;
+}
+
+@include learning.module-header;
+
+/* ─── Tarjeta de subtema ─── */
+
+// Aquí la tarjeta no es clicable: contiene la lista de ejercicios, que es lo accionable. Por eso
+// es un `<li>` con padding y no un `<button>` como en la vista de contenido.
+.lesson-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-white);
+}
+
+.lesson-card.is-locked {
+  background-color: var(--color-surface-container);
+  opacity: 0.7;
+
+  .lesson-icon,
+  .lesson-name {
+    color: var(--color-text-muted);
+  }
+}
+
+.lesson-head {
+  min-width: 0;
+}
+
+.lesson-icon {
+  color: var(--color-primary);
+  font-size: 1.25rem;
+}
+
+.lesson-name {
+  display: block;
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.lesson-meta {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+.lesson-empty {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+/* ─── Filas de ejercicio ─── */
+
+// Son botones, así que hay que apagar lo que el navegador les pone por su cuenta. A cambio salen
+// gratis el foco por teclado y el estado deshabilitado del bloqueo.
+.exercise-row {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--exercise-accent, var(--color-border-strong));
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    box-shadow 0.15s;
+
+  &:not(:disabled):hover {
+    background-color: var(--color-surface-white);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.exercise-arrow {
+  color: var(--exercise-accent);
+  font-size: 0.875rem;
+}
+
+// Cada estado solo redefine un color, igual que las tarjetas de subtema en la otra vista.
+.exercise-row.is-passed {
+  --exercise-accent: var(--color-success);
+}
+
+.exercise-row.is-pending {
+  --exercise-accent: var(--color-primary);
+}
+
+.exercise-row.is-new {
+  --exercise-accent: var(--color-info);
+}
+
+.exercise-row.is-locked {
+  --exercise-accent: var(--color-border-strong);
+
+  color: var(--color-text-muted);
+}
+
+.exercise-icon {
+  color: var(--exercise-accent);
+  font-size: 1rem;
+}
+
+.exercise-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─── Tarjeta de progreso ─── */
+
+@include learning.progress-card;
+
+:host ::ng-deep {
+  .progress-card {
+    @include learning.progress-card-bar;
+
+    // Sin botón debajo, a diferencia de Contenido: aquí la barra cierra la tarjeta.
+    .progress-bar {
+      margin-bottom: 0;
+    }
+  }
+
+  .lesson-progress .p-progressbar {
+    height: 0.5rem;
+    border-radius: var(--radius-full);
+    background-color: var(--color-surface-container);
+  }
+
+  .lesson-progress .p-progressbar-value {
+    border-radius: var(--radius-full);
+    background-color: var(--color-success);
+  }
+}

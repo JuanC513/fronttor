@@ -136,8 +136,10 @@ export class PreviewPanel {
 
     const frame = document.createElement('iframe');
     frame.setAttribute('sandbox', 'allow-scripts');
-    frame.setAttribute('width', '100%');
-    frame.setAttribute('height', '400px');
+
+    // El tamano lo pone el CSS (ver preview-panel.scss) y no un atributo. Con `height="400px"` el
+    // iframe traia una altura propia que cada vista tenia que ganarle desde fuera; asi ocupa el
+    // hueco que le den y quien lo monta decide cuanto es.
 
     // El documento solo se carga si el iframe ya esta en el arbol.
     host.appendChild(frame);

@@ -1,7 +1,14 @@
 <div class="code-editor-container">
-  <div class="tabs">
+  <div class="tabs" role="tablist">
     @for (language of languages; track language) {
-      <button type="button" [class.active]="activeTab() === language" (click)="changeTab(language)">
+      <button
+        type="button"
+        class="tab"
+        role="tab"
+        [class.is-active]="activeTab() === language"
+        [attr.aria-selected]="activeTab() === language"
+        (click)="changeTab(language)"
+      >
         {{ label(language) }}
       </button>
     }

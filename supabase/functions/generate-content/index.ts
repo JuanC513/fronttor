@@ -1,3 +1,4 @@
+import { logInteraction } from '../_shared/ai-log.ts';
 import { requireTeacher } from '../_shared/auth.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 import { callGemini, GEMINI_MODEL_CONTENIDO } from '../_shared/gemini-client.ts';
@@ -11,7 +12,7 @@ Deno.serve(async (req) => {
 
   try {
     // Capa 2: generar contenido del curso queda restringido a profesores.
-    await requireTeacher(req);
+    const user = await requireTeacher(req);
 
     const body: ContentPromptInput = await req.json();
 
@@ -19,7 +20,16 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'Faltan el tema, el subtema o el nombre del bloque' }, 400);
     }
 
-    const contenido = await callGemini(buildContentPrompt(body), GEMINI_MODEL_CONTENIDO);
+    const prompt = buildContentPrompt(body);
+    const contenido = await callGemini(prompt, GEMINI_MODEL_CONTENIDO);
+
+    await logInteraction(user.client, {
+      userId: user.id,
+      kind: 'content',
+      model: GEMINI_MODEL_CONTENIDO,
+      prompt,
+      response: contenido,
+    });
 
     return jsonResponse({ contenido });
   } catch (err) {

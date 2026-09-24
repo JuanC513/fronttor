@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
+import { LessonProgress } from '@domain/learning/models/lesson-progress-model';
 import { ModuleWithLessonCounts } from '@domain/learning/models/module-with-lesson-counts';
 import { ModuleService } from '@domain/learning/services/module-service';
+import { ProgressService } from '@domain/learning/services/progress-service';
 
 import { LearningModules } from './learning-modules';
 
@@ -27,9 +29,27 @@ describe('LearningModules', () => {
     })),
   });
 
-  const setup = async (modules: ModuleWithLessonCounts[]) => {
+  const progressRow = (
+    lessonId: number,
+    status: 'in_progress' | 'completed' = 'completed',
+  ): LessonProgress => ({
+    id: lessonId,
+    user_id: 'usuario-1',
+    lesson_id: lessonId,
+    status,
+    exercises_at_completion: status === 'completed' ? 1 : null,
+    completed_at: status === 'completed' ? '2026-01-01T00:00:00Z' : null,
+    updated_at: '2026-01-01T00:00:00Z',
+  });
+
+  const setup = async (modules: ModuleWithLessonCounts[], progress: LessonProgress[] = []) => {
     const moduleService = jasmine.createSpyObj<ModuleService>('ModuleService', ['getLearningTree']);
     moduleService.getLearningTree.and.resolveTo(modules);
+
+    const progressService = jasmine.createSpyObj<ProgressService>('ProgressService', [
+      'getMyProgress',
+    ]);
+    progressService.getMyProgress.and.resolveTo(progress);
 
     router = jasmine.createSpyObj<Router>('Router', ['navigate']);
 
@@ -37,6 +57,7 @@ describe('LearningModules', () => {
       imports: [LearningModules],
       providers: [
         { provide: ModuleService, useValue: moduleService },
+        { provide: ProgressService, useValue: progressService },
         { provide: Router, useValue: router },
       ],
     });
@@ -54,41 +75,69 @@ describe('LearningModules', () => {
     expect((await setup([])).componentInstance).toBeTruthy();
   });
 
-  it('numera los subtemas de corrido entre temas para asignarles el estado', async () => {
-    // Con el placeholder actual: 3 completados, el 4.º en curso y el resto bloqueados.
-    const component = (await setup([buildModule(1, 2), buildModule(2, 3)])).componentInstance;
+  /**
+   * El arranque real de cualquier estudiante: sin una sola fila de progreso, lo único abierto es
+   * el primer subtema del curso.
+   */
+  it('sin progreso solo el primer subtema está disponible', async () => {
+    const component = (await setup([buildModule(1, 2), buildModule(2, 2)])).componentInstance;
+    const [first, second] = component.moduleViews();
+
+    expect(first.lessons.map((item) => item.status)).toEqual(['in-progress', 'locked']);
+    expect(second.lessons.map((item) => item.status)).toEqual(['locked', 'locked']);
+  });
+
+  it('el desbloqueo encadena entre temas, no solo dentro de uno', async () => {
+    // Completado el último subtema del tema 1, se abre el primero del tema 2.
+    const component = (
+      await setup([buildModule(1, 2), buildModule(2, 2)], [progressRow(100), progressRow(101)])
+    ).componentInstance;
     const [first, second] = component.moduleViews();
 
     expect(first.lessons.map((item) => item.status)).toEqual(['completed', 'completed']);
-    expect(second.lessons.map((item) => item.status)).toEqual([
-      'completed',
+    expect(second.lessons.map((item) => item.status)).toEqual(['in-progress', 'locked']);
+  });
+
+  /**
+   * El modo mixto: haber ABIERTO un subtema basta para leer el siguiente, aunque no esté
+   * completado. Lo que exige completarlo son sus ejercicios, y eso vive en la otra vista.
+   */
+  it('abrir un subtema sin completarlo ya desbloquea el contenido del siguiente', async () => {
+    const component = (await setup([buildModule(1, 3)], [progressRow(100, 'in_progress')]))
+      .componentInstance;
+
+    expect(component.moduleViews()[0].lessons.map((item) => item.status)).toEqual([
+      'in-progress',
       'in-progress',
       'locked',
     ]);
   });
 
   it('marca como bloqueado el tema cuyos subtemas lo están todos', async () => {
-    const component = (await setup([buildModule(1, 4), buildModule(2, 2)])).componentInstance;
+    const component = (await setup([buildModule(1, 2), buildModule(2, 2)])).componentInstance;
 
     expect(component.moduleViews()[0].locked).toBeFalse();
     expect(component.moduleViews()[1].locked).toBeTrue();
   });
 
   it('calcula el progreso sobre el total de subtemas del curso', async () => {
-    const component = (await setup([buildModule(1, 6)])).componentInstance;
+    const component = (await setup([buildModule(1, 4)], [progressRow(100), progressRow(101)]))
+      .componentInstance;
 
     expect(component.progress()).toBe(50);
   });
 
   it('abre el tema donde quedó el estudiante', async () => {
-    const component = (await setup([buildModule(1, 2), buildModule(2, 3)])).componentInstance;
+    const component = (
+      await setup([buildModule(1, 2), buildModule(2, 2)], [progressRow(100), progressRow(101)])
+    ).componentInstance;
 
     expect(component.activePanel()).toBe(2);
   });
 
   it('no navega al hacer clic en un subtema bloqueado', async () => {
-    const component = (await setup([buildModule(1, 5)])).componentInstance;
-    const locked = component.moduleViews()[0].lessons[4];
+    const component = (await setup([buildModule(1, 3)])).componentInstance;
+    const locked = component.moduleViews()[0].lessons[2];
 
     component.onLessonClick(1, locked);
 
@@ -96,26 +145,28 @@ describe('LearningModules', () => {
   });
 
   it('navega al detalle del subtema desbloqueado', async () => {
-    const component = (await setup([buildModule(1, 5)])).componentInstance;
-    const available = component.moduleViews()[0].lessons[3];
+    const component = (await setup([buildModule(1, 3)], [progressRow(100)])).componentInstance;
+    const available = component.moduleViews()[0].lessons[1];
 
     component.onLessonClick(1, available);
 
-    expect(router.navigate).toHaveBeenCalledWith(['learning/modules/1/lessons/103']);
+    expect(router.navigate).toHaveBeenCalledWith(['learning/modules/1/lessons/101']);
   });
 
-  it('continúa en el subtema en curso', async () => {
-    const component = (await setup([buildModule(1, 2), buildModule(2, 3)])).componentInstance;
+  it('continúa en el primer subtema disponible sin completar', async () => {
+    const component = (
+      await setup([buildModule(1, 2), buildModule(2, 2)], [progressRow(100), progressRow(101)])
+    ).componentInstance;
 
     component.onResumeLearning();
 
     expect(component.canResume()).toBeTrue();
-    expect(router.navigate).toHaveBeenCalledWith(['learning/modules/2/lessons/201']);
+    expect(router.navigate).toHaveBeenCalledWith(['learning/modules/2/lessons/200']);
   });
 
-  it('deshabilita "continuar" cuando no hay ningún subtema en curso', async () => {
-    // Menos subtemas que el umbral del placeholder: todos quedan completados.
-    const component = (await setup([buildModule(1, 2)])).componentInstance;
+  it('deshabilita "continuar" cuando ya está todo completado', async () => {
+    const component = (await setup([buildModule(1, 2)], [progressRow(100), progressRow(101)]))
+      .componentInstance;
 
     expect(component.canResume()).toBeFalse();
   });
@@ -146,30 +197,39 @@ describe('LearningModules', () => {
     expect(view.lessons.map((item) => item.lesson.id)).toEqual([withBlocks.id]);
   });
 
-  it('no deja que lo oculto desplace los estados ni cuente en el progreso', async () => {
-    // El tema vacío del medio no debe consumir posiciones del recorrido: con 4 subtemas visibles
-    // el estado es el mismo que si nunca hubiera existido (3 completados + 1 en curso).
-    const component = (await setup([buildModule(1, 2), buildModule(2, 3, 0), buildModule(3, 2)]))
-      .componentInstance;
+  it('lo oculto no rompe la cadena ni cuenta en el progreso', async () => {
+    // El tema vacío del medio no consume posición: completar el tema 1 abre directamente el 3.
+    const component = (
+      await setup(
+        [buildModule(1, 2), buildModule(2, 3, 0), buildModule(3, 2)],
+        [progressRow(100), progressRow(101)],
+      )
+    ).componentInstance;
     const views = component.moduleViews();
 
     expect(views.flatMap((module) => module.lessons).map((item) => item.status)).toEqual([
       'completed',
       'completed',
-      'completed',
       'in-progress',
+      'locked',
     ]);
-    expect(component.progress()).toBe(75);
+    expect(component.progress()).toBe(50);
   });
 
   it('muestra el error cuando falla la carga', async () => {
     const moduleService = jasmine.createSpyObj<ModuleService>('ModuleService', ['getLearningTree']);
     moduleService.getLearningTree.and.rejectWith(new Error('boom'));
 
+    const progressService = jasmine.createSpyObj<ProgressService>('ProgressService', [
+      'getMyProgress',
+    ]);
+    progressService.getMyProgress.and.resolveTo([]);
+
     TestBed.configureTestingModule({
       imports: [LearningModules],
       providers: [
         { provide: ModuleService, useValue: moduleService },
+        { provide: ProgressService, useValue: progressService },
         { provide: Router, useValue: jasmine.createSpyObj<Router>('Router', ['navigate']) },
       ],
     });

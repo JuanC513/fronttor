@@ -1,6 +1,11 @@
 // gemini-3.5-flash-lite es uso actual para prompts de alta frecuencia
 // (feedback, resolución de dudas), donde importan la latencia y el límite de tasa.
-const GEMINI_MODEL = 'gemini-3.5-flash-lite';
+//
+// Se exporta porque quien registra la interacción en `ai_interactions` tiene que poder nombrar el
+// modelo que de verdad se usó. Las funciones que llaman a `callGemini` sin segundo argumento se
+// quedan con este, y sin exportarlo tendrían que repetir la cadena a mano —que es justo como se
+// desincronizan estas cosas—.
+export const GEMINI_MODEL = 'gemini-3.5-flash-lite';
 
 /**
  * Modelo para prompts de baja frecuencia y alta exigencia de calidad, como redactar el

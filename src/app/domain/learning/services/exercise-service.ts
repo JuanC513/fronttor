@@ -2,6 +2,8 @@ import { inject, Injectable, signal } from '@angular/core';
 import { SupabaseService } from '@core/services/supabase/supabase-service';
 import { Exercise, ExerciseInput } from '../models/exercise-model';
 import { ExerciseWithLesson } from '../models/exercise-with-lesson';
+import { StudentExercise } from '../models/student-exercise';
+import { StudentExerciseDetail } from '../models/student-exercise-detail';
 
 @Injectable({
   providedIn: 'root',
@@ -52,6 +54,83 @@ export class ExerciseService {
 
     if (error) throw new Error(error.message);
     return (data as Exercise[]) ?? [];
+  }
+
+  /**
+   * Los ejercicios que el estudiante puede ver, con si ya los tiene aprobados.
+   *
+   * Método aparte y no un parámetro, igual que {@link BlockService.getPublishedByLessonId}: la
+   * separación entre la lectura del profesor y la del estudiante es el patrón del repo, y así el
+   * propósito se lee en la llamada. Ninguno de los otros métodos de este servicio filtra por
+   * publicación, porque todos son del panel.
+   *
+   * **El filtro por `user_id` no sobra.** La RLS de `exercise_attempts` tiene DOS políticas de
+   * lectura: `attempts_select_own` y `attempts_select_teacher`. Una cuenta con los dos roles
+   * —como la que se usa para probar— vería por el embed los intentos de todos los estudiantes, y
+   * cualquier ejercicio aprobado por alguien aparecería como aprobado por ella. La RLS no basta
+   * aquí; hay que acotarlo en la consulta.
+   *
+   * El embed se recorta a los intentos aprobados, así que el array llega vacío o no llega: lo que
+   * importa es su existencia, no su contenido.
+   */
+  async getPublishedForStudent(userId: string): Promise<StudentExercise[]> {
+    const { data, error } = await this.supabase
+      .from('exercises')
+      .select('id, lesson_id, name, difficulty, order, exercise_attempts(passed)')
+      .eq('is_published', true)
+      .eq('exercise_attempts.user_id', userId)
+      .eq('exercise_attempts.passed', true)
+      .order(this.orderColumn, { ascending: true });
+
+    if (error) throw new Error(error.message);
+
+    return (
+      (data as (Omit<StudentExercise, 'passed'> & { exercise_attempts: unknown[] })[]) ?? []
+    ).map(({ exercise_attempts, ...exercise }) => ({
+      ...exercise,
+      passed: (exercise_attempts ?? []).length > 0,
+    }));
+  }
+
+  /**
+   * El ejercicio que el estudiante va a resolver, sin la solución de referencia.
+   *
+   * **La lista explícita de columnas es la parte importante.** Los demás métodos de lectura usan
+   * `select('*')`, y ahí van incluidas `solution_html`, `solution_css` y `solution_js`: la
+   * respuesta del ejercicio viajaría al navegador de quien lo está intentando, a un `console.log`
+   * de distancia. Enumerar las columnas es lo que lo evita.
+   *
+   * No es una frontera de seguridad y no conviene confundirla con una: la política de lectura es
+   * `exercises_select_authenticated ... using (true)`, así que quien sepa pedir esa columna a la
+   * API la recibe. Cerrarlo de verdad exige mover las lecturas del profesor a una RPC
+   * `security definer` para poder revocar esas columnas a `authenticated`. Lo que esto garantiza
+   * es que la aplicación no regala la solución por su cuenta.
+   *
+   * El filtro por publicación evita además que un borrador se pueda abrir por URL.
+   *
+   * El embed de intentos va acotado por `user_id` por el mismo motivo que en
+   * {@link getPublishedForStudent}: una cuenta con los dos roles vería por la RLS los intentos de
+   * todo el mundo, y el ejercicio aparecería resuelto porque lo resolvió otro.
+   */
+  async getForStudent(id: number, userId: string): Promise<StudentExerciseDetail> {
+    const { data, error } = await this.supabase
+      .from('exercises')
+      .select(
+        'id, lesson_id, name, statement, difficulty, starter_html, starter_css, starter_js, criteria, exercise_attempts(passed)',
+      )
+      .eq('id', id)
+      .eq('is_published', true)
+      .eq('exercise_attempts.user_id', userId)
+      .eq('exercise_attempts.passed', true)
+      .single();
+
+    if (error) throw new Error(error.message);
+
+    const { exercise_attempts, ...exercise } = data as Omit<StudentExerciseDetail, 'passed'> & {
+      exercise_attempts: unknown[];
+    };
+
+    return { ...exercise, passed: (exercise_attempts ?? []).length > 0 };
   }
 
   async getById(id: number): Promise<Exercise> {

@@ -12,6 +12,7 @@ import { Module } from '@domain/learning/models/module-model';
 import { Lesson } from '@domain/learning/models/lesson-model';
 import { LessonService } from '@domain/learning/services/lesson-service';
 import { BlockService } from '@domain/learning/services/block-service';
+import { ProgressService } from '@domain/learning/services/progress-service';
 import { Block } from '@domain/learning/models/block-model';
 import { SkeletonModule } from 'primeng/skeleton';
 import { MessageModule } from 'primeng/message';
@@ -36,6 +37,7 @@ export class LearningLesson implements OnInit, OnDestroy {
   private readonly moduleService = inject(ModuleService);
   private readonly lessonService = inject(LessonService);
   private readonly blockService = inject(BlockService);
+  private readonly progressService = inject(ProgressService);
   private readonly chatService = inject(AiChatService);
   currentModule = signal<Module | null>(null);
   currentLesson = signal<Lesson | null>(null);
@@ -84,10 +86,31 @@ export class LearningLesson implements OnInit, OnDestroy {
       this.currentModule.set(moduleData);
       this.currentLesson.set(currentLesson);
       this.currentBlocks.set(currentBlocks);
+
+      void this.markViewed(lessonId);
     } catch (err) {
       this.error.set('No se pudo cargar la información. Intenta de nuevo. ' + err);
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  /**
+   * Deja constancia de que el estudiante abrió el subtema.
+   *
+   * Es lo que hace avanzar el recorrido: la RPC crea la fila de progreso, y de ella dependen el
+   * desbloqueo del siguiente subtema y el completado automático de los que no tienen ejercicios.
+   *
+   * Se lanza sin esperarla y su fallo no interrumpe nada: el contenido ya está en pantalla, y
+   * cortar la lectura por no haber podido anotar una marca de progreso sería peor que perderla.
+   * Solo se anota después de comprobar la publicación, para no registrar visitas a lo que esta
+   * misma vista considera no disponible.
+   */
+  private async markViewed(lessonId: number): Promise<void> {
+    try {
+      await this.progressService.markLessonViewed(lessonId);
+    } catch (err) {
+      console.error('No se pudo registrar la visita al subtema', err);
     }
   }
 

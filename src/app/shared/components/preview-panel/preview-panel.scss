@@ -1,0 +1,32 @@
+// El panel se limita a enmarcar el iframe: quien decide cuánto mide es la vista que lo monta.
+//
+// Hasta ahora este archivo estaba vacío y el iframe llevaba `height="400px"` como atributo, así que
+// cada consumidor tenía que ganarle desde fuera. Ahora el alto sale de aquí, del `:host`, que es lo
+// que un consumidor puede fijar sin pelearse con nada.
+
+:host {
+  display: block;
+  height: 12rem;
+  min-height: 0;
+}
+
+.preview-host {
+  height: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  // Fondo blanco explícito: el documento del estudiante casi nunca declara uno, y sobre el lila del
+  // sistema no se ve como se vería en una página de verdad.
+  background-color: #ffffff;
+  overflow: hidden;
+}
+
+// `::ng-deep` no sobra aquí, aunque el iframe sea hijo de este mismo componente: lo crea
+// `render()` con `document.createElement`, así que nace SIN el atributo de encapsulación que
+// Angular añade a lo que escribe la plantilla. Una regla normal se compila esperando ese atributo
+// y no llega a él — el iframe se quedaba en su tamaño por defecto de 300×150.
+.preview-host ::ng-deep iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: none;
+}

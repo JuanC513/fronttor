@@ -1,13 +1,85 @@
+// La consola sigue pareciendo una consola —fondo oscuro y tipografía monoespaciada— porque es lo
+// que la hace reconocible. Lo que cambia respecto al prototipo es el verde sobre negro puro
+// (`#0f0` sobre `#111`), que pica los ojos y no está en ninguna paleta del sistema.
+
 .console {
-  background: #111;
-  color: #0f0;
-  padding: 10px;
-  font-family: monospace;
-  font-size: 14px;
-  height: 200px;
+  display: flex;
+  flex-direction: column;
+  height: 12rem;
+  min-height: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: #1e1e2e;
+  overflow: hidden;
+}
+
+/* ─── Cabecera ─── */
+
+.console-header {
+  flex-shrink: 0;
+  padding: var(--space-xs) var(--space-sm);
+  border-bottom: 1px solid rgb(255 255 255 / 10%);
+  background-color: rgb(255 255 255 / 4%);
+}
+
+.console-title {
+  color: var(--color-text-inverse);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.console-clear {
+  display: flex;
+  align-items: center;
+  padding: var(--space-xs);
+  border: none;
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  color: var(--color-text-inverse);
+  font-size: 0.75rem;
+  cursor: pointer;
+  opacity: 0.7;
+  transition:
+    background-color 0.15s,
+    opacity 0.15s;
+
+  &:hover:not(:disabled) {
+    background-color: rgb(255 255 255 / 12%);
+    opacity: 1;
+  }
+
+  // Sin salida no hay nada que limpiar; se atenúa en vez de desaparecer para que el sitio no baile.
+  &:disabled {
+    cursor: default;
+    opacity: 0.25;
+  }
+}
+
+/* ─── Salida ─── */
+
+.console-body {
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-sm);
   overflow-y: auto;
+  font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace;
+  font-size: 0.8125rem;
+  line-height: 1.6;
 }
 
 .console-line {
+  color: #a6e3a1;
   white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.console-empty {
+  color: rgb(255 255 255 / 45%);
+  font-size: 0.75rem;
+
+  code {
+    color: rgb(255 255 255 / 65%);
+  }
 }

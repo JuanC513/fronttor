@@ -1,3 +1,4 @@
+import { logInteraction } from '../_shared/ai-log.ts';
 import { requireTeacher } from '../_shared/auth.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 import { callGemini, GEMINI_MODEL_CONTENIDO } from '../_shared/gemini-client.ts';
@@ -25,7 +26,7 @@ Deno.serve(async (req) => {
 
   try {
     // Capa 2: generar contenido del curso queda restringido a profesores.
-    await requireTeacher(req);
+    const user = await requireTeacher(req);
 
     const body: ExercisePromptInput = await req.json();
 
@@ -37,11 +38,16 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'Faltan el tema, el subtema o el nombre del ejercicio' }, 400);
     }
 
-    const texto = await callGemini(
-      buildExercisePrompt(body),
-      GEMINI_MODEL_CONTENIDO,
-      generationConfigFor(body.parte),
-    );
+    const prompt = buildExercisePrompt(body);
+    const texto = await callGemini(prompt, GEMINI_MODEL_CONTENIDO, generationConfigFor(body.parte));
+
+    await logInteraction(user.client, {
+      userId: user.id,
+      kind: 'exercise',
+      model: GEMINI_MODEL_CONTENIDO,
+      prompt,
+      response: texto,
+    });
 
     // El enunciado es markdown y va tal cual; el resto viene como JSON por `responseSchema`.
     if (body.parte === 'statement') {
