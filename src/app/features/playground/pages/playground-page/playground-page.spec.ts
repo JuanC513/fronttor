@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SupabaseService } from '@core/services/supabase/supabase-service';
 import { AiChatService } from '@domain/ai/services/ai-chat-service';
 import { CodeRunnerStateService } from '@domain/code-runner/services/code-runner-state-service';
+import { provideRouter } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
 
 import { PlaygroundPage } from './playground-page';
@@ -19,6 +20,8 @@ describe('PlaygroundPage', () => {
       // `SupabaseService`. Sin el doble se construiría un cliente de Supabase de verdad, con sus
       // bloqueos de sesión, y la zona nunca se estabilizaría.
       providers: [
+        // La barra lleva un enlace a la practica guiada, y `routerLink` pide `ActivatedRoute`.
+        provideRouter([]),
         {
           provide: SupabaseService,
           useValue: { client: { functions: { invoke: () => Promise.resolve({ data: null }) } } },

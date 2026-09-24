@@ -3,6 +3,19 @@ import { ExerciseCriterion } from './exercise-criterion-model';
 /** Espejo del check de la columna `difficulty` */
 export type ExerciseDifficulty = 'facil' | 'media' | 'dificil';
 
+/**
+ * Como se lee cada dificultad en pantalla.
+ *
+ * Vive junto al tipo y no en cada vista porque llego a estar copiada en cuatro archivos: la lista
+ * del estudiante, la de un ejercicio suelto, el panel del profesor y el formulario. Cuatro sitios
+ * donde cambiar una tilde.
+ */
+export const DIFFICULTY_LABEL: Record<ExerciseDifficulty, string> = {
+  facil: 'Fácil',
+  media: 'Media',
+  dificil: 'Difícil',
+};
+
 /** Espejo del check de la columna `source` */
 export type ExerciseSource = 'manual' | 'ia';
 

@@ -1,4 +1,8 @@
-import { CriterionType, ExerciseCriterion } from '@domain/learning/models/exercise-criterion-model';
+import { CriterionType } from '@domain/learning/models/exercise-criterion-model';
+import { RawCriterion, toCriterion } from '@domain/learning/utils/criterion-parsing';
+
+export { toCriterion };
+export type { RawCriterion };
 
 /**
  * Qué campos pide cada tipo de criterio.
@@ -92,15 +96,13 @@ export function metaFor(type: CriterionType): CriterionTypeMeta {
   return CRITERION_TYPES.find((meta) => meta.type === type) ?? CRITERION_TYPES[0];
 }
 
-/** Lo que sale del formulario antes de recortarlo a la forma del criterio. */
-export interface CriterionFormValue {
-  type: CriterionType;
-  description?: string | null;
-  selector?: string | null;
-  attribute?: string | null;
-  property?: string | null;
-  value?: string | number | null;
-}
+/**
+ * Lo que sale del formulario antes de recortarlo a la forma del criterio.
+ *
+ * Es el mismo tipo suelto que devuelve Gemini, asi que vive en el dominio: la vista de practica lo
+ * necesita igual, y un feature de estudiante no puede importar de `features/teaching/`.
+ */
+export type CriterionFormValue = RawCriterion;
 
 const quote = (text: unknown): string => `«${String(text ?? '')}»`;
 
@@ -130,48 +132,5 @@ export function suggestDescription(raw: CriterionFormValue): string {
       return `${selector} tiene ${quote(raw.property)} en ${quote(raw.value)}`;
     case 'console_contains':
       return `La consola imprime ${quote(raw.value)}`;
-  }
-}
-
-/**
- * Recorta el valor del formulario a la forma exacta del criterio.
- *
- * Es la frontera con la base de datos. Sin este recorte, un `attribute` que quedara de haber
- * cambiado el tipo de la fila viajaría hasta el JSON de `criteria` y quedaría ahí para siempre,
- * ensuciando un dato que la Edge Function de generación también va a tener que producir.
- */
-export function toCriterion(raw: CriterionFormValue): ExerciseCriterion {
-  const description = (raw.description ?? '').trim();
-  const selector = (raw.selector ?? '').trim();
-  const attribute = (raw.attribute ?? '').trim();
-  const property = (raw.property ?? '').trim();
-
-  switch (raw.type) {
-    case 'element_exists':
-      return { type: 'element_exists', description, selector };
-    case 'element_count':
-      return { type: 'element_count', description, selector, value: Number(raw.value ?? 0) };
-    case 'text_contains':
-      return { type: 'text_contains', description, selector, value: String(raw.value ?? '') };
-    case 'attribute_exists':
-      return { type: 'attribute_exists', description, selector, attribute };
-    case 'attribute_equals':
-      return {
-        type: 'attribute_equals',
-        description,
-        selector,
-        attribute,
-        value: String(raw.value ?? ''),
-      };
-    case 'computed_style':
-      return {
-        type: 'computed_style',
-        description,
-        selector,
-        property,
-        value: String(raw.value ?? ''),
-      };
-    case 'console_contains':
-      return { type: 'console_contains', description, value: String(raw.value ?? '') };
   }
 }

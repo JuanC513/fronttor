@@ -12,7 +12,7 @@ import { ProgressService } from '@domain/learning/services/progress-service';
 import { ModuleWithLessonCounts } from '@domain/learning/models/module-with-lesson-counts';
 import { LessonProgress } from '@domain/learning/models/lesson-progress-model';
 import { StudentExercise } from '@domain/learning/models/student-exercise';
-import { ExerciseDifficulty } from '@domain/learning/models/exercise-model';
+import { DIFFICULTY_LABEL, ExerciseDifficulty } from '@domain/learning/models/exercise-model';
 import {
   ExerciseProgressStatus,
   exerciseStatus,
@@ -20,13 +20,6 @@ import {
   lessonExerciseProgress,
   orderedLessons,
 } from '@domain/learning/utils/learning-progress';
-
-/** Mismas etiquetas que el panel del profesor: la dificultad se lee igual en los dos lados. */
-const DIFFICULTY_LABEL: Record<ExerciseDifficulty, string> = {
-  facil: 'Fácil',
-  media: 'Media',
-  dificil: 'Difícil',
-};
 
 export interface ExerciseView {
   exercise: StudentExercise;

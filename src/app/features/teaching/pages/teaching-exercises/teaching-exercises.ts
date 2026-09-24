@@ -16,12 +16,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
-
-const DIFFICULTY_LABEL: Record<string, string> = {
-  facil: 'Fácil',
-  media: 'Media',
-  dificil: 'Difícil',
-};
+import { DIFFICULTY_LABEL, ExerciseDifficulty } from '@domain/learning/models/exercise-model';
 
 @Component({
   selector: 'app-teaching-exercises',
@@ -149,7 +144,7 @@ export class TeachingExercises implements OnInit {
     });
   }
 
-  difficultyLabel(value: string): string {
+  difficultyLabel(value: ExerciseDifficulty): string {
     return DIFFICULTY_LABEL[value] ?? value;
   }
 

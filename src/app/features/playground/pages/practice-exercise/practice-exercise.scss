@@ -1,0 +1,190 @@
+// La práctica guiada se lee como un documento y no como una herramienta: hay un enunciado que
+// crece, así que la página scrollea en vez de ocupar la pantalla exacta. Es lo contrario que el
+// taller de Libre, y lo mismo que la vista de resolución, porque es la misma tarea.
+
+:host {
+  display: block;
+  min-height: 100%;
+  padding: var(--space-lg);
+  background-color: var(--color-surface);
+}
+
+.practice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.practice-header {
+  h1 {
+    margin: 0 0 var(--space-xs);
+    color: var(--color-text-primary);
+    font-size: 1.5rem;
+    line-height: 1.3;
+  }
+
+  p {
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+  }
+}
+
+/* ─── Disposición ─── */
+
+.practice-body {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-lg);
+}
+
+// Mientras se pide el ejercicio el taller está aparcado fuera del flujo, así que la columna del
+// enunciado se queda con todo el ancho en vez de dejar media pantalla vacía.
+.practice-body.is-asking {
+  grid-template-columns: 1fr;
+  max-width: 34rem;
+}
+
+@media (min-width: 1200px) {
+  .practice-body:not(.is-asking) {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    align-items: start;
+  }
+
+  .practice-body:not(.is-asking) .statement-column {
+    position: sticky;
+    top: var(--space-lg);
+  }
+}
+
+/* ─── El taller aparcado ─── */
+
+// Fuera de pantalla, NO `display: none`. El iframe tiene que seguir maquetándose para que
+// `getComputedStyle` devuelva valores de verdad durante la comprobación; oculto del todo, los
+// criterios de estilo darían falsos negativos. Y aparcado así el estudiante tampoco ve cómo se
+// renderiza la solución de referencia mientras se prueban sus criterios.
+.work-column.is-parked {
+  position: absolute;
+  left: -10000px;
+  top: 0;
+  width: 45rem;
+  height: 30rem;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* ─── Tarjetas ─── */
+
+.statement-card,
+.criteria-card,
+.request-card,
+.waiting-card {
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface-white);
+}
+
+.waiting-card {
+  text-align: center;
+
+  small {
+    color: var(--color-text-muted);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+}
+
+.request-card label {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+
+  small {
+    font-weight: 400;
+  }
+}
+
+.exercise-header {
+  margin-bottom: var(--space-sm);
+}
+
+.exercise-title {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+
+.criteria-title {
+  margin: 0 0 var(--space-md);
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* ─── Criterios ─── */
+
+// Se ven desde el principio, como en la vista de resolución: son la especificación del ejercicio,
+// no un veredicto. El color llega con la primera comprobación.
+.criterion-row {
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface-low);
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.criterion-icon {
+  margin-top: 0.15rem;
+  color: var(--color-text-muted);
+}
+
+.criterion-row.is-passed {
+  background-color: var(--color-success-bg);
+
+  .criterion-icon {
+    color: var(--color-success);
+  }
+}
+
+.criterion-row.is-failed {
+  background-color: var(--color-error-bg);
+
+  .criterion-icon {
+    color: var(--color-error);
+  }
+}
+
+// Un aviso honesto, no una alarma: el ejercicio sigue sirviendo, solo comprueba menos cosas.
+.discarded-notice {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+/* ─── Taller ─── */
+
+.work-column ::ng-deep .editor {
+  height: 22rem;
+}
+
+.output-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+}
+
+@media (min-width: 768px) {
+  .output-row {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+}
+
+.preview-slot {
+  height: 14rem;
+}
+
+.console-slot ::ng-deep .console {
+  height: 14rem;
+}

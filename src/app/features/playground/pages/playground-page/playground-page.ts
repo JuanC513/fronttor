@@ -1,5 +1,6 @@
 import { Component, effect, ElementRef, inject, OnDestroy, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmPopupModule } from 'primeng/confirmpopup';
@@ -41,6 +42,7 @@ const SAVE_DELAY_MS = 500;
     ConsolePanel,
     FormsModule,
     PreviewPanel,
+    RouterLink,
     ToggleSwitchModule,
   ],
   templateUrl: './playground-page.html',
