@@ -134,23 +134,14 @@
 
 /* ─── Taller ─── */
 
-// El editor y la vista previa son componentes compartidos con el panel del profesor, y sus tamaños
-// propios (500px de ancho, 400px de alto) están pensados para el Playground. Aquí se redimensionan
-// sin tocarlos, igual que ya hace el formulario del profesor.
+// Los tres componentes del taller traen ya su propio aspecto —borde, radio y colores del sistema—,
+// así que aquí solo queda decir cuánto miden en esta vista.
 //
 // El selector arranca en `.work-column` y no en `:host` por especificidad, no por estilo: con
-// `:host ::ng-deep .code-editor-container` se empata con la regla propia del componente —las dos
-// suman una clase y un atributo— y gana la que el navegador reciba después, que resultó ser la
-// del componente. La clase intermedia rompe el empate.
-.work-column ::ng-deep .code-editor-container {
-  width: 100%;
-}
-
+// `:host ::ng-deep .editor` se empata con la regla propia del componente —las dos suman una clase
+// y un atributo— y gana la que el navegador reciba después. La clase intermedia rompe el empate.
 .work-column ::ng-deep .editor {
   height: 22rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  overflow: hidden;
 }
 
 .output-row {
@@ -165,17 +156,12 @@
   }
 }
 
-// El iframe se declara con alto fijo por atributo al crearse; el CSS manda sobre él.
-.preview-slot ::ng-deep iframe {
+.preview-slot {
   height: 14rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background-color: var(--color-surface-white);
 }
 
 .console-slot ::ng-deep .console {
   height: 14rem;
-  border-radius: var(--radius-md);
 }
 
 // Una nota, no una alerta: que el editor traiga tu propio código es lo esperable, no un problema.

@@ -20,4 +20,15 @@ export class ConsolePanel {
   getLogs() {
     return this.codeRunnerStateService.logs();
   }
+
+  /**
+   * Vacia la consola sin volver a ejecutar nada.
+   *
+   * Vive aqui y no en la barra de la vista porque es una accion sobre lo que este panel muestra, y
+   * asi la tienen las dos vistas que lo montan sin que ninguna la cablee por su cuenta. El servicio
+   * ya la expone; lo que faltaba era el boton.
+   */
+  clear() {
+    this.codeRunnerStateService.clearLogs();
+  }
 }

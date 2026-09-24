@@ -30,11 +30,7 @@
   min-height: 26rem;
 }
 
-// El ancho fijo del editor solo sirve al Playground.
-.exercise-tabs ::ng-deep .code-editor-container {
-  width: 100%;
-}
-
+// El editor ya trae su aspecto; aqui solo se fija la altura que cabe en la pestana del dialogo.
 .exercise-tabs ::ng-deep .editor {
   height: 20rem;
 }
@@ -84,10 +80,8 @@
 
 // La vista previa se reserva el sitio desde el principio, pero solo se enseña cuando hay algo que
 // mirar: el iframe existe desde que se monta el panel.
-.preview-slot ::ng-deep iframe {
+.preview-slot {
   height: 12rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
 }
 
 .preview-slot.is-hidden {
