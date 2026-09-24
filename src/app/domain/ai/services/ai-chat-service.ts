@@ -1,5 +1,5 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { ChatTurn } from '../models/answer-question-model';
+import { AnswerQuestionRequest, ChatTurn } from '../models/answer-question-model';
 import { ChatContext, ChatMessage } from '../models/chat-model';
 import { AiService } from './ai-service';
 
@@ -116,14 +116,7 @@ export class AiChatService {
 
     try {
       const respuesta = await this.aiService.answerQuestion(
-        {
-          contenidoLeccion: context.contenidoBloque ?? '',
-          pregunta: texto,
-          tema: context.tema,
-          subtema: context.subtema,
-          nombreBloque: context.nombreBloque,
-          historial,
-        },
+        this.buildRequest(context, texto, historial),
         controller.signal,
       );
 
@@ -140,6 +133,39 @@ export class AiChatService {
         this._isSending.set(false);
       }
     }
+  }
+
+  /**
+   * Traduce el contexto de la vista a la petición que espera la función.
+   *
+   * En modo código, `obtenerCodigo()` y `obtenerConsola()` se llaman **aquí**, al enviar, y no
+   * cuando la vista publicó el contexto: lo que viaja es lo que el estudiante tiene escrito en el
+   * momento de preguntar.
+   */
+  private buildRequest(
+    context: ChatContext,
+    pregunta: string,
+    historial: ChatTurn[],
+  ): AnswerQuestionRequest {
+    if (context.tipo === 'codigo') {
+      return {
+        modo: 'codigo',
+        pregunta,
+        historial,
+        codigo: context.obtenerCodigo(),
+        consola: context.obtenerConsola(),
+      };
+    }
+
+    return {
+      modo: 'leccion',
+      pregunta,
+      historial,
+      contenidoLeccion: context.contenidoBloque ?? '',
+      tema: context.tema,
+      subtema: context.subtema,
+      nombreBloque: context.nombreBloque,
+    };
   }
 
   private buildHistorial(): ChatTurn[] {

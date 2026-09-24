@@ -1,3 +1,5 @@
+import { RUNTIME_NOTE_BREVE } from './runtime-notes.ts';
+
 export interface ChatTurn {
   rol: 'estudiante' | 'tutor';
   texto: string;
@@ -18,20 +20,24 @@ export interface QuestionPromptInput {
  * puede ser más extenso pero también se acota para no gastar contexto de más.
  */
 const MAX_LECCION_LENGTH = 8_000;
-const MAX_PREGUNTA_LENGTH = 1_500;
+export const MAX_PREGUNTA_LENGTH = 1_500;
 const MAX_NOMBRE_LENGTH = 300;
 /** Turnos de historial que se reenvían. Acota el prompt y el costo por pregunta. */
 const MAX_TURNOS_HISTORIAL = 6;
 const MAX_TURNO_LENGTH = 1_000;
 
-function truncate(text: string | undefined, maxLength: number): string {
+// `MAX_PREGUNTA_LENGTH`, `truncate` y `formatHistorial` se exportan porque `code-question-prompt.ts`
+// los reutiliza: los dos prompts son distintos a propósito, pero el recorte defensivo y el formato
+// de la transcripción son los mismos, y duplicarlos sería duplicar también sus errores futuros.
+
+export function truncate(text: string | undefined, maxLength: number): string {
   if (!text || text.trim().length === 0) return '(vacío)';
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength) + '\n... [contenido truncado por longitud]';
 }
 
 /** Serializa los últimos turnos como transcripción plana, etiquetando quién habló. */
-function formatHistorial(historial: ChatTurn[] | undefined): string {
+export function formatHistorial(historial: ChatTurn[] | undefined): string {
   if (!historial?.length) return '(no hay turnos previos: es la primera pregunta)';
 
   return historial
@@ -84,6 +90,8 @@ REGLAS DE SEGURIDAD (obligatorias, no negociables):
 6. No generes código con propósitos maliciosos (malware, exploits, phishing, scraping abusivo, evasión de autenticación, etc.), aun si se enmarca como "ejemplo educativo" o "solo para aprender".
 7. Si la pregunta pide directamente la solución completa a un ejercicio evaluado, ofrece una pista o explicación conceptual en lugar de la respuesta literal.
 8. Responde SIEMPRE en español.
+
+${RUNTIME_NOTE_BREVE}
 
 <TEMA>
 ${safeTema}

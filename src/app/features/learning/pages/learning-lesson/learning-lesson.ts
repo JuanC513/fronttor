@@ -134,9 +134,11 @@ export class LearningLesson implements OnInit, OnDestroy {
 
     const context: ChatContext = {
       key: `lesson:${lesson.id}`,
+      tipo: 'leccion',
       saludo:
         `¡Hola! Soy tu tutor de IA. Veo que estás en **${lesson.name}**. ` +
         '¿Qué duda tienes sobre este subtema?',
+      placeholder: 'Escribe tu duda sobre este subtema…',
       tema: module.name,
       subtema: lesson.name,
       nombreBloque: block?.name,

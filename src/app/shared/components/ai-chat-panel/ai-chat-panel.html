@@ -55,7 +55,7 @@
           rows="5"
           class="w-full"
           style="resize: none"
-          placeholder="Escribe tu duda sobre este subtema…"
+          [placeholder]="chatContext.placeholder"
           aria-label="Escribe tu pregunta"
           [maxlength]="maxPreguntaLength"
           [ngModel]="draft()"
