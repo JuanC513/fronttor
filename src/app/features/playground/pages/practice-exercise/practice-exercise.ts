@@ -7,8 +7,10 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
 import { TextareaModule } from 'primeng/textarea';
+import { FeedbackCriterion, FeedbackHint } from '@domain/ai/models/generate-feedback-model';
 import { GeneratedPractice, PracticeRequest } from '@domain/ai/models/generate-practice-model';
 import { AiService } from '@domain/ai/services/ai-service';
+import { resolveHintFocus } from '@domain/ai/utils/feedback-focus';
 import { CodeRunnerState } from '@domain/code-runner/models/code-runner-model';
 import { CodeRunnerStateService } from '@domain/code-runner/services/code-runner-state-service';
 import {
@@ -67,6 +69,8 @@ export interface PracticeCriterionRow {
   description: string;
   /** `null` mientras no se haya comprobado nada. */
   passed: boolean | null;
+  /** Si es el criterio que la pista del tutor señala. */
+  focused: boolean;
 }
 
 const DIFFICULTY_OPTIONS: { label: string; value: ExerciseDifficulty }[] = (
@@ -170,6 +174,21 @@ export class PracticeExercise implements OnInit, OnDestroy {
    */
   readonly discarded = signal(0);
 
+  /**
+   * El código tal y como se comprobó.
+   *
+   * No se le pide la pista sobre `code()`, que es lo que hay en el editor ahora mismo: entre
+   * comprobar y pedir ayuda el estudiante puede haber seguido escribiendo, y entonces la pista
+   * hablaría de un código distinto del que produjo los criterios en rojo que tiene delante.
+   */
+  private readonly checkedCode = signal<CodeRunnerState | null>(null);
+
+  /** La pista del tutor sobre la última comprobación. */
+  readonly hint = signal<FeedbackHint | null>(null);
+  readonly askingHelp = signal(false);
+  readonly helpError = signal<string | null>(null);
+  private helpController: AbortController | null = null;
+
   /** El código del editor. Vive en el servicio porque es también lo que alimenta al iframe. */
   readonly code = this.codeRunner.editableState;
 
@@ -181,8 +200,14 @@ export class PracticeExercise implements OnInit, OnDestroy {
 
   readonly canGenerate = computed(() => this.lessonId() !== null && this.phase() !== 'generando');
 
-  /** Los criterios con el resultado de la última comprobación, o sin él si no ha habido ninguna. */
-  readonly criteria = computed<PracticeCriterionRow[]>(() => {
+  /**
+   * Los criterios en la forma que entiende el modelo.
+   *
+   * Sirve para dos cosas a la vez, y por eso vive aquí: es lo que viaja en la petición de ayuda y
+   * es contra lo que se valida el criterio que el modelo señala. Si fueran dos listas distintas, el
+   * índice de la respuesta podría interpretarse contra una numeración que no es la que se envió.
+   */
+  private readonly feedbackCriteria = computed<FeedbackCriterion[]>(() => {
     const exercise = this.exercise();
     if (!exercise) return [];
 
@@ -190,8 +215,45 @@ export class PracticeExercise implements OnInit, OnDestroy {
 
     return exercise.criteria.map((criterion, index) => ({
       description: criterion.description,
-      passed: results ? (results[index]?.passed ?? false) : null,
+      passed: results?.[index]?.passed ?? false,
     }));
+  });
+
+  /** A qué criterio apunta la pista, ya validado. `null` si a ninguno que merezca resaltarse. */
+  readonly hintFocus = computed(() => resolveHintFocus(this.hint(), this.feedbackCriteria()));
+
+  /** Los criterios con el resultado de la última comprobación, o sin él si no ha habido ninguna. */
+  readonly criteria = computed<PracticeCriterionRow[]>(() => {
+    const exercise = this.exercise();
+    if (!exercise) return [];
+
+    const results = this.outcome()?.results;
+    const focus = this.hintFocus();
+
+    return exercise.criteria.map((criterion, index) => ({
+      description: criterion.description,
+      passed: results ? (results[index]?.passed ?? false) : null,
+      focused: index === focus,
+    }));
+  });
+
+  /**
+   * Si tiene sentido ofrecer ayuda: se ha comprobado algo y no salió bien.
+   *
+   * Una pista por comprobación. Sin esto, cada clic es otra llamada al modelo sobre el MISMO
+   * código: gasta cuota —que aquí es el recurso escaso de verdad, como han demostrado los 429— y
+   * devuelve consejos que pueden contradecirse sobre algo que no ha cambiado. Para pedir otra hay
+   * que volver a comprobar, que es cuando hay algo nuevo que mirar.
+   *
+   * Se mira la pista y no solo si hubo respuesta: si el modelo contestó en blanco no hay nada que
+   * enseñar, así que el botón sigue disponible. Un error tampoco la fija, de modo que un 503 deja
+   * volver a intentarlo.
+   */
+  readonly canAskHelp = computed(() => {
+    const result = this.outcome();
+    if (!result || result.passed) return false;
+
+    return !this.hint()?.pista;
   });
 
   /**
@@ -229,10 +291,12 @@ export class PracticeExercise implements OnInit, OnDestroy {
     void this.fetchTree();
   }
 
-  /** Si el estudiante se va mientras el modelo trabaja, esa generación ya no le sirve a nadie. */
+  /** Si el estudiante se va mientras el modelo trabaja, eso ya no le sirve a nadie. */
   ngOnDestroy(): void {
     this.controller?.abort();
     this.controller = null;
+    this.helpController?.abort();
+    this.helpController = null;
   }
 
   /**
@@ -305,6 +369,8 @@ export class PracticeExercise implements OnInit, OnDestroy {
     this.step.set('pidiendo');
     this.error.set(null);
     this.outcome.set(null);
+    this.checkedCode.set(null);
+    this.clearHelp();
     this.discarded.set(0);
 
     const base = {
@@ -422,13 +488,84 @@ export class PracticeExercise implements OnInit, OnDestroy {
 
     if (!exercise || !panel || this.checking()) return;
 
+    // Se congela aquí: es el código que se valida y sobre el que hablará la pista, y entre una cosa
+    // y otra el estudiante puede seguir escribiendo.
+    const code = { ...this.code() };
+
     this.checking.set(true);
+    // La ayuda anterior hablaba del código anterior: dejarla sería señalar criterios de otra
+    // comprobación. Se cancela también la que estuviera en camino, por la misma razón.
+    this.clearHelp();
+    this.checkedCode.set(code);
 
     try {
-      this.outcome.set(await panel.runValidation({ ...this.code() }, exercise.criteria));
+      this.outcome.set(await panel.runValidation(code, exercise.criteria));
     } finally {
       this.checking.set(false);
     }
+  }
+
+  /**
+   * Pide al tutor una pista sobre la comprobación que acaba de fallar.
+   *
+   * Es la misma ayuda que en la vista de resolución y por el mismo camino —`generate-feedback`,
+   * que acepta ejercicios sin id justo para esto—, con una sola diferencia: aquí no hay intento
+   * donde archivarla. La pista vive en pantalla y se va con la vista, como el ejercicio.
+   *
+   * Se ofrece también cuando la comprobación agotó el tiempo: ahí no hay criterios que comentar,
+   * pero un bucle que no termina es lo que un tutor detectaría de un vistazo.
+   */
+  async askForHelp(): Promise<void> {
+    const exercise = this.exercise();
+    const result = this.outcome();
+    const code = this.checkedCode();
+
+    if (!exercise || !result || result.passed || !code || this.askingHelp()) return;
+
+    const controller = new AbortController();
+    this.helpController?.abort();
+    this.helpController = controller;
+    this.askingHelp.set(true);
+    this.helpError.set(null);
+
+    try {
+      const hint = await this.aiService.generateFeedback(
+        {
+          enunciado: exercise.enunciado,
+          html: code.html,
+          css: code.css,
+          js: code.js,
+          criterios: this.feedbackCriteria(),
+          agotoTiempo: result.timedOut,
+          // Sin `exerciseId`: este ejercicio no existe en la base. La función lo deja en null en
+          // `ai_interactions`, que es lo correcto —no hay ejercicio al que apuntar—.
+        },
+        controller.signal,
+      );
+
+      if (controller.signal.aborted) return;
+
+      this.hint.set(hint);
+    } catch (err) {
+      // Abortar es una decisión del propio estudiante, no un fallo que enseñarle.
+      if (controller.signal.aborted) return;
+      this.helpError.set(err instanceof Error ? err.message : String(err));
+    } finally {
+      // Solo la petición vigente limpia el estado: si otra la reemplazó, la que termina tarde no
+      // debe apagar el indicador de la nueva.
+      if (this.helpController === controller) {
+        this.helpController = null;
+        this.askingHelp.set(false);
+      }
+    }
+  }
+
+  private clearHelp(): void {
+    this.helpController?.abort();
+    this.helpController = null;
+    this.askingHelp.set(false);
+    this.hint.set(null);
+    this.helpError.set(null);
   }
 
   /** Devuelve el editor al código con el que nació el ejercicio. */
@@ -438,6 +575,8 @@ export class PracticeExercise implements OnInit, OnDestroy {
 
     this.applyCode(exercise.inicial);
     this.outcome.set(null);
+    this.checkedCode.set(null);
+    this.clearHelp();
   }
 
   /** Vuelve a la fase de pedir. El ejercicio anterior se descarta: nunca hubo dónde guardarlo. */
@@ -447,6 +586,8 @@ export class PracticeExercise implements OnInit, OnDestroy {
 
     this.exercise.set(null);
     this.outcome.set(null);
+    this.checkedCode.set(null);
+    this.clearHelp();
     this.discarded.set(0);
     this.error.set(null);
     this.applyCode({ html: '', css: '', js: '' });

@@ -13,6 +13,7 @@ describe('PracticeExercise', () => {
   let fixture: ComponentFixture<PracticeExercise>;
   let component: PracticeExercise;
   let generatePractice: jasmine.Spy;
+  let generateFeedback: jasmine.Spy;
   let runValidation: jasmine.Spy;
 
   const tree: ModuleWithLessonCounts[] = [
@@ -73,7 +74,7 @@ describe('PracticeExercise', () => {
       imports: [PracticeExercise],
       providers: [
         provideRouter([]),
-        { provide: AiService, useValue: { generatePractice } },
+        { provide: AiService, useValue: { generatePractice, generateFeedback } },
         { provide: ModuleService, useValue: { getLearningTree: () => Promise.resolve(tree) } },
       ],
     });
@@ -95,6 +96,9 @@ describe('PracticeExercise', () => {
 
   beforeEach(() => {
     generatePractice = jasmine.createSpy('generatePractice');
+    generateFeedback = jasmine
+      .createSpy('generateFeedback')
+      .and.resolveTo({ criterio: 2, pista: 'Mira el segundo criterio.' });
     runValidation = jasmine.createSpy('runValidation');
   });
 
@@ -263,6 +267,91 @@ describe('PracticeExercise', () => {
 
       expect(component.criteria().map((c) => c.passed)).toEqual([true, false]);
       expect(component.resultMessage()?.severity).toBe('error');
+    });
+
+    describe('la pista del tutor', () => {
+      /** Antes de comprobar, el tutor no tendria sobre que opinar. */
+      it('no se ofrece hasta que algo falla', async () => {
+        expect(component.canAskHelp()).toBeFalse();
+
+        queueValidations(outcome(descripciones, [true, true]));
+        await component.check();
+        expect(component.canAskHelp()).toBeFalse();
+
+        queueValidations(outcome(descripciones, [true, false]));
+        await component.check();
+        expect(component.canAskHelp()).toBeTrue();
+      });
+
+      it('señala el criterio que la pista indica', async () => {
+        queueValidations(outcome(descripciones, [true, false]));
+        await component.check();
+
+        await component.askForHelp();
+
+        // `criterio: 2` viene 1-indexado, como se le presentan al modelo.
+        expect(component.criteria().map((c) => c.focused)).toEqual([false, true]);
+        expect(component.hint()?.pista).toBe('Mira el segundo criterio.');
+      });
+
+      /**
+       * Lo que justifica congelar el codigo al comprobar: entre comprobar y pedir ayuda el
+       * estudiante sigue escribiendo, y la pista tiene que hablar del codigo que produjo los
+       * criterios en rojo que tiene delante.
+       */
+      it('habla del código que se comprobó, no del que hay ahora en el editor', async () => {
+        component.onCodeChange({ html: '<p>comprobado</p>', css: '', js: '' });
+        queueValidations(outcome(descripciones, [true, false]));
+        await component.check();
+
+        component.onCodeChange({ html: '<p>escrito despues</p>', css: '', js: '' });
+        await component.askForHelp();
+
+        expect(generateFeedback.calls.mostRecent().args[0].html).toBe('<p>comprobado</p>');
+      });
+
+      /** El ejercicio no existe en la base, asi que no hay id al que apuntar. */
+      it('pide la pista sin id de ejercicio', async () => {
+        queueValidations(outcome(descripciones, [true, false]));
+        await component.check();
+
+        await component.askForHelp();
+
+        const request = generateFeedback.calls.mostRecent().args[0];
+        expect(request.exerciseId).toBeUndefined();
+        expect(request.enunciado).toBe('Haz esto y lo otro');
+        expect(request.criterios).toEqual([
+          { description: 'Uno', passed: true },
+          { description: 'Dos', passed: false },
+        ]);
+      });
+
+      /** Una pista por comprobacion: otro clic seria otra llamada sobre el mismo codigo. */
+      it('deja de ofrecerse hasta la siguiente comprobación', async () => {
+        queueValidations(outcome(descripciones, [true, false]));
+        await component.check();
+        await component.askForHelp();
+
+        expect(component.canAskHelp()).toBeFalse();
+
+        queueValidations(outcome(descripciones, [true, false]));
+        await component.check();
+
+        // La pista anterior hablaba del codigo anterior: se va con el.
+        expect(component.hint()).toBeNull();
+        expect(component.canAskHelp()).toBeTrue();
+      });
+
+      it('un fallo del modelo deja volver a intentarlo', async () => {
+        queueValidations(outcome(descripciones, [true, false]));
+        await component.check();
+        generateFeedback.and.rejectWith(new Error('El modelo está saturado'));
+
+        await component.askForHelp();
+
+        expect(component.helpError()).toContain('saturado');
+        expect(component.canAskHelp()).toBeTrue();
+      });
     });
 
     /** No hay intento que guardar: esto no califica ni cuenta para el progreso. */

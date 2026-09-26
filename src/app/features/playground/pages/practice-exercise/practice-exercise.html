@@ -42,6 +42,7 @@
                 class="criterion-row flex align-items-start gap-2"
                 [class.is-passed]="criterion.passed === true"
                 [class.is-failed]="criterion.passed === false"
+                [class.is-focused]="criterion.focused"
               >
                 <i
                   class="criterion-icon pi"
@@ -54,6 +55,20 @@
               </div>
             }
           </div>
+
+          @if (hint()?.pista; as pista) {
+            <aside class="hint-card mt-3">
+              <p class="hint-title flex align-items-center gap-2 m-0">
+                <i class="pi pi-lightbulb" aria-hidden="true"></i>
+                Una pista
+              </p>
+              <app-markdown-renderer [content]="pista" />
+            </aside>
+          }
+
+          @if (helpError(); as message) {
+            <p-message severity="warn" [text]="message" styleClass="w-full mt-3" />
+          }
 
           @if (discarded() > 0) {
             <p class="discarded-notice mt-3 mb-0">
@@ -151,6 +166,20 @@
 
       <div class="actions flex flex-wrap gap-2">
         <p-button label="Comprobar" icon="pi pi-check" [loading]="checking()" (onClick)="check()" />
+
+        <!-- Solo tras una comprobacion fallida: con los criterios en verde no hay nada que
+            preguntar, y antes de comprobar el tutor no tendria sobre que opinar. -->
+        @if (canAskHelp()) {
+          <p-button
+            label="Pedir ayuda"
+            icon="pi pi-sparkles"
+            variant="outlined"
+            severity="help"
+            [loading]="askingHelp()"
+            [disabled]="checking()"
+            (onClick)="askForHelp()"
+          />
+        }
         <p-button
           label="Reiniciar"
           icon="pi pi-replay"
