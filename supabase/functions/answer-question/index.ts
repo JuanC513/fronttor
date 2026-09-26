@@ -3,6 +3,7 @@ import { requireUser } from '../_shared/auth.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 import { GEMINI_MODEL } from '../_shared/gemini-client.ts';
 import { errorResponse, jsonResponse } from '../_shared/http.ts';
+import { formatStudentContext, loadStudentContext } from '../_shared/student-context.ts';
 import { buildCodeQuestionPrompt } from '../_shared/prompts/code-question-prompt.ts';
 import {
   buildQuestionPrompt,
@@ -37,9 +38,10 @@ type AnswerQuestionBody = AiLogIds &
  * un solo prompt con un condicional invertiría esa etiqueta según un campo del cuerpo, que es
  * exactamente el tipo de error que no avisa cuando ocurre.
  */
-function buildPrompt(body: AnswerQuestionBody): string {
+function buildPrompt(body: AnswerQuestionBody, estudiante: string): string {
   if (body.modo === 'codigo') {
     return buildCodeQuestionPrompt({
+      estudiante,
       pregunta: body.pregunta,
       html: body.codigo?.html ?? '',
       css: body.codigo?.css ?? '',
@@ -49,7 +51,7 @@ function buildPrompt(body: AnswerQuestionBody): string {
     });
   }
 
-  return buildQuestionPrompt(body);
+  return buildQuestionPrompt({ ...body, estudiante });
 }
 
 Deno.serve(async (req) => {
@@ -67,7 +69,11 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'Falta la pregunta' }, 400);
     }
 
-    const prompt = buildPrompt(body);
+    // Quien pregunta importa: el perfil que escribio y por donde va el curso. Si no se puede
+    // cargar, el prompt sale sin esos bloques y la respuesta llega igual.
+    const estudiante = formatStudentContext(await loadStudentContext(user.client));
+
+    const prompt = buildPrompt(body, estudiante);
 
     // Preguntar por el código propio sigue siendo preguntar: el check de `kind` en
     // `ai_interactions` no necesita un valor nuevo, y así las dos formas de duda se cuentan juntas.

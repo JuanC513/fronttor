@@ -64,6 +64,17 @@ const pairs = [
     },
   },
   {
+    name: 'MAX_PERFIL_LENGTH',
+    a: {
+      file: 'supabase/functions/_shared/student-context.ts',
+      pattern: /MAX_PERFIL_LENGTH\s*=\s*([\d_]+)\s*;/,
+    },
+    b: {
+      file: 'src/app/features/profile/pages/profile-page/profile-page.ts',
+      pattern: /MAX_PERFIL_LENGTH\s*=\s*([\d_]+)\s*;/,
+    },
+  },
+  {
     name: 'MAX_INSTRUCCION_LENGTH (practica)',
     a: {
       file: 'supabase/functions/_shared/prompts/practice-prompt.ts',

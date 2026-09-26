@@ -3,6 +3,7 @@ import { requireUser } from '../_shared/auth.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 import { GEMINI_MODEL_CONTENIDO } from '../_shared/gemini-client.ts';
 import { errorResponse, jsonResponse } from '../_shared/http.ts';
+import { formatStudentContext, loadStudentContext } from '../_shared/student-context.ts';
 import { CRITERIA_SCHEMA } from '../_shared/prompts/exercise-prompt.ts';
 import {
   buildPracticeCriteriaPrompt,
@@ -60,10 +61,17 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: 'Falta el diagnóstico de los criterios' }, 400);
       }
 
+      // La reparación NO lleva el perfil, y no es un olvido: lo que se está arreglando es si un
+      // selector existe en una solución que ya está escrita. Quién vaya a resolver el ejercicio no
+      // cambia esa respuesta, y meterlo solo sería ruido en el prompt.
       prompt = buildPracticeCriteriaPrompt(body);
       responseSchema = CRITERIA_SCHEMA;
     } else {
-      prompt = buildPracticePrompt(body);
+      // El ejercicio sí se adapta: con el perfil y el progreso sale al nivel real del estudiante y
+      // no al nivel genérico del subtema.
+      const estudiante = formatStudentContext(await loadStudentContext(user.client));
+
+      prompt = buildPracticePrompt({ ...body, estudiante });
       responseSchema = PRACTICE_SCHEMA;
     }
 

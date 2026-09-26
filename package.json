@@ -85,6 +85,8 @@
     "supabase/functions/_shared/prompts/exercise-prompt.ts": "node scripts/check-prompt-limits-sync.mjs",
     "src/app/features/teaching/components/ai-generate-panel/ai-generate-panel.ts": "node scripts/check-prompt-limits-sync.mjs",
     "supabase/functions/_shared/prompts/practice-prompt.ts": "node scripts/check-prompt-limits-sync.mjs",
-    "src/app/features/playground/pages/practice-exercise/practice-exercise.ts": "node scripts/check-prompt-limits-sync.mjs"
+    "src/app/features/playground/pages/practice-exercise/practice-exercise.ts": "node scripts/check-prompt-limits-sync.mjs",
+    "supabase/functions/_shared/student-context.ts": "node scripts/check-prompt-limits-sync.mjs",
+    "src/app/features/profile/pages/profile-page/profile-page.ts": "node scripts/check-prompt-limits-sync.mjs"
   }
 }

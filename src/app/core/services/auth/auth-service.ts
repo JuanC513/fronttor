@@ -59,6 +59,20 @@ export class AuthService {
     return this.profileSubject.value;
   }
 
+  /**
+   * Vuelve a leer el perfil de la base y lo publica.
+   *
+   * Existe para quien lo edita: al guardar la descripción, `profile$` se quedaría con el texto
+   * anterior hasta el siguiente arranque de sesión, y la vista mostraría lo viejo justo después de
+   * haber escrito lo nuevo. No hace nada si no hay sesión.
+   */
+  async refreshProfile(): Promise<void> {
+    const user = this.userSubject.value;
+    if (!user) return;
+
+    await this.loadProfile(user.id);
+  }
+
   constructor() {
     this.initializeAuth();
   }

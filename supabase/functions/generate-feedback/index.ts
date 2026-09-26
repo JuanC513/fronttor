@@ -3,6 +3,7 @@ import { requireUser } from '../_shared/auth.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 import { GEMINI_MODEL } from '../_shared/gemini-client.ts';
 import { errorResponse, jsonResponse } from '../_shared/http.ts';
+import { formatStudentContext, loadStudentContext } from '../_shared/student-context.ts';
 import {
   buildFeedbackPrompt,
   feedbackGenerationConfig,
@@ -31,7 +32,11 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'Faltan los criterios del ejercicio' }, 400);
     }
 
-    const prompt = buildFeedbackPrompt(body);
+    // Saber que lleva seis intentos en este mismo ejercicio es lo que separa una pista util de
+    // una que trata cada envio como si fuera el primero.
+    const estudiante = formatStudentContext(await loadStudentContext(user.client));
+
+    const prompt = buildFeedbackPrompt({ ...body, estudiante });
     const texto = await callGeminiLogged(
       {
         client: user.client,
