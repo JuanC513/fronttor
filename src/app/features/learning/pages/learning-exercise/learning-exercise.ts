@@ -422,6 +422,7 @@ export class LearningExercise implements OnInit, OnDestroy {
           criterios: this.feedbackCriteria(),
           agotoTiempo: result.timedOut,
           exerciseId: exercise.id,
+          lessonId: exercise.lesson_id,
         },
         controller.signal,
       );

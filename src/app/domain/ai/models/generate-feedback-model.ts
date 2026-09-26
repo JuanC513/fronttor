@@ -28,8 +28,9 @@ export interface GenerateFeedbackRequest {
   criterios: FeedbackCriterion[];
   /** Si el envío no llegó a responder. Cambia lo que el modelo puede decir. */
   agotoTiempo?: boolean;
-  /** No entra en el prompt: es para que la función deje la interacción registrada. */
+  /** No entran en el prompt: son para que la función deje la interacción registrada. */
   exerciseId?: number;
+  lessonId?: number;
 }
 
 export interface GenerateFeedbackResponse {

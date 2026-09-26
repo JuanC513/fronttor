@@ -1,7 +1,7 @@
-import { logInteraction } from '../_shared/ai-log.ts';
+import { AiLogIds, callGeminiLogged } from '../_shared/ai-log.ts';
 import { requireTeacher } from '../_shared/auth.ts';
 import { corsHeaders } from '../_shared/cors.ts';
-import { callGemini, GEMINI_MODEL_CONTENIDO } from '../_shared/gemini-client.ts';
+import { GEMINI_MODEL_CONTENIDO } from '../_shared/gemini-client.ts';
 import { errorResponse, jsonResponse } from '../_shared/http.ts';
 import {
   buildExercisePrompt,
@@ -28,7 +28,9 @@ Deno.serve(async (req) => {
     // Capa 2: generar contenido del curso queda restringido a profesores.
     const user = await requireTeacher(req);
 
-    const body: ExercisePromptInput = await req.json();
+    // Los ids no entran en el prompt: son para que la fila del registro sepa de que ejercicio
+    // -y de que subtema- se genero cada parte.
+    const body: ExercisePromptInput & AiLogIds = await req.json();
 
     if (!PARTES.includes(body.parte)) {
       return jsonResponse({ error: 'Parte del ejercicio no reconocida' }, 400);
@@ -39,15 +41,19 @@ Deno.serve(async (req) => {
     }
 
     const prompt = buildExercisePrompt(body);
-    const texto = await callGemini(prompt, GEMINI_MODEL_CONTENIDO, generationConfigFor(body.parte));
 
-    await logInteraction(user.client, {
-      userId: user.id,
-      kind: 'exercise',
-      model: GEMINI_MODEL_CONTENIDO,
+    const texto = await callGeminiLogged(
+      {
+        client: user.client,
+        userId: user.id,
+        kind: 'exercise',
+        model: GEMINI_MODEL_CONTENIDO,
+        lessonId: body.lessonId,
+        exerciseId: body.exerciseId,
+      },
       prompt,
-      response: texto,
-    });
+      generationConfigFor(body.parte),
+    );
 
     // El enunciado es markdown y va tal cual; el resto viene como JSON por `responseSchema`.
     if (body.parte === 'statement') {

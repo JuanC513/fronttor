@@ -11,6 +11,8 @@ interface PracticeRequestBase {
   dificultad: ExerciseDifficulty;
   /** Lo que el estudiante escribió que quiere practicar. Opcional. */
   instruccion?: string;
+  /** No entra en el prompt: es para que la interacción quede registrada con su subtema. */
+  lessonId?: number;
 }
 
 /** Pide el ejercicio entero: título, enunciado, código inicial, solución y criterios. */

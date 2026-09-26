@@ -1,7 +1,7 @@
-import { logInteraction } from '../_shared/ai-log.ts';
+import { AiLogIds, callGeminiLogged } from '../_shared/ai-log.ts';
 import { requireUser } from '../_shared/auth.ts';
 import { corsHeaders } from '../_shared/cors.ts';
-import { callGemini, GEMINI_MODEL } from '../_shared/gemini-client.ts';
+import { GEMINI_MODEL } from '../_shared/gemini-client.ts';
 import { errorResponse, jsonResponse } from '../_shared/http.ts';
 import { buildCodeQuestionPrompt } from '../_shared/prompts/code-question-prompt.ts';
 import {
@@ -26,7 +26,8 @@ interface CodeQuestionBody {
  * la vez, y una pestaña abierta sigue ejecutando el bundle anterior, que no manda el campo. Sin ese
  * default, esa pestaña se rompería durante la ventana entre un despliegue y el otro.
  */
-type AnswerQuestionBody = ({ modo?: 'leccion' } & QuestionPromptInput) | CodeQuestionBody;
+type AnswerQuestionBody = AiLogIds &
+  (({ modo?: 'leccion' } & QuestionPromptInput) | CodeQuestionBody);
 
 /**
  * Cada modo arma su propio prompt, y esa separación es deliberada.
@@ -67,17 +68,20 @@ Deno.serve(async (req) => {
     }
 
     const prompt = buildPrompt(body);
-    const respuesta = await callGemini(prompt);
 
     // Preguntar por el código propio sigue siendo preguntar: el check de `kind` en
     // `ai_interactions` no necesita un valor nuevo, y así las dos formas de duda se cuentan juntas.
-    await logInteraction(user.client, {
-      userId: user.id,
-      kind: 'question',
-      model: GEMINI_MODEL,
+    // `lessonId` solo llega en el modo lección; en el taller no hay subtema al que apuntar.
+    const respuesta = await callGeminiLogged(
+      {
+        client: user.client,
+        userId: user.id,
+        kind: 'question',
+        model: GEMINI_MODEL,
+        lessonId: body.lessonId,
+      },
       prompt,
-      response: respuesta,
-    });
+    );
 
     return jsonResponse({ respuesta });
   } catch (err) {

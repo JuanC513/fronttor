@@ -18,6 +18,8 @@ interface ChatContextBase {
 /** Una duda mientras se lee un subtema. El material de la plataforma es la fuente de la respuesta. */
 export interface LessonChatContext extends ChatContextBase {
   tipo: 'leccion';
+  /** Id del subtema. No se usa en el prompt: viaja para que la interacción quede registrada. */
+  lessonId: number;
   tema: string;
   subtema: string;
   nombreBloque?: string;

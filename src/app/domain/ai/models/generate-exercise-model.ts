@@ -27,6 +27,10 @@ export interface GenerateExerciseRequest {
   solucion?: ExerciseCode;
   criterios?: ExerciseCriterion[];
   instruccion?: string;
+  /** No entra en el prompt: es para que la interacción quede registrada con su subtema. */
+  lessonId?: number;
+  /** Tampoco entra en el prompt. Solo lo hay al ajustar un ejercicio ya guardado. */
+  exerciseId?: number;
 }
 
 /**

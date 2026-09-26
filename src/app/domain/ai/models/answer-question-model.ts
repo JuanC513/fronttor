@@ -14,6 +14,9 @@ interface QuestionRequestBase {
 /** Una duda sobre el subtema que se está leyendo. */
 export interface LessonQuestionRequest extends QuestionRequestBase {
   modo: 'leccion';
+  /** No entra en el prompt: es para que la interacción quede registrada con su subtema. */
+  lessonId?: number;
+
   contenidoLeccion: string;
   tema?: string;
   subtema?: string;

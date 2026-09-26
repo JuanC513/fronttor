@@ -162,6 +162,7 @@ export class AiChatService {
       pregunta,
       historial,
       contenidoLeccion: context.contenidoBloque ?? '',
+      lessonId: context.lessonId,
       tema: context.tema,
       subtema: context.subtema,
       nombreBloque: context.nombreBloque,

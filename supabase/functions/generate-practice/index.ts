@@ -1,7 +1,7 @@
-import { logInteraction } from '../_shared/ai-log.ts';
+import { AiLogIds, callGeminiLogged } from '../_shared/ai-log.ts';
 import { requireUser } from '../_shared/auth.ts';
 import { corsHeaders } from '../_shared/cors.ts';
-import { callGemini, GEMINI_MODEL_CONTENIDO } from '../_shared/gemini-client.ts';
+import { GEMINI_MODEL_CONTENIDO } from '../_shared/gemini-client.ts';
 import { errorResponse, jsonResponse } from '../_shared/http.ts';
 import { CRITERIA_SCHEMA } from '../_shared/prompts/exercise-prompt.ts';
 import {
@@ -12,9 +12,11 @@ import {
   PracticePromptInput,
 } from '../_shared/prompts/practice-prompt.ts';
 
-type PracticeBody =
-  | ({ modo?: 'completo' } & PracticePromptInput)
-  | ({ modo: 'criterios' } & PracticeCriteriaPromptInput);
+type PracticeBody = AiLogIds &
+  (
+    | ({ modo?: 'completo' } & PracticePromptInput)
+    | ({ modo: 'criterios' } & PracticeCriteriaPromptInput)
+  );
 
 /**
  * Genera un ejercicio de práctica para el propio estudiante.
@@ -65,20 +67,20 @@ Deno.serve(async (req) => {
       responseSchema = PRACTICE_SCHEMA;
     }
 
-    const texto = await callGemini(prompt, GEMINI_MODEL_CONTENIDO, {
-      responseMimeType: 'application/json',
-      responseSchema,
-    });
-
     // Mismo `kind` que la generación del profesor: sigue siendo un ejercicio hecho por el modelo, y
-    // separarlos obligaría a tocar el check de la columna para contar lo mismo en dos cubos.
-    await logInteraction(user.client, {
-      userId: user.id,
-      kind: 'exercise',
-      model: GEMINI_MODEL_CONTENIDO,
+    // separarlos obligaría a tocar el check de la columna para contar lo mismo en dos cubos. El
+    // `lessonId` es el subtema que el estudiante eligió en el desplegable.
+    const texto = await callGeminiLogged(
+      {
+        client: user.client,
+        userId: user.id,
+        kind: 'exercise',
+        model: GEMINI_MODEL_CONTENIDO,
+        lessonId: body.lessonId,
+      },
       prompt,
-      response: texto,
-    });
+      { responseMimeType: 'application/json', responseSchema },
+    );
 
     try {
       return jsonResponse({ resultado: JSON.parse(texto) });

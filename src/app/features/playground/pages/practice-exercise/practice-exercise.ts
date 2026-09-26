@@ -378,6 +378,8 @@ export class PracticeExercise implements OnInit, OnDestroy {
       subtema: lesson.label,
       dificultad: this.difficulty(),
       instruccion: this.instruction().trim() || undefined,
+      // No entra en el prompt: es para que la interaccion quede registrada con su subtema.
+      lessonId: lesson.value,
     };
 
     try {
@@ -538,7 +540,9 @@ export class PracticeExercise implements OnInit, OnDestroy {
           criterios: this.feedbackCriteria(),
           agotoTiempo: result.timedOut,
           // Sin `exerciseId`: este ejercicio no existe en la base. La función lo deja en null en
-          // `ai_interactions`, que es lo correcto —no hay ejercicio al que apuntar—.
+          // `ai_interactions`, que es lo correcto —no hay ejercicio al que apuntar—. El subtema sí
+          // existe: es el que el estudiante eligió al pedirlo.
+          lessonId: this.lessonId() ?? undefined,
         },
         controller.signal,
       );

@@ -14,6 +14,7 @@ describe('AiChatService', () => {
   const lessonContext: LessonChatContext = {
     key: 'lesson:1',
     tipo: 'leccion',
+    lessonId: 1,
     saludo: 'Hola',
     placeholder: 'Tu duda…',
     tema: 'CSS',
@@ -62,6 +63,7 @@ describe('AiChatService', () => {
           modo: 'leccion',
           pregunta: '¿Qué es flex-grow?',
           contenidoLeccion: '# Flexbox',
+          lessonId: 1,
           tema: 'CSS',
           subtema: 'Flexbox',
           nombreBloque: 'Ejes',

@@ -7,6 +7,8 @@ export interface GenerateContentRequest {
   bloquesExistentes?: string[];
   /** Indicación libre del profesor sobre qué debe contener el bloque. */
   instruccion?: string;
+  /** No entra en el prompt: es para que la interacción quede registrada con su subtema. */
+  lessonId?: number;
 }
 
 export interface GenerateContentResponse {
