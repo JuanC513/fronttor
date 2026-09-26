@@ -1,9 +1,22 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { SupabaseService } from '@core/services/supabase/supabase-service';
-import { Exercise, ExerciseInput } from '../models/exercise-model';
+import { Exercise, ExerciseInput, ExerciseWithoutSolution } from '../models/exercise-model';
 import { ExerciseWithLesson } from '../models/exercise-with-lesson';
 import { StudentExercise } from '../models/student-exercise';
 import { StudentExerciseDetail } from '../models/student-exercise-detail';
+
+/**
+ * Las columnas que la API entrega a cualquier usuario con sesion.
+ *
+ * Esta lista es el espejo del `grant select (...)` de
+ * 20260926120000_hide_exercise_solution.sql. Las tres columnas de solucion quedan fuera, y pedirlas
+ * por aqui no devuelve la solucion: devuelve un error de permisos.
+ *
+ * Por eso ya no se usa `select('*')` en ninguna lectura del panel. Con el grant por columnas, el
+ * comodin se expande a columnas que el rol no tiene y la consulta entera falla.
+ */
+const COLUMNAS_SIN_SOLUCION =
+  'id, lesson_id, name, statement, difficulty, starter_html, starter_css, starter_js, criteria, source, is_published, "order", created_at';
 
 @Injectable({
   providedIn: 'root',
@@ -18,16 +31,6 @@ export class ExerciseService {
     this.refreshTrigger.update((v) => v + 1);
   }
 
-  async getAll(): Promise<Exercise[]> {
-    const { data, error } = await this.supabase
-      .from('exercises')
-      .select('*')
-      .order(this.orderColumn, { ascending: true });
-
-    if (error) throw new Error(error.message);
-    return (data as Exercise[]) ?? [];
-  }
-
   /**
    * Todos los ejercicios con su subtema y su tema, para el listado del profesor.
    *
@@ -38,22 +41,24 @@ export class ExerciseService {
   async getAllWithLesson(): Promise<ExerciseWithLesson[]> {
     const { data, error } = await this.supabase
       .from('exercises')
-      .select('*, lessons(id, name, is_published, module_id, modules(id, name, is_published))')
+      .select(
+        `${COLUMNAS_SIN_SOLUCION}, lessons(id, name, is_published, module_id, modules(id, name, is_published))`,
+      )
       .order(this.orderColumn, { ascending: true });
 
     if (error) throw new Error(error.message);
-    return (data as ExerciseWithLesson[]) ?? [];
+    return (data as unknown as ExerciseWithLesson[]) ?? [];
   }
 
-  async getAllByLessonId(lessonId: number): Promise<Exercise[]> {
+  async getAllByLessonId(lessonId: number): Promise<ExerciseWithoutSolution[]> {
     const { data, error } = await this.supabase
       .from('exercises')
-      .select('*')
+      .select(COLUMNAS_SIN_SOLUCION)
       .eq('lesson_id', lessonId)
       .order(this.orderColumn, { ascending: true });
 
     if (error) throw new Error(error.message);
-    return (data as Exercise[]) ?? [];
+    return (data as unknown as ExerciseWithoutSolution[]) ?? [];
   }
 
   /**
@@ -95,16 +100,14 @@ export class ExerciseService {
   /**
    * El ejercicio que el estudiante va a resolver, sin la solución de referencia.
    *
-   * **La lista explícita de columnas es la parte importante.** Los demás métodos de lectura usan
-   * `select('*')`, y ahí van incluidas `solution_html`, `solution_css` y `solution_js`: la
-   * respuesta del ejercicio viajaría al navegador de quien lo está intentando, a un `console.log`
-   * de distancia. Enumerar las columnas es lo que lo evita.
+   * **La solución no llega hasta aquí ni aunque se pidiera.** Desde
+   * 20260926120000_hide_exercise_solution.sql, `authenticated` no tiene SELECT sobre
+   * `solution_html`, `solution_css` ni `solution_js`: la frontera está en la base, no en esta
+   * lista de columnas.
    *
-   * No es una frontera de seguridad y no conviene confundirla con una: la política de lectura es
-   * `exercises_select_authenticated ... using (true)`, así que quien sepa pedir esa columna a la
-   * API la recibe. Cerrarlo de verdad exige mover las lecturas del profesor a una RPC
-   * `security definer` para poder revocar esas columnas a `authenticated`. Lo que esto garantiza
-   * es que la aplicación no regala la solución por su cuenta.
+   * La lista sigue enumerada de todos modos, y no sobra. Con el grant por columnas, un `select('*')`
+   * falla entero con «permission denied for column», así que escribir las columnas es lo que hace
+   * que la consulta funcione. Antes era además la única defensa; ahora es la segunda.
    *
    * El filtro por publicación evita además que un borrador se pueda abrir por URL.
    *
@@ -133,11 +136,24 @@ export class ExerciseService {
     return { ...exercise, passed: (exercise_attempts ?? []).length > 0 };
   }
 
+  /**
+   * El ejercicio entero, con su solucion de referencia, para el formulario del profesor.
+   *
+   * Es el UNICO camino que queda hacia `solution_html`, `solution_css` y `solution_js`: desde
+   * 20260926120000, `authenticated` no tiene SELECT sobre esas columnas, asi que leerlas por la
+   * tabla falla para todo el mundo, profesores incluidos. La RPC es `security definer` y comprueba
+   * `is_teacher()` por dentro.
+   *
+   * Sin rol de profesor no devuelve filas -no lanza-, asi que desde fuera es indistinguible de un
+   * ejercicio que no existe. De ahi que el error sea el mismo en los dos casos.
+   */
   async getById(id: number): Promise<Exercise> {
-    const { data, error } = await this.supabase.from('exercises').select('*').eq('id', id).single();
+    const { data, error } = await this.supabase
+      .rpc('get_exercise_for_edit', { p_id: id })
+      .single<Exercise>();
 
     if (error) throw new Error(error.message);
-    return data as Exercise;
+    return data;
   }
 
   async insert(input: ExerciseInput): Promise<void> {

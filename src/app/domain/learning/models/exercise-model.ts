@@ -45,6 +45,21 @@ export interface Exercise {
 }
 
 /**
+ * Un ejercicio sin la solucion de referencia.
+ *
+ * Es lo que la API entrega a cualquier usuario con sesion: desde
+ * 20260926120000_hide_exercise_solution.sql, `authenticated` no tiene SELECT sobre las tres
+ * columnas de solucion, y el unico camino hacia ellas es la RPC `get_exercise_for_edit`.
+ *
+ * Existe para que el tipo no mienta. Las lecturas del panel del profesor devuelven esto; solo
+ * `ExerciseService.getById`, que pasa por la RPC, devuelve un `Exercise` entero.
+ */
+export type ExerciseWithoutSolution = Omit<
+  Exercise,
+  'solution_html' | 'solution_css' | 'solution_js'
+>;
+
+/**
  * Campos editables de un ejercicio.
  *
  * Se pasan como objeto y no como argumentos sueltos: las RPC de insercion y actualizacion tienen

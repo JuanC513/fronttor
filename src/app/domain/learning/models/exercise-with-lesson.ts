@@ -1,12 +1,14 @@
-import { Exercise } from './exercise-model';
+import { ExerciseWithoutSolution } from './exercise-model';
 
 /**
  * Ejercicio con el subtema y el tema a los que pertenece.
  *
  * El listado del profesor muestra y filtra por ambos, y traerlos embebidos en la misma
  * consulta evita tener que cruzar tres listas en el componente.
+ *
+ * Sin la solucion de referencia: el listado no la necesita y la API ya no la entrega.
  */
-export interface ExerciseWithLesson extends Exercise {
+export interface ExerciseWithLesson extends ExerciseWithoutSolution {
   lessons: {
     id: number;
     name: string;

@@ -34,6 +34,7 @@ import {
   Exercise,
   ExerciseDifficulty,
   ExerciseInput,
+  ExerciseWithoutSolution,
 } from '@domain/learning/models/exercise-model';
 import { Lesson } from '@domain/learning/models/lesson-model';
 import { ModuleWithLessons } from '@domain/learning/models/module-with-lessons';
@@ -192,7 +193,7 @@ export class ExerciseFormDialog implements OnInit, OnDestroy {
   readonly verdictMessage = VERDICT_MESSAGE;
 
   private readonly saved = signal<Exercise | null>(null);
-  private readonly siblings = signal<Exercise[]>([]);
+  private readonly siblings = signal<ExerciseWithoutSolution[]>([]);
   private readonly pendingPublished = signal(false);
 
   private readonly saveAnchor = viewChild<ElementRef<HTMLElement>>('saveAnchor');
