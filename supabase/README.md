@@ -251,6 +251,11 @@ devolvía las 24 funciones del esquema.
 La misma con `authenticated` debe devolver las RPC que usa la aplicación, y **no** puede incluir
 `recompute_lesson_progress`, que es interna y no se concede a nadie.
 
+> Buscando `anon` en `schema-actual.sql` aparece **una** línea, y es la que debe aparecer:
+> `GRANT USAGE ON SCHEMA "public" TO "anon"`. Se deja a propósito: quitarla dejaría al rol sin poder
+> resolver nada en el esquema, y no hace falta, porque lo que de verdad da acceso son los permisos
+> sobre cada objeto, que sí están cerrados.
+
 Las secuencias, también cero filas:
 
 ```sql

@@ -92,6 +92,179 @@ $$;
 
 ALTER FUNCTION "public"."delete_module"("p_id" integer) OWNER TO "postgres";
 
+SET default_tablespace = '';
+
+SET default_table_access_method = "heap";
+
+
+CREATE TABLE IF NOT EXISTS "public"."exercises" (
+    "id" integer NOT NULL,
+    "lesson_id" integer NOT NULL,
+    "name" character varying(255) NOT NULL,
+    "statement" "text" NOT NULL,
+    "difficulty" "text" DEFAULT 'media'::"text" NOT NULL,
+    "starter_html" "text" DEFAULT ''::"text" NOT NULL,
+    "starter_css" "text" DEFAULT ''::"text" NOT NULL,
+    "starter_js" "text" DEFAULT ''::"text" NOT NULL,
+    "criteria" "jsonb" DEFAULT '[]'::"jsonb" NOT NULL,
+    "source" "text" DEFAULT 'manual'::"text" NOT NULL,
+    "order" integer DEFAULT 0 NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "is_published" boolean DEFAULT false NOT NULL,
+    "solution_html" "text" DEFAULT ''::"text" NOT NULL,
+    "solution_css" "text" DEFAULT ''::"text" NOT NULL,
+    "solution_js" "text" DEFAULT ''::"text" NOT NULL,
+    CONSTRAINT "exercises_criteria_check" CHECK (("jsonb_typeof"("criteria") = 'array'::"text")),
+    CONSTRAINT "exercises_difficulty_check" CHECK (("difficulty" = ANY (ARRAY['facil'::"text", 'media'::"text", 'dificil'::"text"]))),
+    CONSTRAINT "exercises_source_check" CHECK (("source" = ANY (ARRAY['manual'::"text", 'ia'::"text"])))
+);
+
+
+ALTER TABLE "public"."exercises" OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."get_exercise_for_edit"("p_id" integer) RETURNS SETOF "public"."exercises"
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  select * from public.exercises where id = p_id and public.is_teacher();
+$$;
+
+
+ALTER FUNCTION "public"."get_exercise_for_edit"("p_id" integer) OWNER TO "postgres";
+
+
+COMMENT ON FUNCTION "public"."get_exercise_for_edit"("p_id" integer) IS 'Unica lectura de solution_* que queda. authenticated no tiene SELECT sobre esas columnas.';
+
+
+
+CREATE OR REPLACE FUNCTION "public"."get_student_context"() RETURNS "jsonb"
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  with ultimos as (
+    select a.exercise_id, a.results
+    from exercise_attempts a
+    where a.user_id = auth.uid()
+    order by a.id desc
+    limit 50
+  ),
+  criterios as (
+    select
+      e.criteria -> (r.idx::int - 1) ->> 'type' as tipo,
+      r.res ->> 'description'                   as descripcion,
+      (r.res ->> 'passed')::boolean             as paso
+    from ultimos u
+    join exercises e on e.id = u.exercise_id
+    cross join lateral jsonb_array_elements(u.results) with ordinality as r(res, idx)
+    where jsonb_array_length(e.criteria) = jsonb_array_length(u.results)
+  )
+  select jsonb_build_object(
+    -- Lo que el estudiante escribio de si mismo. Contenido NO confiable aguas abajo.
+    'perfil', (
+      select p.profile_description from profiles p where p.user_id = auth.uid()
+    ),
+
+    'subtemasCompletados', (
+      select count(*) from lesson_progress lp
+      where lp.user_id = auth.uid() and lp.status = 'completed'
+    ),
+    'subtemasPublicados', (select count(*) from lessons where is_published),
+
+    -- El mas reciente primero: es el que tiene entre manos ahora mismo.
+    'enCurso', (
+      select coalesce(jsonb_agg(l.name order by lp.updated_at desc), '[]'::jsonb)
+      from lesson_progress lp
+      join lessons l on l.id = lp.lesson_id
+      where lp.user_id = auth.uid()
+        and lp.status = 'in_progress'
+        and l.is_published
+    ),
+
+    -- Distinct: un ejercicio aprobado dos veces no son dos ejercicios.
+    'ejerciciosAprobados', (
+      select count(distinct a.exercise_id) from exercise_attempts a
+      where a.user_id = auth.uid() and a.passed
+    ),
+    'ejerciciosPublicados', (select count(*) from exercises where is_published),
+
+    -- Donde lo ha intentado y NUNCA ha aprobado. `bool_and(not passed)` es "ninguno
+    -- de sus intentos aprobo": con un `where not passed` se colarian los ejercicios
+    -- que fallo antes de acertar, que son justo los que YA resolvio.
+    'atascados', (
+      select coalesce(
+        jsonb_agg(
+          jsonb_build_object('ejercicio', e.name, 'subtema', l.name, 'intentos', f.intentos)
+          order by f.intentos desc
+        ),
+        '[]'::jsonb
+      )
+      from (
+        select a.exercise_id, count(*) as intentos
+        from exercise_attempts a
+        where a.user_id = auth.uid()
+        group by a.exercise_id
+        having bool_and(not a.passed)
+      ) f
+      join exercises e on e.id = f.exercise_id
+      join lessons l on l.id = e.lesson_id
+      where e.is_published
+    ),
+
+    -- Cuantos envios cubre la ventana. Va en el prompt para que el tutor no hable
+    -- de "siempre" cuando en realidad son tres intentos.
+    'enviosRecientes', (select count(*) from ultimos),
+
+    -- El dato transferible: de que TIPO son los criterios que falla. Solo se
+    -- informan los tipos en los que ha fallado algo; los que domina no aportan.
+    'fallosPorTipo', (
+      select coalesce(
+        jsonb_agg(
+          jsonb_build_object('tipo', t.tipo, 'fallos', t.fallos, 'total', t.total)
+          order by t.fallos desc
+        ),
+        '[]'::jsonb
+      )
+      from (
+        select
+          c.tipo,
+          count(*) filter (where not c.paso) as fallos,
+          count(*)                           as total
+        from criterios c
+        where c.tipo is not null
+        group by c.tipo
+        having count(*) filter (where not c.paso) > 0
+      ) t
+    ),
+
+    -- El dato concreto: lo que se le olvida siempre. Tres veces es el umbral
+    -- donde deja de ser un despiste y empieza a ser una costumbre.
+    'criteriosRepetidos', (
+      select coalesce(
+        jsonb_agg(
+          jsonb_build_object('descripcion', d.descripcion, 'fallos', d.fallos)
+          order by d.fallos desc
+        ),
+        '[]'::jsonb
+      )
+      from (
+        select c.descripcion, count(*) as fallos
+        from criterios c
+        where not c.paso and c.descripcion is not null
+        group by c.descripcion
+        having count(*) >= 3
+      ) d
+    )
+  );
+$$;
+
+
+ALTER FUNCTION "public"."get_student_context"() OWNER TO "postgres";
+
+
+COMMENT ON FUNCTION "public"."get_student_context"() IS 'Perfil escrito + progreso y patrones de error calculados del usuario actual. Lo consumen los prompts del estudiante.';
+
+
 
 CREATE OR REPLACE FUNCTION "public"."handle_new_user"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
@@ -235,21 +408,92 @@ COMMENT ON FUNCTION "public"."is_teacher"() IS 'Criterio unico de "puede gestion
 
 
 
+CREATE OR REPLACE FUNCTION "public"."lesson_is_reachable"("p_lesson_id" integer) RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  with consumibles as (
+    select
+      l.id,
+      l.module_id,
+      -- l.id como ultimo criterio para que la secuencia sea determinista.
+      -- reorder_lessons mantiene los `order` sin repetir, asi que no deberia
+      -- hacer falta; si alguna vez se repiten, esto evita que este orden y el de
+      -- PostgREST -que ordena solo por `order`- salgan distintos.
+      row_number() over (order by m."order", l."order", l.id) as pos
+    from lessons l
+    join modules m on m.id = l.module_id
+    where l.is_published
+      and m.is_published
+      and exists (select 1 from blocks b where b.lesson_id = l.id and b.is_published)
+  ),
+  objetivo as (
+    select pos, module_id from consumibles where id = p_lesson_id
+  ),
+  previo as (
+    select c.id, c.module_id
+    from consumibles c
+    join objetivo o on c.pos = o.pos - 1
+  )
+  select
+    -- El primero del curso esta siempre abierto: sin esa excepcion nadie podria
+    -- empezar nunca, porque todo lo demas depende de algo anterior.
+    o.pos = 1
+    or case
+         -- Dentro del tema: haber ABIERTO el anterior.
+         when p.module_id = o.module_id then exists (
+           select 1 from lesson_progress lp
+           where lp.user_id = auth.uid()
+             and lp.lesson_id = p.id
+         )
+         -- Abre tema: el anterior COMPLETO. Se expresa como "ningun subtema suyo
+         -- sin fila completada" y no con bool_and() porque bool_and ignora los
+         -- NULL: con un left join a lesson_progress, un tema donde el estudiante
+         -- no ha abierto nada daria NULL en vez de false.
+         else not exists (
+           select 1 from consumibles c
+           where c.module_id = p.module_id
+             and not exists (
+               select 1 from lesson_progress lp
+               where lp.user_id = auth.uid()
+                 and lp.lesson_id = c.id
+                 and lp.status = 'completed'
+             )
+         )
+       end
+  from objetivo o
+  left join previo p on true;
+$$;
+
+
+ALTER FUNCTION "public"."lesson_is_reachable"("p_lesson_id" integer) OWNER TO "postgres";
+
+
+COMMENT ON FUNCTION "public"."lesson_is_reachable"("p_lesson_id" integer) IS 'Si el usuario actual puede abrir ese subtema. NULL si el subtema no es parte del recorrido. Replica lessonAvailability() de learning-progress.ts.';
+
+
+
 CREATE OR REPLACE FUNCTION "public"."mark_lesson_viewed"("p_lesson_id" integer) RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
 DECLARE
-  v_user_id uuid := auth.uid();
+  v_user_id    uuid := auth.uid();
+  v_alcanzable boolean;
 BEGIN
   IF v_user_id IS NULL THEN
     RAISE EXCEPTION 'No autenticado' USING ERRCODE = '42501';
   END IF;
 
-  IF NOT EXISTS (
-    SELECT 1 FROM lessons WHERE id = p_lesson_id AND is_published
-  ) THEN
+  SELECT public.lesson_is_reachable(p_lesson_id) INTO v_alcanzable;
+
+  IF v_alcanzable IS NULL THEN
     RETURN;
+  END IF;
+
+  IF NOT v_alcanzable THEN
+    RAISE EXCEPTION 'Este subtema todavia no esta disponible'
+      USING ERRCODE = '42501';
   END IF;
 
   INSERT INTO lesson_progress (user_id, lesson_id, status)
@@ -416,13 +660,37 @@ $$;
 ALTER FUNCTION "public"."rls_auto_enable"() OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."submit_exercise_attempt"("p_exercise_id" integer, "p_html" "text", "p_css" "text", "p_js" "text", "p_passed" boolean, "p_results" "jsonb" DEFAULT '[]'::"jsonb") RETURNS "void"
+CREATE OR REPLACE FUNCTION "public"."set_attempt_feedback"("p_attempt_id" integer, "p_feedback" "text") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
     AS $$
 DECLARE
-  v_user_id   uuid := auth.uid();
-  v_lesson_id INTEGER;
+  v_user_id uuid := auth.uid();
+BEGIN
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'No autenticado' USING ERRCODE = '42501';
+  END IF;
+
+  UPDATE exercise_attempts
+  SET feedback = left(p_feedback, 1000)
+  WHERE id = p_attempt_id
+    AND user_id = v_user_id;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."set_attempt_feedback"("p_attempt_id" integer, "p_feedback" "text") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."submit_exercise_attempt"("p_exercise_id" integer, "p_html" "text", "p_css" "text", "p_js" "text", "p_passed" boolean, "p_results" "jsonb" DEFAULT '[]'::"jsonb") RETURNS integer
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+  v_user_id    uuid := auth.uid();
+  v_lesson_id  INTEGER;
+  v_alcanzable BOOLEAN;
+  v_attempt_id INTEGER;
 BEGIN
   IF v_user_id IS NULL THEN
     RAISE EXCEPTION 'No autenticado' USING ERRCODE = '42501';
@@ -434,12 +702,20 @@ BEGIN
     RAISE EXCEPTION 'El ejercicio no existe' USING ERRCODE = '23503';
   END IF;
 
+  SELECT public.lesson_is_reachable(v_lesson_id) INTO v_alcanzable;
+
+  IF v_alcanzable IS NOT TRUE THEN
+    RAISE EXCEPTION 'Este subtema todavia no esta disponible'
+      USING ERRCODE = '42501';
+  END IF;
+
   INSERT INTO exercise_attempts (
     user_id, exercise_id, submitted_html, submitted_css, submitted_js, passed, results
   )
   VALUES (
     v_user_id, p_exercise_id, p_html, p_css, p_js, p_passed, p_results
-  );
+  )
+  RETURNING id INTO v_attempt_id;
 
   INSERT INTO lesson_progress (user_id, lesson_id, status)
   VALUES (v_user_id, v_lesson_id, 'in_progress')
@@ -448,6 +724,8 @@ BEGIN
   IF p_passed THEN
     PERFORM recompute_lesson_progress(v_user_id, v_lesson_id);
   END IF;
+
+  RETURN v_attempt_id;
 END;
 $$;
 
@@ -528,10 +806,6 @@ $$;
 
 ALTER FUNCTION "public"."update_module"("p_id" integer, "p_name" "text", "p_is_published" boolean) OWNER TO "postgres";
 
-SET default_tablespace = '';
-
-SET default_table_access_method = "heap";
-
 
 CREATE TABLE IF NOT EXISTS "public"."ai_interactions" (
     "id" integer NOT NULL,
@@ -543,11 +817,23 @@ CREATE TABLE IF NOT EXISTS "public"."ai_interactions" (
     "prompt" "text",
     "response" "text",
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    CONSTRAINT "ai_interactions_kind_check" CHECK (("kind" = ANY (ARRAY['question'::"text", 'feedback'::"text", 'content'::"text", 'exercise'::"text"])))
+    "status" "text" DEFAULT 'ok'::"text" NOT NULL,
+    "error_status" integer,
+    "error_message" "text",
+    CONSTRAINT "ai_interactions_kind_check" CHECK (("kind" = ANY (ARRAY['question'::"text", 'feedback'::"text", 'content'::"text", 'exercise'::"text"]))),
+    CONSTRAINT "ai_interactions_status_check" CHECK (("status" = ANY (ARRAY['ok'::"text", 'error'::"text"])))
 );
 
 
 ALTER TABLE "public"."ai_interactions" OWNER TO "postgres";
+
+
+COMMENT ON COLUMN "public"."ai_interactions"."status" IS 'ok = el modelo respondio. error = la llamada fallo y no hay response.';
+
+
+
+COMMENT ON COLUMN "public"."ai_interactions"."error_status" IS 'Codigo HTTP de Gemini cuando se conoce: 429 cuota, 503 saturado. NULL si el fallo fue de red.';
+
 
 
 ALTER TABLE "public"."ai_interactions" ALTER COLUMN "id" ADD GENERATED ALWAYS AS IDENTITY (
@@ -617,32 +903,6 @@ ALTER TABLE "public"."exercise_attempts" ALTER COLUMN "id" ADD GENERATED ALWAYS 
     CACHE 1
 );
 
-
-
-CREATE TABLE IF NOT EXISTS "public"."exercises" (
-    "id" integer NOT NULL,
-    "lesson_id" integer NOT NULL,
-    "name" character varying(255) NOT NULL,
-    "statement" "text" NOT NULL,
-    "difficulty" "text" DEFAULT 'media'::"text" NOT NULL,
-    "starter_html" "text" DEFAULT ''::"text" NOT NULL,
-    "starter_css" "text" DEFAULT ''::"text" NOT NULL,
-    "starter_js" "text" DEFAULT ''::"text" NOT NULL,
-    "criteria" "jsonb" DEFAULT '[]'::"jsonb" NOT NULL,
-    "source" "text" DEFAULT 'manual'::"text" NOT NULL,
-    "order" integer DEFAULT 0 NOT NULL,
-    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "is_published" boolean DEFAULT false NOT NULL,
-    "solution_html" "text" DEFAULT ''::"text" NOT NULL,
-    "solution_css" "text" DEFAULT ''::"text" NOT NULL,
-    "solution_js" "text" DEFAULT ''::"text" NOT NULL,
-    CONSTRAINT "exercises_criteria_check" CHECK (("jsonb_typeof"("criteria") = 'array'::"text")),
-    CONSTRAINT "exercises_difficulty_check" CHECK (("difficulty" = ANY (ARRAY['facil'::"text", 'media'::"text", 'dificil'::"text"]))),
-    CONSTRAINT "exercises_source_check" CHECK (("source" = ANY (ARRAY['manual'::"text", 'ia'::"text"])))
-);
-
-
-ALTER TABLE "public"."exercises" OWNER TO "postgres";
 
 
 ALTER TABLE "public"."exercises" ALTER COLUMN "id" ADD GENERATED ALWAYS AS IDENTITY (
@@ -883,7 +1143,15 @@ CREATE INDEX "ai_interactions_created_at_idx" ON "public"."ai_interactions" USIN
 
 
 
+CREATE INDEX "ai_interactions_errors_idx" ON "public"."ai_interactions" USING "btree" ("created_at" DESC) WHERE ("status" = 'error'::"text");
+
+
+
 CREATE INDEX "exercise_attempts_user_exercise_idx" ON "public"."exercise_attempts" USING "btree" ("user_id", "exercise_id");
+
+
+
+CREATE INDEX "exercise_attempts_user_recent_idx" ON "public"."exercise_attempts" USING "btree" ("user_id", "id" DESC);
 
 
 
@@ -990,7 +1258,10 @@ CREATE POLICY "blocks_insert_teacher" ON "public"."blocks" FOR INSERT TO "authen
 
 
 
-CREATE POLICY "blocks_select_authenticated" ON "public"."blocks" FOR SELECT TO "authenticated" USING (true);
+CREATE POLICY "blocks_select_published_or_teacher" ON "public"."blocks" FOR SELECT TO "authenticated" USING (("public"."is_teacher"() OR ("is_published" AND (EXISTS ( SELECT 1
+   FROM ("public"."lessons" "l"
+     JOIN "public"."modules" "m" ON (("m"."id" = "l"."module_id")))
+  WHERE (("l"."id" = "blocks"."lesson_id") AND "l"."is_published" AND "m"."is_published"))))));
 
 
 
@@ -1012,7 +1283,10 @@ CREATE POLICY "exercises_insert_teacher" ON "public"."exercises" FOR INSERT TO "
 
 
 
-CREATE POLICY "exercises_select_authenticated" ON "public"."exercises" FOR SELECT TO "authenticated" USING (true);
+CREATE POLICY "exercises_select_published_or_teacher" ON "public"."exercises" FOR SELECT TO "authenticated" USING (("public"."is_teacher"() OR ("is_published" AND (EXISTS ( SELECT 1
+   FROM ("public"."lessons" "l"
+     JOIN "public"."modules" "m" ON (("m"."id" = "l"."module_id")))
+  WHERE (("l"."id" = "exercises"."lesson_id") AND "l"."is_published" AND "m"."is_published"))))));
 
 
 
@@ -1034,7 +1308,9 @@ CREATE POLICY "lessons_insert_teacher" ON "public"."lessons" FOR INSERT TO "auth
 
 
 
-CREATE POLICY "lessons_select_authenticated" ON "public"."lessons" FOR SELECT TO "authenticated" USING (true);
+CREATE POLICY "lessons_select_published_or_teacher" ON "public"."lessons" FOR SELECT TO "authenticated" USING (("public"."is_teacher"() OR ("is_published" AND (EXISTS ( SELECT 1
+   FROM "public"."modules" "m"
+  WHERE (("m"."id" = "lessons"."module_id") AND "m"."is_published"))))));
 
 
 
@@ -1053,7 +1329,7 @@ CREATE POLICY "modules_insert_teacher" ON "public"."modules" FOR INSERT TO "auth
 
 
 
-CREATE POLICY "modules_select_authenticated" ON "public"."modules" FOR SELECT TO "authenticated" USING (true);
+CREATE POLICY "modules_select_published_or_teacher" ON "public"."modules" FOR SELECT TO "authenticated" USING (("public"."is_teacher"() OR "is_published"));
 
 
 
@@ -1101,133 +1377,219 @@ GRANT USAGE ON SCHEMA "public" TO "service_role";
 
 
 
-GRANT ALL ON FUNCTION "public"."delete_block"("p_id" integer) TO "anon";
+REVOKE ALL ON FUNCTION "public"."delete_block"("p_id" integer) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."delete_block"("p_id" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."delete_block"("p_id" integer) TO "service_role";
 
 
 
-GRANT ALL ON FUNCTION "public"."delete_exercise"("p_id" integer) TO "anon";
+REVOKE ALL ON FUNCTION "public"."delete_exercise"("p_id" integer) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."delete_exercise"("p_id" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."delete_exercise"("p_id" integer) TO "service_role";
 
 
 
-GRANT ALL ON FUNCTION "public"."delete_lesson"("p_id" integer) TO "anon";
+REVOKE ALL ON FUNCTION "public"."delete_lesson"("p_id" integer) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."delete_lesson"("p_id" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."delete_lesson"("p_id" integer) TO "service_role";
 
 
 
-GRANT ALL ON FUNCTION "public"."delete_module"("p_id" integer) TO "anon";
+REVOKE ALL ON FUNCTION "public"."delete_module"("p_id" integer) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."delete_module"("p_id" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."delete_module"("p_id" integer) TO "service_role";
 
 
 
-GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "anon";
+GRANT ALL ON TABLE "public"."exercises" TO "service_role";
+GRANT INSERT,DELETE,UPDATE ON TABLE "public"."exercises" TO "authenticated";
+
+
+
+GRANT SELECT("id") ON TABLE "public"."exercises" TO "authenticated";
+
+
+
+GRANT SELECT("lesson_id") ON TABLE "public"."exercises" TO "authenticated";
+
+
+
+GRANT SELECT("name") ON TABLE "public"."exercises" TO "authenticated";
+
+
+
+GRANT SELECT("statement") ON TABLE "public"."exercises" TO "authenticated";
+
+
+
+GRANT SELECT("difficulty") ON TABLE "public"."exercises" TO "authenticated";
+
+
+
+GRANT SELECT("starter_html") ON TABLE "public"."exercises" TO "authenticated";
+
+
+
+GRANT SELECT("starter_css") ON TABLE "public"."exercises" TO "authenticated";
+
+
+
+GRANT SELECT("starter_js") ON TABLE "public"."exercises" TO "authenticated";
+
+
+
+GRANT SELECT("criteria") ON TABLE "public"."exercises" TO "authenticated";
+
+
+
+GRANT SELECT("source") ON TABLE "public"."exercises" TO "authenticated";
+
+
+
+GRANT SELECT("order") ON TABLE "public"."exercises" TO "authenticated";
+
+
+
+GRANT SELECT("created_at") ON TABLE "public"."exercises" TO "authenticated";
+
+
+
+GRANT SELECT("is_published") ON TABLE "public"."exercises" TO "authenticated";
+
+
+
+REVOKE ALL ON FUNCTION "public"."get_exercise_for_edit"("p_id" integer) FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."get_exercise_for_edit"("p_id" integer) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_exercise_for_edit"("p_id" integer) TO "service_role";
+
+
+
+REVOKE ALL ON FUNCTION "public"."get_student_context"() FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."get_student_context"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_student_context"() TO "service_role";
+
+
+
+REVOKE ALL ON FUNCTION "public"."handle_new_user"() FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "service_role";
 
 
 
+REVOKE ALL ON FUNCTION "public"."has_role"("p_role" "text") FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."has_role"("p_role" "text") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."has_role"("p_role" "text") TO "service_role";
 
 
 
-GRANT ALL ON FUNCTION "public"."insert_block"("p_name" "text", "p_content" "text", "p_lesson_id" integer, "p_is_published" boolean) TO "anon";
+REVOKE ALL ON FUNCTION "public"."insert_block"("p_name" "text", "p_content" "text", "p_lesson_id" integer, "p_is_published" boolean) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."insert_block"("p_name" "text", "p_content" "text", "p_lesson_id" integer, "p_is_published" boolean) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."insert_block"("p_name" "text", "p_content" "text", "p_lesson_id" integer, "p_is_published" boolean) TO "service_role";
 
 
 
-GRANT ALL ON FUNCTION "public"."insert_exercise"("p_lesson_id" integer, "p_name" "text", "p_statement" "text", "p_difficulty" "text", "p_starter_html" "text", "p_starter_css" "text", "p_starter_js" "text", "p_solution_html" "text", "p_solution_css" "text", "p_solution_js" "text", "p_criteria" "jsonb", "p_source" "text", "p_is_published" boolean) TO "anon";
+REVOKE ALL ON FUNCTION "public"."insert_exercise"("p_lesson_id" integer, "p_name" "text", "p_statement" "text", "p_difficulty" "text", "p_starter_html" "text", "p_starter_css" "text", "p_starter_js" "text", "p_solution_html" "text", "p_solution_css" "text", "p_solution_js" "text", "p_criteria" "jsonb", "p_source" "text", "p_is_published" boolean) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."insert_exercise"("p_lesson_id" integer, "p_name" "text", "p_statement" "text", "p_difficulty" "text", "p_starter_html" "text", "p_starter_css" "text", "p_starter_js" "text", "p_solution_html" "text", "p_solution_css" "text", "p_solution_js" "text", "p_criteria" "jsonb", "p_source" "text", "p_is_published" boolean) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."insert_exercise"("p_lesson_id" integer, "p_name" "text", "p_statement" "text", "p_difficulty" "text", "p_starter_html" "text", "p_starter_css" "text", "p_starter_js" "text", "p_solution_html" "text", "p_solution_css" "text", "p_solution_js" "text", "p_criteria" "jsonb", "p_source" "text", "p_is_published" boolean) TO "service_role";
 
 
 
-GRANT ALL ON FUNCTION "public"."insert_lesson"("p_name" "text", "p_module_id" integer, "p_is_published" boolean) TO "anon";
+REVOKE ALL ON FUNCTION "public"."insert_lesson"("p_name" "text", "p_module_id" integer, "p_is_published" boolean) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."insert_lesson"("p_name" "text", "p_module_id" integer, "p_is_published" boolean) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."insert_lesson"("p_name" "text", "p_module_id" integer, "p_is_published" boolean) TO "service_role";
 
 
 
-GRANT ALL ON FUNCTION "public"."insert_module"("p_name" "text", "p_is_published" boolean) TO "anon";
+REVOKE ALL ON FUNCTION "public"."insert_module"("p_name" "text", "p_is_published" boolean) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."insert_module"("p_name" "text", "p_is_published" boolean) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."insert_module"("p_name" "text", "p_is_published" boolean) TO "service_role";
 
 
 
+REVOKE ALL ON FUNCTION "public"."is_teacher"() FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."is_teacher"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."is_teacher"() TO "service_role";
 
 
 
+REVOKE ALL ON FUNCTION "public"."lesson_is_reachable"("p_lesson_id" integer) FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."lesson_is_reachable"("p_lesson_id" integer) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."lesson_is_reachable"("p_lesson_id" integer) TO "service_role";
+
+
+
+REVOKE ALL ON FUNCTION "public"."mark_lesson_viewed"("p_lesson_id" integer) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."mark_lesson_viewed"("p_lesson_id" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."mark_lesson_viewed"("p_lesson_id" integer) TO "service_role";
 
 
 
+REVOKE ALL ON FUNCTION "public"."recompute_lesson_progress"("p_user_id" "uuid", "p_lesson_id" integer) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."recompute_lesson_progress"("p_user_id" "uuid", "p_lesson_id" integer) TO "service_role";
 
 
 
-GRANT ALL ON FUNCTION "public"."reorder_blocks"("p_ids" integer[]) TO "anon";
+REVOKE ALL ON FUNCTION "public"."reorder_blocks"("p_ids" integer[]) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."reorder_blocks"("p_ids" integer[]) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."reorder_blocks"("p_ids" integer[]) TO "service_role";
 
 
 
-GRANT ALL ON FUNCTION "public"."reorder_exercises"("p_ids" integer[]) TO "anon";
+REVOKE ALL ON FUNCTION "public"."reorder_exercises"("p_ids" integer[]) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."reorder_exercises"("p_ids" integer[]) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."reorder_exercises"("p_ids" integer[]) TO "service_role";
 
 
 
-GRANT ALL ON FUNCTION "public"."reorder_lessons"("p_ids" integer[]) TO "anon";
+REVOKE ALL ON FUNCTION "public"."reorder_lessons"("p_ids" integer[]) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."reorder_lessons"("p_ids" integer[]) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."reorder_lessons"("p_ids" integer[]) TO "service_role";
 
 
 
-GRANT ALL ON FUNCTION "public"."reorder_modules"("p_ids" integer[]) TO "anon";
+REVOKE ALL ON FUNCTION "public"."reorder_modules"("p_ids" integer[]) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."reorder_modules"("p_ids" integer[]) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."reorder_modules"("p_ids" integer[]) TO "service_role";
 
 
 
-GRANT ALL ON FUNCTION "public"."rls_auto_enable"() TO "anon";
+REVOKE ALL ON FUNCTION "public"."rls_auto_enable"() FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."rls_auto_enable"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."rls_auto_enable"() TO "service_role";
 
 
 
+REVOKE ALL ON FUNCTION "public"."set_attempt_feedback"("p_attempt_id" integer, "p_feedback" "text") FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."set_attempt_feedback"("p_attempt_id" integer, "p_feedback" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."set_attempt_feedback"("p_attempt_id" integer, "p_feedback" "text") TO "service_role";
+
+
+
+REVOKE ALL ON FUNCTION "public"."submit_exercise_attempt"("p_exercise_id" integer, "p_html" "text", "p_css" "text", "p_js" "text", "p_passed" boolean, "p_results" "jsonb") FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."submit_exercise_attempt"("p_exercise_id" integer, "p_html" "text", "p_css" "text", "p_js" "text", "p_passed" boolean, "p_results" "jsonb") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."submit_exercise_attempt"("p_exercise_id" integer, "p_html" "text", "p_css" "text", "p_js" "text", "p_passed" boolean, "p_results" "jsonb") TO "service_role";
 
 
 
-GRANT ALL ON FUNCTION "public"."update_block"("p_id" integer, "p_name" "text", "p_content" "text", "p_lesson_id" integer, "p_is_published" boolean) TO "anon";
+REVOKE ALL ON FUNCTION "public"."update_block"("p_id" integer, "p_name" "text", "p_content" "text", "p_lesson_id" integer, "p_is_published" boolean) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."update_block"("p_id" integer, "p_name" "text", "p_content" "text", "p_lesson_id" integer, "p_is_published" boolean) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_block"("p_id" integer, "p_name" "text", "p_content" "text", "p_lesson_id" integer, "p_is_published" boolean) TO "service_role";
 
 
 
-GRANT ALL ON FUNCTION "public"."update_exercise"("p_id" integer, "p_name" "text", "p_statement" "text", "p_lesson_id" integer, "p_difficulty" "text", "p_starter_html" "text", "p_starter_css" "text", "p_starter_js" "text", "p_solution_html" "text", "p_solution_css" "text", "p_solution_js" "text", "p_criteria" "jsonb", "p_source" "text", "p_is_published" boolean) TO "anon";
+REVOKE ALL ON FUNCTION "public"."update_exercise"("p_id" integer, "p_name" "text", "p_statement" "text", "p_lesson_id" integer, "p_difficulty" "text", "p_starter_html" "text", "p_starter_css" "text", "p_starter_js" "text", "p_solution_html" "text", "p_solution_css" "text", "p_solution_js" "text", "p_criteria" "jsonb", "p_source" "text", "p_is_published" boolean) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."update_exercise"("p_id" integer, "p_name" "text", "p_statement" "text", "p_lesson_id" integer, "p_difficulty" "text", "p_starter_html" "text", "p_starter_css" "text", "p_starter_js" "text", "p_solution_html" "text", "p_solution_css" "text", "p_solution_js" "text", "p_criteria" "jsonb", "p_source" "text", "p_is_published" boolean) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_exercise"("p_id" integer, "p_name" "text", "p_statement" "text", "p_lesson_id" integer, "p_difficulty" "text", "p_starter_html" "text", "p_starter_css" "text", "p_starter_js" "text", "p_solution_html" "text", "p_solution_css" "text", "p_solution_js" "text", "p_criteria" "jsonb", "p_source" "text", "p_is_published" boolean) TO "service_role";
 
 
 
-GRANT ALL ON FUNCTION "public"."update_lesson"("p_id" integer, "p_name" "text", "p_module_id" integer, "p_is_published" boolean) TO "anon";
+REVOKE ALL ON FUNCTION "public"."update_lesson"("p_id" integer, "p_name" "text", "p_module_id" integer, "p_is_published" boolean) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."update_lesson"("p_id" integer, "p_name" "text", "p_module_id" integer, "p_is_published" boolean) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_lesson"("p_id" integer, "p_name" "text", "p_module_id" integer, "p_is_published" boolean) TO "service_role";
 
 
 
-GRANT ALL ON FUNCTION "public"."update_module"("p_id" integer, "p_name" "text", "p_is_published" boolean) TO "anon";
+REVOKE ALL ON FUNCTION "public"."update_module"("p_id" integer, "p_name" "text", "p_is_published" boolean) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."update_module"("p_id" integer, "p_name" "text", "p_is_published" boolean) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_module"("p_id" integer, "p_name" "text", "p_is_published" boolean) TO "service_role";
 
@@ -1238,7 +1600,6 @@ GRANT SELECT,INSERT ON TABLE "public"."ai_interactions" TO "authenticated";
 
 
 
-GRANT ALL ON SEQUENCE "public"."ai_interactions_id_seq" TO "anon";
 GRANT ALL ON SEQUENCE "public"."ai_interactions_id_seq" TO "authenticated";
 GRANT ALL ON SEQUENCE "public"."ai_interactions_id_seq" TO "service_role";
 
@@ -1249,7 +1610,6 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE "public"."blocks" TO "authenticated";
 
 
 
-GRANT ALL ON SEQUENCE "public"."blocks_id_seq" TO "anon";
 GRANT ALL ON SEQUENCE "public"."blocks_id_seq" TO "authenticated";
 GRANT ALL ON SEQUENCE "public"."blocks_id_seq" TO "service_role";
 
@@ -1260,18 +1620,11 @@ GRANT SELECT,INSERT ON TABLE "public"."exercise_attempts" TO "authenticated";
 
 
 
-GRANT ALL ON SEQUENCE "public"."exercise_attempts_id_seq" TO "anon";
 GRANT ALL ON SEQUENCE "public"."exercise_attempts_id_seq" TO "authenticated";
 GRANT ALL ON SEQUENCE "public"."exercise_attempts_id_seq" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."exercises" TO "service_role";
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE "public"."exercises" TO "authenticated";
-
-
-
-GRANT ALL ON SEQUENCE "public"."exercises_id_seq" TO "anon";
 GRANT ALL ON SEQUENCE "public"."exercises_id_seq" TO "authenticated";
 GRANT ALL ON SEQUENCE "public"."exercises_id_seq" TO "service_role";
 
@@ -1282,7 +1635,6 @@ GRANT SELECT ON TABLE "public"."lesson_progress" TO "authenticated";
 
 
 
-GRANT ALL ON SEQUENCE "public"."lesson_progress_id_seq" TO "anon";
 GRANT ALL ON SEQUENCE "public"."lesson_progress_id_seq" TO "authenticated";
 GRANT ALL ON SEQUENCE "public"."lesson_progress_id_seq" TO "service_role";
 
@@ -1293,7 +1645,6 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE "public"."lessons" TO "authenticated"
 
 
 
-GRANT ALL ON SEQUENCE "public"."lessons_id_seq" TO "anon";
 GRANT ALL ON SEQUENCE "public"."lessons_id_seq" TO "authenticated";
 GRANT ALL ON SEQUENCE "public"."lessons_id_seq" TO "service_role";
 
@@ -1304,7 +1655,6 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE "public"."modules" TO "authenticated"
 
 
 
-GRANT ALL ON SEQUENCE "public"."modules_id_seq" TO "anon";
 GRANT ALL ON SEQUENCE "public"."modules_id_seq" TO "authenticated";
 GRANT ALL ON SEQUENCE "public"."modules_id_seq" TO "service_role";
 
@@ -1324,7 +1674,6 @@ GRANT SELECT ON TABLE "public"."roles" TO "authenticated";
 
 
 
-GRANT ALL ON SEQUENCE "public"."roles_id_seq" TO "anon";
 GRANT ALL ON SEQUENCE "public"."roles_id_seq" TO "authenticated";
 GRANT ALL ON SEQUENCE "public"."roles_id_seq" TO "service_role";
 
@@ -1336,7 +1685,6 @@ GRANT SELECT ON TABLE "public"."user_roles" TO "authenticated";
 
 
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "postgres";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "anon";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "authenticated";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "service_role";
 
@@ -1346,7 +1694,6 @@ ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQ
 
 
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS TO "postgres";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS TO "anon";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS TO "authenticated";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS TO "service_role";
 
@@ -1356,7 +1703,6 @@ ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUN
 
 
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "postgres";
-ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "anon";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "authenticated";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "service_role";
 
