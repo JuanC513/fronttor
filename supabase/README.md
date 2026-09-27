@@ -36,9 +36,12 @@ npx supabase db dump --linked --schema public -f supabase/schema-actual.sql
 15. `migrations/20260927130000_student_error_patterns.sql`
 16. `migrations/20260928120000_close_anon_grants.sql`
 17. `migrations/20260929120000_enforce_lesson_order.sql`
-18. `seed.sql`
+18. `migrations/20260930120000_content_publication_rls.sql`
+19. `seed.sql`
 
 El orden **no es opcional**: la 3 usa la función `is_admin()`, que crea la 2; la 4 redefine funciones que crea la 2; la 5 redefine las que deja la 4; la 6 redefine `is_admin()` y `handle_new_user()`, la 7 depende de esa última, la 10 renombra `is_admin()` a `is_teacher()` junto con el rol y las políticas, y la 11 recrea `submit_exercise_attempt`, que existe desde la 2. La 12 usa `is_teacher()`, que deja la 10; la 14 lee `lesson_progress` y `exercise_attempts`, que crea la 2, y `profiles.profile_description`, que la 8 dejó como la única columna editable del propio perfil; y la 15 recrea `get_student_context()`, que crea la 14.
+
+La 18 reemplaza policies que declaran la 3 y la 12, así que va después de las dos.
 
 La 17 recrea `mark_lesson_viewed` —que viene de la 4— y `submit_exercise_attempt` —de la 11—, así que
 va después de las dos. Y va **después de la 16** por un motivo concreto: crea una función nueva, y
@@ -185,6 +188,12 @@ Es decir: las cuentas de usuario y su asociación con los roles **no se pierden*
   el subtema sea parte del recorrido, y el recorrido descarta lo que no tiene nada que leer —igual que
   hace el cliente en `orderedLessons`—.
 
+- **`20260930120000_content_publication_rls.sql` es seguro de reejecutar.** Solo declara policies, y
+  cada una va precedida de su `drop policy if exists`.
+
+  Reemplaza `exercises_select_published_or_teacher`, que creó la 12: aquella solo miraba el
+  `is_published` del propio ejercicio, y esta mira además su subtema y su tema.
+
 - **`seed.sql` es seguro de reejecutar.**
 
 ## Comprobación
@@ -259,6 +268,38 @@ where c.relnamespace = 'public'::regnamespace
 > de `pg_class` que no son secuencias antes de llegar al filtro de `relkind`. Reordenar la consulta no
 > lo arregla, porque ese orden no se puede imponer; lo que lo arregla es no usar una función que pueda
 > lanzar.
+
+### Publicado significa publicado en toda la cadena
+
+Desde `20260930120000`, un estudiante solo puede leer contenido cuya cadena entera esté publicada: un
+subtema necesita que su tema lo esté, y un bloque o un ejercicio que lo estén su subtema y su tema. El
+profesor lo ve todo, que es la primera rama de cada policy.
+
+Antes, el filtro existía solo en `exercises` y solo sobre su propia fila. **Con una cuenta de
+estudiante se podían leer por la API** el nombre de un tema sin publicar, los nombres de sus subtemas
+—que sí estaban publicados— y el contenido completo de un bloque en borrador. No se veía en la
+aplicación porque `getLearningTree` filtra por su cuenta; es decir, filtraba la vista y no la base.
+
+Se comprueba con **una sesión de estudiante**, sobre el borrador que ya exista en la base. Con el tema
+sin publicar en `modules`, estas tres deben devolver **cero filas**:
+
+```sql
+select * from modules  where not is_published;
+select * from lessons  where module_id = <id del tema sin publicar>;
+select * from blocks   where not is_published;
+```
+
+La segunda es la que importa: esos subtemas **están publicados**, y lo que debe esconderlos es su
+tema. Si devuelve filas, la policy está mirando solo el `is_published` propio.
+
+Y con la misma sesión, lo que sí tiene que seguir viéndose: los temas publicados con sus subtemas, los
+bloques del subtema que esté abierto, y los ejercicios publicados.
+
+> **Cuidado con la recursión si algún día se toca esto.** La policy de `blocks` consulta `lessons`, y
+> la de `lessons` consulta `modules`. La subconsulta de una policy pasa por la RLS de la tabla que
+> consulta, así que la cadena se evalúa anidada — funciona porque `modules` no consulta a nadie. Una
+> policy nueva en `modules` que mirase a `lessons` cerraría el ciclo, y PostgreSQL respondería con
+> recursión infinita en cada lectura de contenido.
 
 ### El recorrido no se puede saltar
 
