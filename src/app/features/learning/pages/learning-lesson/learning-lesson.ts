@@ -6,6 +6,7 @@ import { TagModule } from 'primeng/tag';
 import { CustomScrollPanel } from '@shared/components/custom-scroll-panel/custom-scroll-panel';
 import { ButtonModule } from 'primeng/button';
 import { ChatContext } from '@domain/ai/models/chat-model';
+import { BreadcrumbService } from '@core/services/breadcrumb/breadcrumb-service';
 import { AiChatService } from '@domain/ai/services/ai-chat-service';
 import { ModuleService } from '@domain/learning/services/module-service';
 import { Module } from '@domain/learning/models/module-model';
@@ -39,6 +40,7 @@ export class LearningLesson implements OnInit, OnDestroy {
   private readonly blockService = inject(BlockService);
   private readonly progressService = inject(ProgressService);
   private readonly chatService = inject(AiChatService);
+  private readonly breadcrumbService = inject(BreadcrumbService);
   currentModule = signal<Module | null>(null);
   currentLesson = signal<Lesson | null>(null);
   currentBlocks = signal<Block[] | null>(null);
@@ -63,6 +65,7 @@ export class LearningLesson implements OnInit, OnDestroy {
   /** Al salir de la vista el chat deja de estar disponible y la conversación se descarta. */
   ngOnDestroy(): void {
     this.chatService.clearContext();
+    this.breadcrumbService.clear();
   }
 
   /**
@@ -86,6 +89,7 @@ export class LearningLesson implements OnInit, OnDestroy {
       this.currentModule.set(moduleData);
       this.currentLesson.set(currentLesson);
       this.currentBlocks.set(currentBlocks);
+      this.breadcrumbService.setTitle(currentLesson.name);
 
       void this.markViewed(lessonId);
     } catch (err) {

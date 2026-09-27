@@ -1,8 +1,8 @@
-@if (breadcrumbItems.length || chatContext()) {
+@if (breadcrumbItems().length || chatContext()) {
   <header>
     <div class="topbar-bar">
-      @if (breadcrumbItems.length) {
-        <p-breadcrumb [home]="home" [model]="breadcrumbItems" />
+      @if (breadcrumbItems().length) {
+        <p-breadcrumb [home]="home" [model]="breadcrumbItems()" />
       }
 
       @if (chatContext()) {

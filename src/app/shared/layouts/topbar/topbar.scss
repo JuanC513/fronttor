@@ -12,3 +12,11 @@
     margin-left: auto;
   }
 }
+
+:host ::ng-deep .p-breadcrumb-item:last-child .p-breadcrumb-item-label {
+  display: block;
+  max-width: 28ch;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
