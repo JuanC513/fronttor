@@ -8,6 +8,17 @@
     </div>
 
     <div class="toolbar flex align-items-center gap-3">
+      <!-- Va aqui y no en el menu lateral porque es la continuacion natural de este taller: cuando
+          ya no sabes que escribir, pides un ejercicio. -->
+      <p-button
+        label="Generar ejercicio"
+        icon="pi pi-sparkles"
+        size="small"
+        severity="info"
+        variant="outlined"
+        routerLink="/playground/practice"
+      />
+
       <span class="auto-run flex align-items-center gap-2">
         <p-toggleswitch
           inputId="auto-run"

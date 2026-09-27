@@ -44,10 +44,8 @@ export const routes: Routes = [
       },
       {
         path: 'playground',
-        loadComponent: () =>
-          import('@features/playground/pages/playground-page/playground-page').then(
-            (m) => m.PlaygroundPage,
-          ),
+        loadChildren: () =>
+          import('@features/playground/playground.routes').then((m) => m.PLAYGROUND_ROUTES),
       },
       {
         path: 'profile',

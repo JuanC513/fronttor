@@ -11,6 +11,7 @@ import {
   GenerateExerciseRequest,
   GenerateExerciseResponse,
 } from '../models/generate-exercise-model';
+import { GeneratePracticeResponse, PracticeRequest } from '../models/generate-practice-model';
 
 /**
  * Punto único de acceso a las capacidades de IA, expuestas como Edge Functions.
@@ -56,6 +57,29 @@ export class AiService {
   ): Promise<GenerateExerciseResponse> {
     const { data, error } = await this.supabase.functions.invoke<GenerateExerciseResponse>(
       'generate-exercise',
+      { body: input, signal },
+    );
+
+    if (error) throw new Error(await this.readFunctionError(error));
+    return data ?? {};
+  }
+
+  /**
+   * Genera un ejercicio de práctica para el propio estudiante, o repara sus criterios.
+   *
+   * Devuelve la respuesta sin interpretar, igual que `generateExercisePart`: quien llama sabe si
+   * pidió el ejercicio entero o solo la lista de criterios, y es quien los recorta con
+   * `toCriterion`.
+   *
+   * @param signal Igual que en `generateBlockContent`: son varios segundos de espera y el
+   * estudiante puede irse de la vista mientras tanto.
+   */
+  async generatePractice(
+    input: PracticeRequest,
+    signal?: AbortSignal,
+  ): Promise<GeneratePracticeResponse> {
+    const { data, error } = await this.supabase.functions.invoke<GeneratePracticeResponse>(
+      'generate-practice',
       { body: input, signal },
     );
 

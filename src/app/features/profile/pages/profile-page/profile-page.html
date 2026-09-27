@@ -1,8 +1,65 @@
 <section class="profile-container">
-  <span>
-    <h1>Perfil</h1>
-  </span>
-  <span>
+  <header class="profile-header flex flex-wrap align-items-start justify-content-between gap-3">
+    <div class="min-w-0">
+      <h1>Perfil</h1>
+      @if (email(); as correo) {
+        <p class="profile-email m-0">{{ correo }}</p>
+      }
+    </div>
+
     <p-button label="Cerrar sesión" variant="outlined" severity="danger" (onClick)="logout()" />
-  </span>
+  </header>
+
+  <!-- El texto de alrededor es lo que decide si alguien rellena esto. Un campo llamado
+      «descripción», sin decir para qué sirve ni qué merece la pena escribir, se queda vacío. -->
+  <div class="tutor-card">
+    <h2 class="tutor-title">Cuéntale a tu tutor sobre ti</h2>
+    <p class="tutor-help">
+      Esto se lo paso al tutor de IA cada vez que le preguntas, le pides una pista o le pides un
+      ejercicio de práctica, para que te responda a tu medida. Tu progreso ya lo conoce: lo que no
+      sabe es de dónde vienes y cómo prefieres que te expliquen.
+    </p>
+
+    <ul class="tutor-examples">
+      <li>Qué sabes ya de programación, aunque sea de otra área.</li>
+      <li>Para qué quieres el frontend: un trabajo, un proyecto propio, la carrera.</li>
+      <li>Cómo aprendes mejor: con ejemplos cortos, con analogías, yendo al grano.</li>
+    </ul>
+
+    <div class="flex flex-column gap-2">
+      <label for="perfil">Sobre mí</label>
+      <textarea
+        pTextarea
+        id="perfil"
+        rows="5"
+        class="w-full"
+        style="resize: none"
+        placeholder="Ej: Vengo de backend en Java y nunca he hecho CSS. Quiero montar mi portafolio. Prefiero ejemplos cortos y poca teoría."
+        [maxlength]="maxLength"
+        [ngModel]="description()"
+        (ngModelChange)="onDescriptionChange($event)"
+      ></textarea>
+      <small class="counter">{{ description().length }} / {{ maxLength }}</small>
+    </div>
+
+    @if (error(); as message) {
+      <p-message severity="error" [text]="message" styleClass="w-full mt-3" />
+    } @else if (saved()) {
+      <p-message
+        severity="success"
+        text="Guardado. Tu tutor ya lo tiene en cuenta."
+        styleClass="w-full mt-3"
+      />
+    }
+
+    <div class="actions mt-3">
+      <p-button
+        label="Guardar"
+        icon="pi pi-check"
+        [loading]="saving()"
+        [disabled]="!canSave()"
+        (onClick)="save()"
+      />
+    </div>
+  </div>
 </section>

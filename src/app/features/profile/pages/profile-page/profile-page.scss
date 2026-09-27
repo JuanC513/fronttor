@@ -1,7 +1,74 @@
+// La vista se lee como un documento corto y se queda estrecha: es un formulario de un solo campo,
+// y una caja de texto de 1400px de ancho no invita a escribir en ella.
+
+:host {
+  display: block;
+  min-height: 100%;
+  padding: var(--space-lg);
+  background-color: var(--color-surface);
+}
+
 .profile-container {
-  background-color: white;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  padding: 0 1.25rem;
+  gap: var(--space-lg);
+  max-width: 44rem;
+}
+
+.profile-header {
+  h1 {
+    margin: 0 0 var(--space-xs);
+    color: var(--color-text-primary);
+    font-size: 1.5rem;
+    line-height: 1.3;
+  }
+}
+
+.profile-email {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+/* ─── Lo que se le cuenta al tutor ─── */
+
+.tutor-card {
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface-white);
+}
+
+.tutor-title {
+  margin: 0 0 var(--space-sm);
+  color: var(--color-text-primary);
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.tutor-help {
+  margin: 0 0 var(--space-md);
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+// Ejemplos y no reglas: el objetivo es que se le ocurra qué escribir, no que rellene un formulario.
+.tutor-examples {
+  margin: 0 0 var(--space-lg);
+  padding-left: var(--space-lg);
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+}
+
+.tutor-card label {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.counter {
+  align-self: flex-end;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
 }

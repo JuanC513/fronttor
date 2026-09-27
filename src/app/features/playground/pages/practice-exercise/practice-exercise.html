@@ -1,0 +1,199 @@
+<section class="practice">
+  <header class="practice-header flex flex-wrap align-items-start justify-content-between gap-3">
+    <div class="min-w-0">
+      <h1>Práctica guiada</h1>
+      <p class="m-0">
+        Pide un ejercicio sobre lo que estés estudiando y resuélvelo aquí mismo. No se guarda ni
+        cuenta para tu progreso: es solo para practicar.
+      </p>
+    </div>
+
+    <p-button
+      label="Ir a Práctica libre"
+      icon="pi pi-pencil"
+      size="small"
+      variant="outlined"
+      severity="secondary"
+      routerLink="/playground"
+    />
+  </header>
+
+  @if (error(); as message) {
+    <p-message severity="error" [text]="message" styleClass="w-full" />
+  }
+
+  <div class="practice-body" [class.is-asking]="phase() !== 'resolver'">
+    <div class="statement-column">
+      @if (exercise(); as current) {
+        <div class="statement-card">
+          <div class="exercise-header flex flex-wrap align-items-center gap-2">
+            <h2 class="exercise-title">{{ current.titulo }}</h2>
+            <p-tag [value]="difficultyLabel()" severity="secondary" />
+          </div>
+          <app-markdown-renderer [content]="current.enunciado" />
+        </div>
+
+        <div class="criteria-card mt-3">
+          <h3 class="criteria-title">Qué se comprueba</h3>
+
+          <div class="flex flex-column gap-2">
+            @for (criterion of criteria(); track $index) {
+              <div
+                class="criterion-row flex align-items-start gap-2"
+                [class.is-passed]="criterion.passed === true"
+                [class.is-failed]="criterion.passed === false"
+                [class.is-focused]="criterion.focused"
+              >
+                <i
+                  class="criterion-icon pi"
+                  [class.pi-circle]="criterion.passed === null"
+                  [class.pi-check-circle]="criterion.passed === true"
+                  [class.pi-times-circle]="criterion.passed === false"
+                  aria-hidden="true"
+                ></i>
+                <span>{{ criterion.description }}</span>
+              </div>
+            }
+          </div>
+
+          @if (hint()?.pista; as pista) {
+            <aside class="hint-card mt-3">
+              <p class="hint-title flex align-items-center gap-2 m-0">
+                <i class="pi pi-lightbulb" aria-hidden="true"></i>
+                Una pista
+              </p>
+              <app-markdown-renderer [content]="pista" />
+            </aside>
+          }
+
+          @if (helpError(); as message) {
+            <p-message severity="warn" [text]="message" styleClass="w-full mt-3" />
+          }
+
+          @if (discarded() > 0) {
+            <p class="discarded-notice mt-3 mb-0">
+              Se descartaron {{ discarded() }} comprobaciones que no funcionaban bien, así que el
+              enunciado puede pedir algo más de lo que aparece en esta lista.
+            </p>
+          }
+        </div>
+      } @else if (phase() === 'generando') {
+        <div class="waiting-card flex flex-column align-items-center gap-3">
+          <p-progressspinner [style]="{ width: '3rem', height: '3rem' }" strokeWidth="4" />
+          <p class="m-0">{{ stepMessage() }}</p>
+          <small>
+            Se está comprobando que el ejercicio se pueda resolver de verdad antes de dártelo, así
+            que tarda unos segundos.
+          </small>
+        </div>
+      } @else {
+        <form class="request-card flex flex-column gap-3" (ngSubmit)="generate()">
+          <div class="flex flex-column gap-2">
+            <label for="subtema">Practicar sobre</label>
+            <p-select
+              inputId="subtema"
+              styleClass="w-full"
+              placeholder="Elige un subtema"
+              [options]="lessonGroups()"
+              [group]="true"
+              optionGroupLabel="label"
+              optionGroupChildren="items"
+              optionLabel="label"
+              optionValue="value"
+              [loading]="loadingTree()"
+              [ngModel]="lessonId()"
+              (ngModelChange)="lessonId.set($event)"
+              name="subtema"
+            />
+          </div>
+
+          <div class="flex flex-column gap-2">
+            <label for="instruccion">Qué quieres practicar <small>(opcional)</small></label>
+            <textarea
+              pTextarea
+              id="instruccion"
+              name="instruccion"
+              rows="3"
+              class="w-full"
+              style="resize: none"
+              placeholder="Ej: que use flexbox para alinear tres tarjetas"
+              [maxlength]="maxInstruccionLength"
+              [ngModel]="instruction()"
+              (ngModelChange)="instruction.set($event)"
+            ></textarea>
+          </div>
+
+          <div class="flex flex-column gap-2">
+            <label for="dificultad">Dificultad</label>
+            <p-select
+              inputId="dificultad"
+              styleClass="w-full"
+              [options]="difficultyOptions"
+              optionLabel="label"
+              optionValue="value"
+              [ngModel]="difficulty()"
+              (ngModelChange)="difficulty.set($event)"
+              name="dificultad"
+            />
+          </div>
+
+          <p-button
+            type="submit"
+            label="Generar ejercicio"
+            icon="pi pi-sparkles"
+            [disabled]="!canGenerate()"
+          />
+        </form>
+      }
+    </div>
+
+    <!-- El taller se queda SIEMPRE en el DOM, aparcado fuera de pantalla mientras no haya
+        ejercicio. La comprobación necesita el iframe montado y con maquetación de verdad: con
+        `display: none` el navegador no calcula estilos usados y los criterios de estilo darían
+        resultados falsos. Aparcarlo fuera de pantalla lo mantiene vivo y, de paso, evita que el
+        estudiante vea cómo se renderiza la solución de referencia mientras se comprueba. -->
+    <div class="work-column flex flex-column gap-3" [class.is-parked]="phase() !== 'resolver'">
+      <app-code-editor [value]="code()" (valueChange)="onCodeChange($event)" />
+
+      <div class="output-row">
+        <app-preview-panel class="preview-slot" />
+        <app-console-panel class="console-slot" />
+      </div>
+
+      @if (resultMessage(); as message) {
+        <p-message [severity]="message.severity" [text]="message.text" styleClass="w-full" />
+      }
+
+      <div class="actions flex flex-wrap gap-2">
+        <p-button label="Comprobar" icon="pi pi-check" [loading]="checking()" (onClick)="check()" />
+
+        <!-- Solo tras una comprobacion fallida: con los criterios en verde no hay nada que
+            preguntar, y antes de comprobar el tutor no tendria sobre que opinar. -->
+        @if (canAskHelp()) {
+          <p-button
+            label="Pedir ayuda"
+            icon="pi pi-sparkles"
+            variant="outlined"
+            severity="help"
+            [loading]="askingHelp()"
+            [disabled]="checking()"
+            (onClick)="askForHelp()"
+          />
+        }
+        <p-button
+          label="Reiniciar"
+          icon="pi pi-replay"
+          variant="outlined"
+          severity="secondary"
+          (onClick)="reset()"
+        />
+        <p-button
+          label="Otro ejercicio"
+          icon="pi pi-refresh"
+          variant="text"
+          (onClick)="startOver()"
+        />
+      </div>
+    </div>
+  </div>
+</section>

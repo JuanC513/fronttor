@@ -136,6 +136,81 @@ describe('learning-progress', () => {
     });
   });
 
+  /**
+   * La puerta entre temas, que es más dura que el encadenado de dentro: pasar de tema exige el tema
+   * anterior COMPLETO, no solo haber abierto su último subtema.
+   */
+  describe('lessonAvailability entre temas', () => {
+    const lessons = orderedLessons([buildModule(1, [10, 11]), buildModule(2, [20, 21])]);
+
+    it('completar el tema entero abre el siguiente por los dos caminos', () => {
+      const availability = lessonAvailability(lessons, [
+        progressRow(10, 'completed'),
+        progressRow(11, 'completed'),
+      ]);
+
+      expect(availability.get(20)?.content).toBeTrue();
+      expect(availability.get(20)?.exercises).toBeTrue();
+    });
+
+    it('abrir el último subtema del tema anterior no abre el tema siguiente', () => {
+      const availability = lessonAvailability(lessons, [
+        progressRow(10, 'completed'),
+        progressRow(11, 'in_progress'),
+      ]);
+
+      expect(availability.get(20)?.content).toBeFalse();
+      expect(availability.get(20)?.exercises).toBeFalse();
+    });
+
+    /**
+     * El caso que la regla vieja dejaba pasar: mira el subtema ANTERIOR y no el tema. Con el último
+     * completado y uno de en medio a medias, abría el tema siguiente igualmente.
+     */
+    it('no basta con que el último esté completado si queda otro sin completar', () => {
+      const availability = lessonAvailability(lessons, [
+        progressRow(10, 'in_progress'),
+        progressRow(11, 'completed'),
+      ]);
+
+      expect(availability.get(20)?.content).toBeFalse();
+    });
+
+    it('dentro del tema recién abierto se vuelve a encadenar por haber abierto', () => {
+      const availability = lessonAvailability(lessons, [
+        progressRow(10, 'completed'),
+        progressRow(11, 'completed'),
+        progressRow(20, 'in_progress'),
+      ]);
+
+      expect(availability.get(21)?.content).toBeTrue();
+      expect(availability.get(21)?.exercises).toBeFalse();
+    });
+
+    /** El mismo invariante del modo mixto, pero cruzando la frontera de tema. */
+    it('nunca hay ejercicios disponibles sin contenido disponible', () => {
+      const combinaciones: LessonProgress[][] = [
+        [],
+        [progressRow(10, 'in_progress')],
+        [progressRow(10, 'completed')],
+        [progressRow(10, 'in_progress'), progressRow(11, 'completed')],
+        [progressRow(10, 'completed'), progressRow(11, 'in_progress')],
+        [progressRow(10, 'completed'), progressRow(11, 'completed')],
+        [
+          progressRow(10, 'completed'),
+          progressRow(11, 'completed'),
+          progressRow(20, 'in_progress'),
+        ],
+      ];
+
+      for (const progress of combinaciones) {
+        for (const estado of lessonAvailability(lessons, progress).values()) {
+          if (estado.exercises) expect(estado.content).toBeTrue();
+        }
+      }
+    });
+  });
+
   describe('exerciseStatus', () => {
     const disponible = { exercises: true, completed: false };
     const cerrado = { exercises: false, completed: false };

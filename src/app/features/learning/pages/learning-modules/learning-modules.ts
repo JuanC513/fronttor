@@ -1,5 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { AuthService } from '@core/services/auth/auth-service';
 import { AccordionModule } from 'primeng/accordion';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
@@ -12,7 +13,12 @@ import { lessonAvailability, orderedLessons } from '@domain/learning/utils/learn
 import { ModuleWithLessonCounts } from '@domain/learning/models/module-with-lesson-counts';
 import { Lesson } from '@domain/learning/models/lesson-model';
 
-export type LessonStatus = 'completed' | 'in-progress' | 'locked';
+/**
+ * `available` es «se puede abrir y todavía no se ha abierto». Sin ese estado la vista llamaba «En
+ * progreso» a subtemas que el estudiante no había tocado, porque solo miraba si el contenido estaba
+ * disponible e ignoraba `visited`.
+ */
+export type LessonStatus = 'completed' | 'in-progress' | 'available' | 'locked';
 
 export interface LessonView {
   lesson: Lesson;
@@ -34,6 +40,7 @@ export interface ModuleView {
 })
 export class LearningModules implements OnInit {
   private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
   private readonly moduleService = inject(ModuleService);
   private readonly progressService = inject(ProgressService);
 
@@ -66,7 +73,8 @@ export class LearningModules implements OnInit {
     const statusOf = (lessonId: number): LessonStatus => {
       const state = availability.get(lessonId);
       if (state?.completed) return 'completed';
-      return state?.content ? 'in-progress' : 'locked';
+      if (!state?.content) return 'locked';
+      return state.visited ? 'in-progress' : 'available';
     };
 
     return this.modules()
@@ -94,11 +102,20 @@ export class LearningModules implements OnInit {
     return Math.round((completed / lessons.length) * 100);
   });
 
-  /** Tema y subtema donde se quedó el estudiante, para el botón "Continuar aprendiendo". */
+  /**
+   * Tema y subtema donde se quedó el estudiante, para el botón "Continuar aprendiendo".
+   *
+   * Primero lo que dejó a medias; si no hay nada a medias, lo primero que puede empezar. El orden
+   * importa: retomar un subtema abierto es más útil que mandarlo a uno nuevo.
+   */
   private currentLesson = computed(() => {
-    for (const module of this.moduleViews()) {
-      const current = module.lessons.find((item) => item.status === 'in-progress');
-      if (current) return { moduleId: module.id, lessonId: current.lesson.id };
+    const views = this.moduleViews();
+
+    for (const status of ['in-progress', 'available'] as const) {
+      for (const module of views) {
+        const found = module.lessons.find((item) => item.status === status);
+        if (found) return { moduleId: module.id, lessonId: found.lesson.id };
+      }
     }
     return null;
   });
@@ -110,12 +127,22 @@ export class LearningModules implements OnInit {
   }
 
   async fetchModules() {
+    // El progreso va pedido por usuario a mano: la RLS de `lesson_progress` deja ver también el de
+    // los demás a quien tenga rol de profesor, y esta vista la abre la misma cuenta.
+    const userId = this.authService.getCurrentUser()?.id;
+
+    if (!userId) {
+      this.error.set('No se pudo identificar la sesión. Vuelve a iniciar sesión.');
+      this.loading.set(false);
+      return;
+    }
+
     try {
       // En paralelo: son dos lecturas independientes y la vista necesita las dos para pintar un
       // solo estado coherente.
       const [data, progress] = await Promise.all([
         this.moduleService.getLearningTree(),
-        this.progressService.getMyProgress(),
+        this.progressService.getForStudent(userId),
       ]);
 
       this.modules.set(data);
@@ -146,6 +173,8 @@ export class LearningModules implements OnInit {
         return 'Completado';
       case 'in-progress':
         return 'En progreso';
+      case 'available':
+        return 'Disponible';
       case 'locked':
         return 'Bloqueado';
     }
@@ -157,17 +186,23 @@ export class LearningModules implements OnInit {
         return 'pi pi-check-circle';
       case 'in-progress':
         return 'pi pi-play-circle';
+      case 'available':
+        return 'pi pi-circle';
       case 'locked':
         return 'pi pi-lock';
     }
   }
 
-  /** Abre el tema en curso; si no hay ninguno, el primero que no esté bloqueado. */
+  /**
+   * Abre el tema donde el estudiante va a continuar; si ya lo completó todo, el primero abierto.
+   *
+   * Sale de `currentLesson` para que el acordeón y el botón "Continuar aprendiendo" no puedan
+   * apuntar a temas distintos.
+   */
   private resolveInitialPanel(): number | undefined {
-    const views = this.moduleViews();
-    const current = views.find((module) =>
-      module.lessons.some((item) => item.status === 'in-progress'),
-    );
-    return (current ?? views.find((module) => !module.locked))?.id;
+    const current = this.currentLesson();
+    if (current) return current.moduleId;
+
+    return this.moduleViews().find((module) => !module.locked)?.id;
   }
 }

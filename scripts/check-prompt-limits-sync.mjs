@@ -63,6 +63,28 @@ const pairs = [
       pattern: /instruccion:\s*\[undefined,\s*Validators\.maxLength\(([\d_]+)\)\]/,
     },
   },
+  {
+    name: 'MAX_PERFIL_LENGTH',
+    a: {
+      file: 'supabase/functions/_shared/student-context.ts',
+      pattern: /MAX_PERFIL_LENGTH\s*=\s*([\d_]+)\s*;/,
+    },
+    b: {
+      file: 'src/app/features/profile/pages/profile-page/profile-page.ts',
+      pattern: /MAX_PERFIL_LENGTH\s*=\s*([\d_]+)\s*;/,
+    },
+  },
+  {
+    name: 'MAX_INSTRUCCION_LENGTH (practica)',
+    a: {
+      file: 'supabase/functions/_shared/prompts/practice-prompt.ts',
+      pattern: /MAX_INSTRUCCION_LENGTH\s*=\s*([\d_]+)\s*;/,
+    },
+    b: {
+      file: 'src/app/features/playground/pages/practice-exercise/practice-exercise.ts',
+      pattern: /MAX_INSTRUCCION_LENGTH\s*=\s*([\d_]+)\s*;/,
+    },
+  },
 ];
 
 let hasMismatch = false;

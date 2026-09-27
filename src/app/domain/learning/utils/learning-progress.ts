@@ -4,7 +4,7 @@ import { LessonProgress } from '../models/lesson-progress-model';
 /**
  * Qué puede hacer el estudiante en cada punto del recorrido.
  *
- * El desbloqueo va por dos caminos separados y eso es deliberado:
+ * DENTRO de un tema el desbloqueo va por dos caminos separados, y eso es deliberado:
  *
  * - **El contenido** de un subtema se abre en cuanto se ha ABIERTO el anterior. Leer no debería
  *   quedar detenido por un ejercicio atascado.
@@ -14,6 +14,15 @@ import { LessonProgress } from '../models/lesson-progress-model';
  * Como completar exige haber abierto, la disponibilidad de ejercicios es siempre un subconjunto de
  * la del contenido: nunca se puede practicar un subtema que todavía no se puede leer. Ese
  * invariante es lo que hace coherentes los dos caminos, y está cubierto por una prueba.
+ *
+ * ENTRE temas la regla es una sola y es dura: el primer subtema de un tema no se abre —ni para leer
+ * ni para practicar— hasta que TODOS los subtemas del tema anterior están completados.
+ *
+ * La diferencia de trato tiene un motivo. Dentro de un tema, poder seguir leyendo mientras un
+ * ejercicio se resiste es una ayuda: el subtema siguiente suele ser justo lo que falta por
+ * entender. Pero aplicar eso también entre temas dejaba el candado en nada, porque bastaba con
+ * entrar y salir de cada subtema en orden, sin resolver un solo ejercicio, para abrir el curso
+ * entero. Un tema es la unidad que se da por vista, así que pasar de tema sí exige haberlo hecho.
  *
  * Todo aquí es puro: recibe lo que ya se leyó de la base y no habla con nadie. Las reglas de
  * visibilidad de lo publicado viven aparte, en `publication-state.ts`; esto es lo que ocurre
@@ -70,15 +79,32 @@ export function lessonAvailability(
 ): Map<number, LessonAvailability> {
   const byLesson = new Map(progress.map((row) => [row.lesson_id, row]));
   const availability = new Map<number, LessonAvailability>();
+  const isCompleted = (lessonId: number) => byLesson.get(lessonId)?.status === 'completed';
+
+  // Los subtemas de cada tema, para poder preguntar si un tema entero está completado. Se construye
+  // sobre `lessons`, ya filtrado, de modo que un subtema sin bloques no puede retener a nadie.
+  const byModule = new Map<number, number[]>();
+  lessons.forEach(({ lesson, moduleId }) => {
+    byModule.set(moduleId, [...(byModule.get(moduleId) ?? []), lesson.id]);
+  });
 
   lessons.forEach((item, index) => {
-    const previous = index === 0 ? null : lessons[index - 1].lesson.id;
-    const previousProgress = previous === null ? null : byLesson.get(previous);
+    const previous = index === 0 ? null : lessons[index - 1];
+
+    // La puerta entre temas. `null` significa «este subtema no abre tema», y entonces deciden las
+    // reglas de abajo; un booleano manda sobre ambas, porque mientras el tema anterior no esté
+    // terminado aquí no se entra ni a leer ni a practicar.
+    const gate =
+      previous !== null && previous.moduleId !== item.moduleId
+        ? (byModule.get(previous.moduleId) ?? []).every(isCompleted)
+        : null;
+
+    const previousProgress = previous === null ? null : byLesson.get(previous.lesson.id);
     const own = byLesson.get(item.lesson.id);
 
     availability.set(item.lesson.id, {
-      content: index === 0 || !!previousProgress,
-      exercises: index === 0 || previousProgress?.status === 'completed',
+      content: index === 0 || (gate ?? !!previousProgress),
+      exercises: index === 0 || (gate ?? previousProgress?.status === 'completed'),
       completed: own?.status === 'completed',
       visited: !!own,
     });

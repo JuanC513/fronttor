@@ -316,6 +316,7 @@ export class BlockFormDialog implements OnInit, OnDestroy {
           nombreBloque,
           bloquesExistentes: await this.loadSiblingBlockNames(lessonId),
           instruccion: this.uiForm.get('instruccion')?.value || undefined,
+          lessonId,
         },
         controller.signal,
       );

@@ -22,7 +22,7 @@ import { resolveHintFocus } from '@domain/ai/utils/feedback-focus';
 import { CodeRunnerState } from '@domain/code-runner/models/code-runner-model';
 import { CodeRunnerStateService } from '@domain/code-runner/services/code-runner-state-service';
 import { ValidationOutcome } from '@domain/code-runner/validation/probe-model';
-import { ExerciseDifficulty } from '@domain/learning/models/exercise-model';
+import { DIFFICULTY_LABEL, ExerciseDifficulty } from '@domain/learning/models/exercise-model';
 import { StudentExerciseDetail } from '@domain/learning/models/student-exercise-detail';
 import { AttemptDraft, AttemptService } from '@domain/learning/services/attempt-service';
 import { ExerciseService } from '@domain/learning/services/exercise-service';
@@ -30,13 +30,6 @@ import { CodeEditor } from '@shared/components/code-editor/code-editor';
 import { ConsolePanel } from '@shared/components/console-panel/console-panel';
 import { MarkdownRenderer } from '@shared/components/markdown-renderer/markdown-renderer';
 import { PreviewPanel } from '@shared/components/preview-panel/preview-panel';
-
-/** Mismas etiquetas que el resto de la aplicación: la dificultad se lee igual en todos lados. */
-const DIFFICULTY_LABEL: Record<ExerciseDifficulty, string> = {
-  facil: 'Fácil',
-  media: 'Media',
-  dificil: 'Difícil',
-};
 
 /** Una fila de la lista de criterios, ya cruzada con el resultado del último envío. */
 export interface CriterionRow {
@@ -429,6 +422,7 @@ export class LearningExercise implements OnInit, OnDestroy {
           criterios: this.feedbackCriteria(),
           agotoTiempo: result.timedOut,
           exerciseId: exercise.id,
+          lessonId: exercise.lesson_id,
         },
         controller.signal,
       );

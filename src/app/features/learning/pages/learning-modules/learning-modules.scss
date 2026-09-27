@@ -67,6 +67,11 @@
   --lesson-accent: var(--color-primary);
 }
 
+// Se puede abrir pero aún no se ha abierto: ni el color de lo empezado ni el gris de lo bloqueado.
+.lesson-card.is-available {
+  --lesson-accent: var(--color-text-secondary);
+}
+
 .lesson-card.is-locked {
   --lesson-accent: var(--color-text-muted);
 

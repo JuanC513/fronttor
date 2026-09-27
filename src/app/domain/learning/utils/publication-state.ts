@@ -1,5 +1,5 @@
 import { Block } from '../models/block-model';
-import { Exercise } from '../models/exercise-model';
+import { Exercise, ExerciseWithoutSolution } from '../models/exercise-model';
 import { Lesson } from '../models/lesson-model';
 import { Module } from '../models/module-model';
 
@@ -266,12 +266,18 @@ function unchanged(): ToggleImpact {
 // propia insignia ya lo dice.
 // ---------------------------------------------------------------------------
 
-/** `siblingExercises` incluye al propio ejercicio. */
+/**
+ * `siblingExercises` incluye al propio ejercicio.
+ *
+ * Sin la solucion de referencia: aqui solo se miran `criteria`, `is_published` y `lesson_id`, y
+ * pedir el tipo completo obligaria a los llamadores a traerse unas columnas que la API ya no les
+ * entrega.
+ */
 export interface ExerciseScope {
-  exercise: Exercise;
+  exercise: ExerciseWithoutSolution;
   lesson: Lesson;
   module: Module;
-  siblingExercises: Exercise[];
+  siblingExercises: ExerciseWithoutSolution[];
 }
 
 /**
