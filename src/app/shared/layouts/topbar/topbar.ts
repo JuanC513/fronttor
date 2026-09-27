@@ -9,14 +9,34 @@ import { ButtonModule } from 'primeng/button';
 import { DividerModule } from 'primeng/divider';
 import { filter, map } from 'rxjs/operators';
 
+interface Seccion {
+  lista: string;
+  etiqueta: string;
+  detalle: RegExp;
+  /**
+   * Etiqueta fija para el detalle, cuando lo que se abre no es una entidad guardada y por tanto no
+   * tiene un nombre que publicar. Si falta, el escalón lo pone la vista con `BreadcrumbService`.
+   */
+  detalleEtiqueta?: string;
+}
+
 /** Las secciones con miga de pan: la lista y, debajo, su vista de detalle. */
-const SECCIONES = [
+const SECCIONES: Seccion[] = [
   {
     lista: '/learning/modules',
     etiqueta: 'Módulos',
     detalle: /^\/learning\/modules\/\d+\/lessons\/\d+/,
   },
   { lista: '/learning/exercises', etiqueta: 'Ejercicios', detalle: /^\/learning\/exercises\/\d+/ },
+  {
+    // El ejercicio de la práctica guiada se genera y se descarta con la pantalla: no hay entidad
+    // que nombrar, y su título ya sale en el encabezado. Por eso este escalón es fijo, y además
+    // aparece desde que se entra, antes de haber pedido nada.
+    lista: '/playground',
+    etiqueta: 'Libre',
+    detalle: /^\/playground\/practice/,
+    detalleEtiqueta: 'Práctica guiada',
+  },
 ];
 
 @Component({
@@ -56,12 +76,15 @@ export class Topbar {
 
     for (const seccion of SECCIONES) {
       if (seccion.detalle.test(url)) {
-        // Mientras el título no ha llegado se pinta solo el escalón padre. Es preferible a rellenar
-        // con un número: el ejercicio `id` 2 se llama «Ejercicio 01», y la miga desmentiría al
-        // título de la página.
+        // Con etiqueta fija el escalón está desde el primer momento; con nombre publicado llega
+        // cuando la vista termina de cargar, y hasta entonces se pinta solo el padre. Rellenar el
+        // hueco con un número sería peor: el ejercicio `id` 2 se llama «Ejercicio 01», así que la
+        // miga desmentiría al título de la página.
+        const hoja = seccion.detalleEtiqueta ?? titulo;
+
         return [
           { label: seccion.etiqueta, routerLink: seccion.lista },
-          ...(titulo ? [{ label: titulo }] : []),
+          ...(hoja ? [{ label: hoja }] : []),
         ];
       }
 

@@ -87,6 +87,31 @@ describe('Topbar', () => {
     expect(component.breadcrumbItems()[0].routerLink).toBe('/learning/modules');
   });
 
+  it('reconoce la práctica libre', async () => {
+    await setup('/playground');
+    expect(etiquetas()).toEqual(['Libre']);
+  });
+
+  /**
+   * El único detalle con etiqueta fija: el ejercicio de la práctica guiada se genera y se descarta
+   * con la pantalla, así que no hay entidad que nombrar. Por eso su escalón aparece de entrada, sin
+   * esperar a que la vista publique nada.
+   */
+  it('nombra la práctica guiada sin que la vista publique nada', async () => {
+    await setup('/playground/practice');
+
+    expect(etiquetas()).toEqual(['Libre', 'Práctica guiada']);
+    expect(component.breadcrumbItems()[0].routerLink).toBe('/playground');
+  });
+
+  it('la etiqueta fija manda sobre un nombre que haya quedado publicado', async () => {
+    await setup('/playground/practice');
+
+    breadcrumbService.setTitle('Ejercicio 01');
+
+    expect(etiquetas()).toEqual(['Libre', 'Práctica guiada']);
+  });
+
   it('sigue la navegación sin tener que rearmarse a mano', async () => {
     await setup('/learning/modules');
 
