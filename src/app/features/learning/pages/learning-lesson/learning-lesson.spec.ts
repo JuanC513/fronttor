@@ -22,7 +22,7 @@ describe('LearningLesson', () => {
   });
 
   /** Monta el componente con los tres servicios espiados y la ruta `/modules/1/lessons/1`. */
-  const setup = async (blocks: Block[], failing = false) => {
+  const setup = async (blocks: Block[], failing = false, visitaRechazada = false) => {
     const moduleService = jasmine.createSpyObj<ModuleService>('ModuleService', ['getById']);
     const lessonService = jasmine.createSpyObj<LessonService>('LessonService', ['getById']);
     const blockService = jasmine.createSpyObj<BlockService>('BlockService', [
@@ -35,7 +35,15 @@ describe('LearningLesson', () => {
     const progressService = jasmine.createSpyObj<ProgressService>('ProgressService', [
       'markLessonViewed',
     ]);
-    progressService.markLessonViewed.and.resolveTo();
+    // `visitaRechazada` tiene que quedar puesto antes del montaje: la visita se marca como efecto
+    // de `ngOnInit`, asi que cambiar el espia despues no llega a tiempo de nada.
+    if (visitaRechazada) {
+      progressService.markLessonViewed.and.rejectWith(
+        new Error('Este subtema todavia no esta disponible'),
+      );
+    } else {
+      progressService.markLessonViewed.and.resolveTo();
+    }
 
     moduleService.getById.and.resolveTo({ id: 1, name: 'Tema 1', order: 1, is_published: true });
     lessonService.getById.and.resolveTo({
@@ -104,6 +112,18 @@ describe('LearningLesson', () => {
     expect(element.querySelectorAll('p-tab').length).toBe(0);
     // El pie con "Regresar" se mantiene para que siempre haya salida.
     expect(element.querySelector('.footer')).not.toBeNull();
+  });
+
+  /**
+   * Desde `20260929120000` la RPC se niega a registrar la visita a un subtema al que el estudiante
+   * no ha llegado. Solo se llega ahí por URL directa —el guard de la ruta lo ataja antes—, y la
+   * página no debe romperse ni perder lo que ya cargó: anotar el progreso es accesorio.
+   */
+  it('sobrevive a que la base rechace registrar la visita', async () => {
+    const fixture = await setup([buildBlock(1)], false, true);
+
+    expect(fixture.componentInstance.error()).toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('p-tab').length).toBe(1);
   });
 
   it('muestra el error cuando falla la carga', async () => {

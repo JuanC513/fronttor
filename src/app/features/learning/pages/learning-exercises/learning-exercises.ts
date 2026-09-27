@@ -156,7 +156,7 @@ export class LearningExercises implements OnInit {
       const [modules, exercises, progress] = await Promise.all([
         this.moduleService.getLearningTree(),
         this.exerciseService.getPublishedForStudent(userId),
-        this.progressService.getMyProgress(),
+        this.progressService.getForStudent(userId),
       ]);
 
       this.modules.set(modules);

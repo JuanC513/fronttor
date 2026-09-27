@@ -63,9 +63,9 @@ describe('LearningExercises', () => {
     exerciseService.getPublishedForStudent.and.resolveTo(options.exercises ?? []);
 
     const progressService = jasmine.createSpyObj<ProgressService>('ProgressService', [
-      'getMyProgress',
+      'getForStudent',
     ]);
-    progressService.getMyProgress.and.resolveTo(options.progress ?? []);
+    progressService.getForStudent.and.resolveTo(options.progress ?? []);
 
     const userId = options.userId === undefined ? 'usuario-1' : options.userId;
     const authService = jasmine.createSpyObj<AuthService>('AuthService', ['getCurrentUser']);
@@ -225,9 +225,9 @@ describe('LearningExercises', () => {
     exerciseService.getPublishedForStudent.and.resolveTo([]);
 
     const progressService = jasmine.createSpyObj<ProgressService>('ProgressService', [
-      'getMyProgress',
+      'getForStudent',
     ]);
-    progressService.getMyProgress.and.resolveTo([]);
+    progressService.getForStudent.and.resolveTo([]);
 
     const authService = jasmine.createSpyObj<AuthService>('AuthService', ['getCurrentUser']);
     authService.getCurrentUser.and.returnValue({ id: 'usuario-1' } as never);

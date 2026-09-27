@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
+import { AuthService } from '@core/services/auth/auth-service';
 import { LessonProgress } from '@domain/learning/models/lesson-progress-model';
 import { ModuleWithLessonCounts } from '@domain/learning/models/module-with-lesson-counts';
 import { ModuleService } from '@domain/learning/services/module-service';
@@ -47,9 +48,13 @@ describe('LearningModules', () => {
     moduleService.getLearningTree.and.resolveTo(modules);
 
     const progressService = jasmine.createSpyObj<ProgressService>('ProgressService', [
-      'getMyProgress',
+      'getForStudent',
     ]);
-    progressService.getMyProgress.and.resolveTo(progress);
+    progressService.getForStudent.and.resolveTo(progress);
+
+    // El progreso se pide por usuario, así que la vista necesita saber quién está en sesión.
+    const authService = jasmine.createSpyObj<AuthService>('AuthService', ['getCurrentUser']);
+    authService.getCurrentUser.and.returnValue({ id: 'usuario-1' } as never);
 
     router = jasmine.createSpyObj<Router>('Router', ['navigate']);
 
@@ -58,6 +63,7 @@ describe('LearningModules', () => {
       providers: [
         { provide: ModuleService, useValue: moduleService },
         { provide: ProgressService, useValue: progressService },
+        { provide: AuthService, useValue: authService },
         { provide: Router, useValue: router },
       ],
     });
@@ -83,7 +89,7 @@ describe('LearningModules', () => {
     const component = (await setup([buildModule(1, 2), buildModule(2, 2)])).componentInstance;
     const [first, second] = component.moduleViews();
 
-    expect(first.lessons.map((item) => item.status)).toEqual(['in-progress', 'locked']);
+    expect(first.lessons.map((item) => item.status)).toEqual(['available', 'locked']);
     expect(second.lessons.map((item) => item.status)).toEqual(['locked', 'locked']);
   });
 
@@ -95,12 +101,12 @@ describe('LearningModules', () => {
     const [first, second] = component.moduleViews();
 
     expect(first.lessons.map((item) => item.status)).toEqual(['completed', 'completed']);
-    expect(second.lessons.map((item) => item.status)).toEqual(['in-progress', 'locked']);
+    expect(second.lessons.map((item) => item.status)).toEqual(['available', 'locked']);
   });
 
   /**
-   * El modo mixto: haber ABIERTO un subtema basta para leer el siguiente, aunque no esté
-   * completado. Lo que exige completarlo son sus ejercicios, y eso vive en la otra vista.
+   * El modo mixto DENTRO de un tema: haber ABIERTO un subtema basta para leer el siguiente, aunque
+   * no esté completado. Lo que exige completarlo son sus ejercicios, y eso vive en la otra vista.
    */
   it('abrir un subtema sin completarlo ya desbloquea el contenido del siguiente', async () => {
     const component = (await setup([buildModule(1, 3)], [progressRow(100, 'in_progress')]))
@@ -108,7 +114,7 @@ describe('LearningModules', () => {
 
     expect(component.moduleViews()[0].lessons.map((item) => item.status)).toEqual([
       'in-progress',
-      'in-progress',
+      'available',
       'locked',
     ]);
   });
@@ -118,6 +124,42 @@ describe('LearningModules', () => {
 
     expect(component.moduleViews()[0].locked).toBeFalse();
     expect(component.moduleViews()[1].locked).toBeTrue();
+  });
+
+  /**
+   * El bug que reportó el estudiante: entrar al último subtema del tema 1 —sin resolver su
+   * ejercicio— desbloqueaba el tema 2, porque el candado del tema solo mira si alguno de sus
+   * subtemas está abierto y la cadena no distinguía fronteras de tema.
+   */
+  it('el tema siguiente sigue bloqueado si el anterior no está completo', async () => {
+    const component = (
+      await setup(
+        [buildModule(1, 2), buildModule(2, 2)],
+        [progressRow(100), progressRow(101, 'in_progress')],
+      )
+    ).componentInstance;
+
+    expect(component.moduleViews()[1].locked).toBeTrue();
+  });
+
+  it('el tema siguiente se abre al completar el anterior entero', async () => {
+    const component = (
+      await setup([buildModule(1, 2), buildModule(2, 2)], [progressRow(100), progressRow(101)])
+    ).componentInstance;
+
+    expect(component.moduleViews()[1].locked).toBeFalse();
+  });
+
+  /** «Disponible» y «En progreso» no son lo mismo: uno se abrió y el otro solo se puede abrir. */
+  it('distingue el subtema abierto del que solo está disponible', async () => {
+    const component = (await setup([buildModule(1, 2)], [progressRow(100, 'in_progress')]))
+      .componentInstance;
+
+    expect(component.moduleViews()[0].lessons.map((item) => item.status)).toEqual([
+      'in-progress',
+      'available',
+    ]);
+    expect(component.statusLabel('available')).toBe('Disponible');
   });
 
   it('calcula el progreso sobre el total de subtemas del curso', async () => {
@@ -210,7 +252,7 @@ describe('LearningModules', () => {
     expect(views.flatMap((module) => module.lessons).map((item) => item.status)).toEqual([
       'completed',
       'completed',
-      'in-progress',
+      'available',
       'locked',
     ]);
     expect(component.progress()).toBe(50);
@@ -221,15 +263,19 @@ describe('LearningModules', () => {
     moduleService.getLearningTree.and.rejectWith(new Error('boom'));
 
     const progressService = jasmine.createSpyObj<ProgressService>('ProgressService', [
-      'getMyProgress',
+      'getForStudent',
     ]);
-    progressService.getMyProgress.and.resolveTo([]);
+    progressService.getForStudent.and.resolveTo([]);
+
+    const authService = jasmine.createSpyObj<AuthService>('AuthService', ['getCurrentUser']);
+    authService.getCurrentUser.and.returnValue({ id: 'usuario-1' } as never);
 
     TestBed.configureTestingModule({
       imports: [LearningModules],
       providers: [
         { provide: ModuleService, useValue: moduleService },
         { provide: ProgressService, useValue: progressService },
+        { provide: AuthService, useValue: authService },
         { provide: Router, useValue: jasmine.createSpyObj<Router>('Router', ['navigate']) },
       ],
     });

@@ -22,18 +22,47 @@ export class ProgressService {
   }
 
   /**
-   * El progreso del usuario en sesión.
+   * El progreso de un estudiante.
    *
-   * No lleva filtro por usuario porque la RLS ya lo pone: `progress_select_own` solo deja ver las
-   * filas propias. Ojo con la excepción, que importa en las cuentas con doble rol: un profesor
-   * puede ver el progreso de todos por `progress_select_teacher`, así que si algún día esto se usa
-   * desde una vista del profesor habrá que filtrar a mano.
+   * **El filtro por usuario no es redundante con la RLS.** `lesson_progress` tiene DOS policies de
+   * lectura, `progress_select_own` y `progress_select_teacher`, así que una cuenta con los dos roles
+   * —como la que se usa para probar— recibe por la RLS el progreso de todo el mundo. Las vistas del
+   * estudiante metían esas filas en un `Map` por `lesson_id`, donde gana la última, y acababan
+   * pintando el avance de otra persona: un subtema completado aparecía «en progreso» y el candado del
+   * recorrido se abría o se cerraba según lo que hubieran hecho otros.
+   *
+   * Antes esto se llamaba `getMyProgress()` y no recibía nada. Ese nombre era justo lo que hacía
+   * invisible el problema, porque el «my» daba por hecho que el servidor ya había elegido. Ahora se
+   * pide explícito, como en {@link ExerciseService.getPublishedForStudent}, que tropezó con lo mismo.
    */
-  async getMyProgress(): Promise<LessonProgress[]> {
-    const { data, error } = await this.supabase.from('lesson_progress').select('*');
+  async getForStudent(userId: string): Promise<LessonProgress[]> {
+    const { data, error } = await this.supabase
+      .from('lesson_progress')
+      .select('*')
+      .eq('user_id', userId);
 
     if (error) throw new Error(error.message);
     return (data as LessonProgress[]) ?? [];
+  }
+
+  /**
+   * Si el estudiante puede abrir ese subtema, según la base.
+   *
+   * La regla también vive en `learning-progress.ts`, y eso no es duplicación accidental: la del
+   * cliente pinta el candado con los datos que ya tiene, y la de la base es la que de verdad manda,
+   * porque una URL escrita a mano no pasa por ninguna vista. Esto solo trae la segunda, para que el
+   * guard de la ruta no tenga que cargarse el árbol entero del curso.
+   *
+   * La RPC devuelve `null` cuando el subtema no es parte del recorrido —sin publicar, o sin bloques
+   * publicados—, y eso también es un no: no hay nada que abrir.
+   */
+  async isLessonReachable(lessonId: number): Promise<boolean> {
+    const { data, error } = await this.supabase.rpc('lesson_is_reachable', {
+      p_lesson_id: lessonId,
+    });
+
+    if (error) throw new Error(error.message);
+    return data === true;
   }
 
   /**
@@ -43,7 +72,9 @@ export class ProgressService {
    * nada se desbloquea nunca. Además dispara el recálculo del completado, así que un subtema sin
    * ejercicios publicados queda completado con solo abrirlo.
    *
-   * Sobre un subtema no publicado la RPC sale en silencio, sin escribir ni fallar.
+   * Desde `20260929120000` la RPC comprueba el recorrido antes de escribir: sobre un subtema que no
+   * es parte del recorrido sale en silencio, y sobre uno que todavía no toca **falla**. Ese fallo no
+   * debería ocurrirle nunca a un estudiante que llega por la interfaz.
    */
   async markLessonViewed(lessonId: number): Promise<void> {
     const { error } = await this.supabase.rpc('mark_lesson_viewed', { p_lesson_id: lessonId });
