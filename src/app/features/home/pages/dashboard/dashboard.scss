@@ -184,10 +184,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-sm);
-  // El hueco va aquí y no como `padding` del enlace: dentro del enlace sería área clicable, y se
-  // podría activar pulsando justo debajo de la etiqueta. Con `margin-top: auto` en la acción, este
-  // margen es el mínimo garantizado cuando la tarjeta va justa de alto.
-  margin-bottom: var(--space-md);
 }
 
 .panel-title .pi {

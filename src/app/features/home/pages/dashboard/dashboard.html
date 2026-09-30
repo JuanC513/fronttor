@@ -89,13 +89,15 @@
             @if (siguienteEjercicio(); as ejercicio) {
               <p class="duo-name">{{ ejercicio.nombre }}</p>
 
-              <div class="duo-meta">
-                <p-tag severity="secondary" [value]="dificultadLabel(ejercicio.dificultad)" />
-              </div>
+              <span class="flex justify-content-between">
+                <div class="duo-meta">
+                  <p-tag severity="secondary" [value]="dificultadLabel(ejercicio.dificultad)" />
+                </div>
 
-              <a class="duo-action" [routerLink]="['/learning/exercises', ejercicio.id]">
-                Resolverlo <i class="pi pi-arrow-right" aria-hidden="true"></i>
-              </a>
+                <a class="duo-action" [routerLink]="['/learning/exercises', ejercicio.id]">
+                  Resolverlo <i class="pi pi-arrow-right" aria-hidden="true"></i>
+                </a>
+              </span>
             } @else {
               <p class="panel-help m-0">
                 Los ejercicios de un subtema se abren cuando completas el anterior. Sigue con el
