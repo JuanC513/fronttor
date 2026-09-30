@@ -1,1 +1,284 @@
-<p>dashboard works!</p>
+<section class="dashboard">
+  @if (loading()) {
+    <div class="grid">
+      <div class="col-12 lg:col-8">
+        <p-skeleton height="12rem" borderRadius="0.75rem" styleClass="mb-3" />
+        <p-skeleton height="7rem" borderRadius="0.75rem" />
+      </div>
+      <div class="col-12 lg:col-4">
+        <p-skeleton height="19rem" borderRadius="0.75rem" />
+      </div>
+    </div>
+  }
+
+  @if (error(); as message) {
+    <p-message severity="error" [text]="message" styleClass="w-full" />
+  }
+
+  @if (!loading() && !error()) {
+    <header class="page-header">
+      <h1>Inicio</h1>
+      <p>Desde aquí retomas donde lo dejaste y ves cómo vas.</p>
+    </header>
+
+    <div class="grid">
+      <div class="col-12 lg:col-8 flex flex-column gap-3">
+        <!-- ─── Qué hacer ahora ─── -->
+        <div class="progress-card">
+          @switch (estado()) {
+            @case ('empezar') {
+              <h2>Empieza por aquí</h2>
+              <p class="step-name">{{ siguientePaso()?.nombre }}</p>
+              <p class="step-help">
+                Es el primer subtema del recorrido. Los demás se abren después.
+              </p>
+            }
+            @case ('continuar') {
+              <h2>Continúa donde ibas</h2>
+              <p class="step-name">{{ siguientePaso()?.nombre }}</p>
+              <p class="step-help">Es el subtema que dejaste empezado.</p>
+            }
+            @case ('completado') {
+              <h2>Completaste el recorrido</h2>
+              <p class="step-help">
+                Ya no queda contenido por delante. Puedes seguir practicando por tu cuenta.
+              </p>
+            }
+            @case ('sin-contenido') {
+              <h2>Todavía no hay contenido</h2>
+              <p class="step-help">
+                Cuando se publique el primer subtema aparecerá aquí para que empieces.
+              </p>
+            }
+          }
+
+          <!--
+            `(onClick)` y no `[routerLink]`: sobre `p-button` el directivo se monta y resuelve bien
+            la URL, pero el clic no llega a dispararlo. Es el mismo motivo por el que «Continuar
+            aprendiendo» navega así en la vista de Contenido.
+          -->
+          @if (siguientePaso()) {
+            <p-button
+              [label]="estado() === 'empezar' ? 'Empezar' : 'Continuar'"
+              icon="pi pi-arrow-right"
+              iconPos="right"
+              class="step-button"
+              (onClick)="irAlSiguiente()"
+            />
+          } @else if (estado() === 'completado') {
+            <p-button
+              label="Ir a Práctica libre"
+              icon="pi pi-code"
+              iconPos="right"
+              class="step-button"
+              (onClick)="irAPracticaLibre()"
+            />
+          }
+
+          <i class="progress-decor pi pi-compass" aria-hidden="true"></i>
+        </div>
+
+        <!-- ─── Qué toca ahora y el tutor ─── -->
+        <div class="duo">
+          <div class="panel">
+            <h2 class="panel-title">
+              <i class="pi pi-list-check" aria-hidden="true"></i>
+              Tu siguiente ejercicio
+            </h2>
+
+            @if (siguienteEjercicio(); as ejercicio) {
+              <p class="duo-name">{{ ejercicio.nombre }}</p>
+
+              <div class="duo-meta">
+                <p-tag severity="secondary" [value]="dificultadLabel(ejercicio.dificultad)" />
+              </div>
+
+              <a class="duo-action" [routerLink]="['/learning/exercises', ejercicio.id]">
+                Resolverlo <i class="pi pi-arrow-right" aria-hidden="true"></i>
+              </a>
+            } @else {
+              <p class="panel-help m-0">
+                Los ejercicios de un subtema se abren cuando completas el anterior. Sigue con el
+                contenido y aparecerán aquí.
+              </p>
+            }
+          </div>
+
+          <div class="panel">
+            <h2 class="panel-title">
+              <i class="pi pi-sparkles" aria-hidden="true"></i>
+              Tu tutor
+            </h2>
+
+            <!--
+              A diferencia de los atascos, esta tarjeta NO se esconde cuando está vacía: para un
+              estudiante nuevo —que es el caso de todos el primer día— decirle que el tutor existe y
+              dónde está vale más que un hueco.
+            -->
+            @if (usoElTutor()) {
+              <ul class="tutor-list list-none m-0 p-0">
+                <li>
+                  <b>{{ tutor().preguntas }}</b> preguntas
+                </li>
+                <li>
+                  <b>{{ tutor().pistas }}</b> pistas pedidas
+                </li>
+                <li>
+                  <b>{{ tutor().practicas }}</b> prácticas generadas
+                </li>
+              </ul>
+
+              @if (tutor().ultima?.subtema; as subtema) {
+                <p class="panel-help m-0">Lo último fue sobre «{{ subtema }}».</p>
+              }
+            } @else {
+              <p class="panel-help m-0">
+                Todavía no le has preguntado nada. Está dentro de cada subtema y en cada ejercicio:
+                pídele una explicación o una pista cuando te atasques.
+              </p>
+            }
+          </div>
+        </div>
+
+        <!-- ─── Dónde se está atascando ─── -->
+        @if (atascos().length) {
+          <div class="panel">
+            <h2 class="panel-title">Dónde te estás atascando</h2>
+            <p class="panel-help">
+              Los has intentado varias veces y todavía no pasan. Si te bloqueas, pídele una pista al
+              tutor desde el ejercicio.
+            </p>
+
+            <ul class="stuck-list flex flex-column gap-2 list-none m-0 p-0">
+              @for (atasco of atascos(); track atasco.exerciseId) {
+                <li>
+                  <a
+                    class="stuck-card flex align-items-center gap-3 w-full"
+                    [routerLink]="['/learning/exercises', atasco.exerciseId]"
+                  >
+                    <i class="pi pi-exclamation-circle flex-shrink-0" aria-hidden="true"></i>
+                    <span class="flex-1 min-w-0">{{ atasco.nombre }}</span>
+                    <span class="stuck-count flex-shrink-0">
+                      {{ atasco.intentos }}
+                      {{ atasco.intentos === 1 ? 'intento' : 'intentos' }}
+                    </span>
+                    <i class="stuck-arrow pi pi-arrow-right flex-shrink-0" aria-hidden="true"></i>
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+
+        <!-- ─── Accesos ─── -->
+        <div class="shortcuts">
+          <a class="shortcut" routerLink="/learning/modules">
+            <i class="pi pi-book" aria-hidden="true"></i>
+            <span class="shortcut-name">Contenido</span>
+            <span class="shortcut-help">Los temas y subtemas del curso</span>
+          </a>
+
+          <a class="shortcut" routerLink="/learning/exercises">
+            <i class="pi pi-list-check" aria-hidden="true"></i>
+            <span class="shortcut-name">Ejercicios</span>
+            <span class="shortcut-help">Practica lo que has leído</span>
+          </a>
+
+          <a class="shortcut" routerLink="/playground">
+            <i class="pi pi-code" aria-hidden="true"></i>
+            <span class="shortcut-name">Práctica libre</span>
+            <span class="shortcut-help">Escribe código sin que cuente</span>
+          </a>
+
+          @if (isTeacher()) {
+            <a class="shortcut is-teacher" routerLink="/teaching">
+              <i class="pi pi-user-edit" aria-hidden="true"></i>
+              <span class="shortcut-name">Enseñar</span>
+              <span class="shortcut-help">Gestiona el contenido del curso</span>
+            </a>
+          }
+        </div>
+      </div>
+
+      <!-- ─── Cómo va ─── -->
+      <aside class="col-12 lg:col-4 flex flex-column gap-3">
+        <div class="panel stats-panel">
+          <h2 class="panel-title">Progreso</h2>
+
+          <!--
+            El anillo en vez de una barra: mismo dato, mucho más peso visual. `pathLength="100"`
+            evita calcular la circunferencia a mano, así que el porcentaje se pinta tal cual.
+          -->
+          <div
+            class="ring"
+            role="img"
+            [attr.aria-label]="'Recorrido completado: ' + porcentaje() + '%'"
+          >
+            <svg viewBox="0 0 120 120" aria-hidden="true">
+              <circle class="ring-track" cx="60" cy="60" r="52" pathLength="100" />
+              <circle
+                class="ring-value"
+                cx="60"
+                cy="60"
+                r="52"
+                pathLength="100"
+                [attr.stroke-dasharray]="porcentaje() + ' 100'"
+              />
+            </svg>
+            <span class="ring-figure">
+              <span class="ring-value-text">{{ porcentaje() }}%</span>
+              <span class="ring-caption">del recorrido</span>
+            </span>
+          </div>
+
+          <dl class="stats-list">
+            <div class="stats-row">
+              <dt>Subtemas</dt>
+              <dd>{{ subtemas().completados }} de {{ subtemas().total }}</dd>
+            </div>
+            <div class="stats-row">
+              <dt>Ejercicios</dt>
+              <dd>{{ ejercicios().aprobados }} de {{ ejercicios().total }}</dd>
+            </div>
+            @if (comprobaciones().total) {
+              <!--
+                Crédito parcial: sin esto, quien intentó un ejercicio y no lo aprobó solo lee
+                «0 de 1», que no distingue entre no haberlo intentado y quedarse a un criterio.
+              -->
+              <div class="stats-row">
+                <dt>Comprobaciones</dt>
+                <dd>{{ comprobaciones().superadas }} de {{ comprobaciones().total }}</dd>
+              </div>
+            }
+          </dl>
+        </div>
+
+        @if (temas().length) {
+          <div class="panel">
+            <h2 class="panel-title">Temas</h2>
+
+            <ul class="topic-list list-none m-0 p-0 flex flex-column gap-3">
+              @for (tema of temas(); track tema.id) {
+                <li class="topic" [class.is-locked]="tema.bloqueado">
+                  <div class="topic-head flex align-items-baseline justify-content-between gap-2">
+                    <span class="topic-name">{{ tema.nombre }}</span>
+                    <span class="topic-count">
+                      @if (tema.bloqueado) {
+                        <i class="pi pi-lock" aria-hidden="true"></i>
+                      } @else {
+                        {{ tema.completados }}/{{ tema.total }}
+                      }
+                    </span>
+                  </div>
+                  <div class="topic-track">
+                    <div class="topic-fill" [style.width.%]="tema.porcentaje"></div>
+                  </div>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </aside>
+    </div>
+  }
+</section>

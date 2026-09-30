@@ -105,27 +105,10 @@
 /* ─── Tarjeta de progreso ─── */
 
 @include learning.progress-card;
+// Aquí la tarjeta va en una columna al lado de la lista de temas, así que acompaña a su scroll.
+@include learning.progress-card-sticky;
 
 :host ::ng-deep .progress-card {
   @include learning.progress-card-bar;
-
-  // Botón invertido (fondo blanco sobre la tarjeta): los `severity` de PrimeNG no dan este contraste.
-  .resume-button {
-    display: block;
-    position: relative;
-
-    .p-button {
-      justify-content: center;
-      width: 100%;
-      border: none;
-      background-color: var(--color-surface-white);
-      color: var(--color-primary);
-      font-weight: 600;
-
-      &:not(:disabled):hover {
-        background-color: var(--color-primary-light);
-        color: var(--color-primary-hover);
-      }
-    }
-  }
+  @include learning.progress-card-button('resume-button');
 }

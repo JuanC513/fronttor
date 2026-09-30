@@ -1,0 +1,385 @@
+@use '../../../../shared/styles/page' as page;
+
+:host {
+  @include page.page-shell;
+
+  padding: var(--space-lg);
+}
+
+.page-header {
+  @include page.page-header;
+}
+
+/* ─── Tarjeta principal ─── */
+
+// El degradado y la cifra grande son los mismos de Contenido y Ejercicios. Aquí encabeza la página
+// en vez de acompañar a una lista, así que no lleva el `sticky` de allá.
+@include page.progress-card;
+
+.step-name {
+  margin: 0 0 var(--space-xs);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.step-help {
+  margin: 0 0 var(--space-lg);
+  font-size: 0.9375rem;
+  opacity: 0.85;
+}
+
+:host ::ng-deep .progress-card {
+  @include page.progress-card-button('step-button');
+
+  // Sobre el degradado el botón no debe ocupar todo el ancho: es una invitación, no un formulario.
+  .step-button .p-button {
+    width: auto;
+    padding-inline: var(--space-lg);
+  }
+}
+
+/* ─── Paneles blancos ─── */
+
+.panel {
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface-white);
+}
+
+.panel-title {
+  margin: 0 0 var(--space-xs);
+  color: var(--color-text-primary);
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.panel-help {
+  margin: 0 0 var(--space-md);
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+/* ─── Dónde se está atascando ─── */
+
+.stuck-card {
+  padding: var(--space-md);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-warning);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  text-decoration: none;
+  transition:
+    border-color 0.2s,
+    background-color 0.2s;
+
+  .pi-exclamation-circle {
+    color: var(--color-warning);
+  }
+
+  &:hover {
+    border-color: var(--color-primary);
+    border-left-color: var(--color-warning);
+    background-color: var(--color-surface-white);
+  }
+
+  &:hover .stuck-arrow {
+    transform: translateX(4px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+.stuck-count {
+  color: var(--color-warning);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.stuck-arrow {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  transition: transform 0.2s;
+}
+
+/* ─── Accesos ─── */
+
+.shortcuts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-md);
+}
+
+.shortcut {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface-white);
+  color: var(--color-text-primary);
+  text-decoration: none;
+  transition:
+    border-color 0.2s,
+    transform 0.2s;
+
+  .pi {
+    color: var(--color-primary);
+    font-size: 1.25rem;
+  }
+
+  &:hover {
+    border-color: var(--color-primary);
+    transform: translateY(-2px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  // El acceso del profesor se distingue del resto: no es parte del recorrido del estudiante.
+  &.is-teacher {
+    border-left: 4px solid var(--color-accent);
+
+    .pi {
+      color: var(--color-accent);
+    }
+  }
+}
+
+.shortcut-name {
+  font-weight: 600;
+}
+
+.shortcut-help {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+/* ─── Las dos tarjetas de en medio ─── */
+
+.duo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-md);
+
+  // Columna, para poder anclar la acción al pie: así las dos tarjetas la alinean a la misma altura
+  // aunque una tenga más texto que la otra.
+  .panel {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+// El `p-tag` es inline, igual que el enlace de abajo: sin esta fila propia los dos fluyen juntos y
+// el `margin` del enlace no los separa.
+.duo-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  // El hueco va aquí y no como `padding` del enlace: dentro del enlace sería área clicable, y se
+  // podría activar pulsando justo debajo de la etiqueta. Con `margin-top: auto` en la acción, este
+  // margen es el mínimo garantizado cuando la tarjeta va justa de alto.
+  margin-bottom: var(--space-md);
+}
+
+.panel-title .pi {
+  margin-right: var(--space-xs);
+  color: var(--color-primary);
+}
+
+.duo-name {
+  margin: 0 0 var(--space-sm);
+  color: var(--color-text-primary);
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.duo-action {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: var(--space-xs);
+  // `auto` empuja la acción al pie de la tarjeta, que es lo que alinea las dos del dúo a la misma
+  // altura. El aire por encima lo pone el margen de `.duo-meta`.
+  margin-top: auto;
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: none;
+
+  .pi {
+    font-size: 0.875rem;
+    transition: transform 0.2s;
+  }
+
+  &:hover .pi {
+    transform: translateX(4px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+.tutor-list {
+  margin-bottom: var(--space-md);
+  color: var(--color-text-secondary);
+  line-height: 1.9;
+
+  b {
+    color: var(--color-text-primary);
+    font-size: 1.125rem;
+  }
+}
+
+/* ─── El anillo ─── */
+
+// `pathLength="100"` en el SVG normaliza la circunferencia, así que el `stroke-dasharray` recibe el
+// porcentaje tal cual y no hay que calcular 2πr ni mantenerlo sincronizado con el radio.
+.ring {
+  position: relative;
+  width: 11rem;
+  height: 11rem;
+  margin: 0 auto var(--space-lg);
+
+  svg {
+    width: 100%;
+    height: 100%;
+    // Para que el trazo empiece arriba y avance en el sentido del reloj.
+    transform: rotate(-90deg);
+  }
+
+  circle {
+    fill: none;
+    stroke-width: 10;
+    stroke-linecap: round;
+  }
+}
+
+.ring-track {
+  stroke: var(--color-surface-container);
+}
+
+.ring-value {
+  stroke: var(--color-primary);
+  transition: stroke-dasharray 0.4s ease-out;
+}
+
+.ring-figure {
+  display: flex;
+  position: absolute;
+  inset: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+}
+
+.ring-value-text {
+  color: var(--color-primary);
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.ring-caption {
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+}
+
+/* ─── Progreso por tema ─── */
+
+.topic-name {
+  color: var(--color-text-primary);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.topic-count {
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.topic-track {
+  height: 0.5rem;
+  margin-top: var(--space-xs);
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface-container);
+  overflow: hidden;
+}
+
+.topic-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background-color: var(--color-primary);
+  transition: width 0.4s ease-out;
+}
+
+// Un tema al que todavía no se llega se apaga, en vez de desaparecer: saber que está ahí es parte
+// de ver el recorrido completo.
+.topic.is-locked {
+  .topic-name,
+  .topic-count {
+    color: var(--color-text-muted);
+  }
+
+  .topic-fill {
+    background-color: var(--color-text-muted);
+  }
+}
+
+/* ─── Cómo va ─── */
+
+// El panel de cifras va en blanco, no en degradado: el degradado ya lo lleva la tarjeta principal, y
+// dos en la misma pantalla se pelearían por la atención.
+.stats-value {
+  color: var(--color-primary);
+}
+
+.stats-caption {
+  color: var(--color-text-secondary);
+  opacity: 1;
+}
+
+.stats-list {
+  margin: var(--space-lg) 0 0;
+}
+
+.stats-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 0;
+  border-top: 1px solid var(--color-border);
+
+  dt {
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--color-text-primary);
+    font-weight: 600;
+  }
+}
+
+@media (min-width: 992px) {
+  .stats-panel {
+    position: sticky;
+    top: 0;
+  }
+}

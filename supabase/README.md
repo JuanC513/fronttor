@@ -37,11 +37,13 @@ npx supabase db dump --linked --schema public -f supabase/schema-actual.sql
 16. `migrations/20260928120000_close_anon_grants.sql`
 17. `migrations/20260929120000_enforce_lesson_order.sql`
 18. `migrations/20260930120000_content_publication_rls.sql`
-19. `seed.sql`
+19. `migrations/20261001120000_tutor_activity.sql`
+20. `seed.sql`
 
 El orden **no es opcional**: la 3 usa la función `is_admin()`, que crea la 2; la 4 redefine funciones que crea la 2; la 5 redefine las que deja la 4; la 6 redefine `is_admin()` y `handle_new_user()`, la 7 depende de esa última, la 10 renombra `is_admin()` a `is_teacher()` junto con el rol y las políticas, y la 11 recrea `submit_exercise_attempt`, que existe desde la 2. La 12 usa `is_teacher()`, que deja la 10; la 14 lee `lesson_progress` y `exercise_attempts`, que crea la 2, y `profiles.profile_description`, que la 8 dejó como la única columna editable del propio perfil; y la 15 recrea `get_student_context()`, que crea la 14.
 
-La 18 reemplaza policies que declaran la 3 y la 12, así que va después de las dos.
+La 18 reemplaza policies que declaran la 3 y la 12, así que va después de las dos; y la 19 lee
+`ai_interactions.status`, que añade la 13.
 
 La 17 recrea `mark_lesson_viewed` —que viene de la 4— y `submit_exercise_attempt` —de la 11—, así que
 va después de las dos. Y va **después de la 16** por un motivo concreto: crea una función nueva, y
@@ -193,6 +195,13 @@ Es decir: las cuentas de usuario y su asociación con los roles **no se pierden*
 
   Reemplaza `exercises_select_published_or_teacher`, que creó la 12: aquella solo miraba el
   `is_published` del propio ejercicio, y esta mira además su subtema y su tema.
+
+- **`20261001120000_tutor_activity.sql` es seguro de reejecutar.** Crea un índice con `if not
+  exists` y una función con `create or replace`.
+
+  **No añade una policy de lectura sobre `ai_interactions`, y es deliberado**: esa tabla guarda el
+  `prompt`, que lleva dentro las reglas del sistema y las defensas contra inyección. La función
+  devuelve solo el agregado, así que el estudiante sigue sin poder leer ni una fila.
 
 - **`seed.sql` es seguro de reejecutar.**
 

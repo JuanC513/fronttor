@@ -57,6 +57,35 @@ describe('lessonReachableGuard', () => {
   });
 
   /**
+   * El caso que el `catch` no cubre: una promesa colgada no lanza. Sin tope, la navegación se queda
+   * esperando para siempre y el estudiante ve un botón que no hace nada. Se reprodujo de verdad con
+   * el cliente de Supabase sin poder tomar el `navigator.lock` de su sesión.
+   */
+  it('deja pasar si la consulta no responde nunca', async () => {
+    jasmine.clock().install();
+    isLessonReachable.and.returnValue(new Promise(() => undefined));
+
+    const resultado = run('101');
+    jasmine.clock().tick(3_001);
+    jasmine.clock().uninstall();
+
+    expect(await resultado).toBeTrue();
+    expect(router.createUrlTree).not.toHaveBeenCalled();
+  });
+
+  /** Y lo contrario: si responde a tiempo, manda la respuesta, no el tope. */
+  it('respeta la respuesta cuando llega antes del tope', async () => {
+    jasmine.clock().install();
+    isLessonReachable.and.resolveTo(false);
+
+    const resultado = run('101');
+    jasmine.clock().tick(3_001);
+    jasmine.clock().uninstall();
+
+    expect(await resultado).toBe(urlTree);
+  });
+
+  /**
    * La barrera de verdad está en la base, así que este guard es comodidad: dejar a alguien sin poder
    * leer por un fallo de red sería peor que el problema que resuelve.
    */

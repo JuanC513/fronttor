@@ -6,29 +6,12 @@
 //
 // Se usa igual que `_auth-shared.scss`: `@use '../../learning-shared' as learning;` y luego
 // `@include learning.page-shell;`.
+//
+// La forma de la página y la tarjeta del degradado ya no viven aquí: las comparte `home`, así que
+// se mudaron a `shared/styles/_page.scss`. Se reexportan para que las vistas de esta feature las
+// sigan llamando por `learning.*` sin enterarse del traslado.
 
-/// Lienzo de la página: ocupa el alto disponible y desplaza su propio contenido.
-@mixin page-shell {
-  display: block;
-  height: 100%;
-  width: 100%;
-  background-color: var(--color-surface);
-  overflow-y: auto;
-}
-
-/// Título y bajada de la vista.
-@mixin page-header {
-  margin-bottom: var(--space-lg);
-
-  h1 {
-    margin: 0 0 var(--space-xs);
-    color: var(--color-text-primary);
-  }
-
-  p {
-    color: var(--color-text-secondary);
-  }
-}
+@forward '../../shared/styles/page';
 
 /// Acordeón de temas. Va dentro de un `:host ::ng-deep` porque toca las clases de PrimeNG.
 @mixin modules-accordion {
@@ -128,82 +111,15 @@
   }
 }
 
-/// Tarjeta destacada de progreso, la del degradado.
-@mixin progress-card {
-  .progress-card {
-    position: relative;
-    padding: var(--space-lg);
-    border-radius: var(--radius-lg);
-    background: linear-gradient(
-      135deg,
-      var(--color-primary) 0%,
-      var(--color-primary-container) 100%
-    );
-    color: var(--color-on-primary);
-    overflow: hidden;
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 10%);
-
-    h2 {
-      margin: 0 0 var(--space-md);
-      font-size: 1.25rem;
-      font-weight: 600;
-    }
-  }
-
-  .progress-figure {
-    display: flex;
-    align-items: baseline;
-    gap: var(--space-sm);
-    margin: 0 0 var(--space-sm);
-  }
-
-  .progress-value {
-    font-size: 3rem;
-    font-weight: 700;
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-  }
-
-  .progress-caption {
-    font-size: 0.875rem;
-    opacity: 0.85;
-  }
-
-  // El decorativo del diseño; `pointer-events: none` para que no tape lo que haya debajo.
-  .progress-decor {
-    position: absolute;
-    right: -1.5rem;
-    bottom: -1.5rem;
-    font-size: 8rem;
-    opacity: 0.12;
-    pointer-events: none;
-  }
-
-  /* En pantallas anchas la tarjeta acompaña al scroll de los temas. */
+/// La tarjeta acompañando al scroll de los temas, en pantallas anchas.
+///
+/// Se quedó en esta feature porque solo aplica cuando la tarjeta va en una columna al lado de una
+/// lista larga. En Inicio encabeza la página y fijarla no tendría sentido.
+@mixin progress-card-sticky {
   @media (min-width: 992px) {
     .progress-card {
       position: sticky;
       top: 0;
     }
-  }
-}
-
-/// Barra de progreso sobre el degradado. Va dentro de un `:host ::ng-deep .progress-card`.
-@mixin progress-card-bar {
-  .progress-bar {
-    display: block;
-    position: relative;
-    margin-bottom: var(--space-lg);
-  }
-
-  .p-progressbar {
-    height: 0.75rem;
-    border-radius: var(--radius-full);
-    background-color: rgb(255 255 255 / 25%);
-  }
-
-  .p-progressbar-value {
-    border-radius: var(--radius-full);
-    background-color: var(--color-surface-white);
   }
 }
