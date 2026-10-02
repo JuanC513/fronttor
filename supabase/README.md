@@ -17,6 +17,17 @@ Cuando se aplica una migración, la foto queda desactualizada. Para refrescarla:
 npx supabase db dump --linked --schema public -f supabase/schema-actual.sql
 ```
 
+> **Hazlo con el árbol limpio, y ten Docker arrancado.** `-f` vacía el archivo **antes** de saber si
+> va a poder generarlo, y el CLI no usa el `pg_dump` del sistema: levanta un contenedor con el de la
+> versión del servidor. Sin el demonio de Docker, el comando falla dejando `schema-actual.sql` en
+> cero bytes. Se recupera con `git checkout -- supabase/schema-actual.sql`, que es justamente lo que
+> no se puede hacer si había cambios sin commitear.
+
+> **El diff del refresco es un detector de deriva.** Si solo añade lo que crean las migraciones
+> nuevas, la base remota y `migrations/` dicen lo mismo. Si **borra** o cambia algo que ninguna
+> migración tocó, es que alguien editó la base a mano desde el panel, y ese cambio no está en ningún
+> archivo: hay que escribirle su migración antes de que se pierda.
+
 ## Orden de aplicación
 
 1. `schema-actual.sql` — solo en un proyecto nuevo
