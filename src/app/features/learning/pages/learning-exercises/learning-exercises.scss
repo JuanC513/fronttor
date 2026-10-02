@@ -138,6 +138,7 @@
 /* ─── Tarjeta de progreso ─── */
 
 @include learning.progress-card;
+@include learning.progress-card-sticky;
 
 :host ::ng-deep {
   .progress-card {

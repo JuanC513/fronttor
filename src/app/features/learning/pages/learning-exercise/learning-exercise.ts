@@ -16,6 +16,7 @@ import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
 import { AuthService } from '@core/services/auth/auth-service';
+import { BreadcrumbService } from '@core/services/breadcrumb/breadcrumb-service';
 import { FeedbackCriterion, FeedbackHint } from '@domain/ai/models/generate-feedback-model';
 import { AiService } from '@domain/ai/services/ai-service';
 import { resolveHintFocus } from '@domain/ai/utils/feedback-focus';
@@ -83,6 +84,7 @@ function starterOf(exercise: StudentExerciseDetail): CodeRunnerState {
 export class LearningExercise implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly authService = inject(AuthService);
+  private readonly breadcrumbService = inject(BreadcrumbService);
   private readonly exerciseService = inject(ExerciseService);
   private readonly attemptService = inject(AttemptService);
   private readonly aiService = inject(AiService);
@@ -281,6 +283,7 @@ export class LearningExercise implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.helpController?.abort();
     this.helpController = null;
+    this.breadcrumbService.clear();
   }
 
   async fetchExercise() {
@@ -309,6 +312,7 @@ export class LearningExercise implements OnInit, OnDestroy {
 
       this.exercise.set(exercise);
       this.draft.set(draft);
+      this.breadcrumbService.setTitle(exercise.name);
 
       // El último envío manda sobre el código inicial: si el estudiante ya trabajó aquí, empezar
       // de cero otra vez le borraría el trabajo cada vez que sale de la vista.

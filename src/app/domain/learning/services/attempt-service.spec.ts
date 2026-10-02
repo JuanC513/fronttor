@@ -227,4 +227,121 @@ describe('AttemptService', () => {
       );
     });
   });
+
+  describe('getAttemptSummary', () => {
+    let calls: { method: string; args: unknown[] }[];
+
+    /**
+     * Como en `getLastAttempt`, pero sin método final: esta consulta se espera directamente sobre
+     * el constructor, que en supabase-js es «thenable».
+     */
+    const setupQuery = (result: { data: unknown; error: { message: string } | null }) => {
+      calls = [];
+
+      const builder: Record<string, unknown> = {};
+      for (const method of ['select', 'eq', 'order']) {
+        builder[method] = (...args: unknown[]) => {
+          calls.push({ method, args });
+          return builder;
+        };
+      }
+      builder['then'] = (resolve: (value: unknown) => unknown) =>
+        Promise.resolve(result).then(resolve);
+
+      const from = jasmine.createSpy('from').and.returnValue(builder);
+
+      TestBed.configureTestingModule({
+        providers: [{ provide: SupabaseService, useValue: { client: { from } } }],
+      });
+
+      service = TestBed.inject(AttemptService);
+      return from;
+    };
+
+    const criterio = (passed: boolean) => ({ description: 'Existe un h1', passed });
+
+    it('cuenta los intentos de cada ejercicio', async () => {
+      setupQuery({
+        data: [
+          { exercise_id: 7, results: [] },
+          { exercise_id: 7, results: [] },
+          { exercise_id: 9, results: [] },
+          { exercise_id: 7, results: [] },
+        ],
+        error: null,
+      });
+
+      const resumen = await service.getAttemptSummary('usuario-1');
+
+      expect(resumen.get(7)?.intentos).toBe(3);
+      expect(resumen.get(9)?.intentos).toBe(1);
+      expect(resumen.size).toBe(2);
+    });
+
+    /**
+     * La consulta pide `id desc`, así que la primera fila de cada ejercicio es su envío más
+     * reciente. Si se quedara con otra, Inicio contaría comprobaciones de un intento viejo.
+     */
+    it('se queda con el veredicto del último intento', async () => {
+      setupQuery({
+        data: [
+          { exercise_id: 7, results: [criterio(true), criterio(true)] },
+          { exercise_id: 7, results: [criterio(false), criterio(false)] },
+        ],
+        error: null,
+      });
+
+      const resumen = await service.getAttemptSummary('usuario-1');
+
+      expect(resumen.get(7)?.ultimoResultado.map((c) => c.passed)).toEqual([true, true]);
+    });
+
+    it('pide los intentos del más reciente al más antiguo', async () => {
+      setupQuery({ data: [], error: null });
+
+      await service.getAttemptSummary('usuario-1');
+
+      expect(calls.filter((call) => call.method === 'order').map((call) => call.args)).toContain([
+        'id',
+        { ascending: false },
+      ]);
+    });
+
+    it('tolera un intento sin veredicto guardado', async () => {
+      setupQuery({ data: [{ exercise_id: 7, results: null }], error: null });
+
+      expect((await service.getAttemptSummary('usuario-1')).get(7)?.ultimoResultado).toEqual([]);
+    });
+
+    it('devuelve un mapa vacío cuando no hay intentos', async () => {
+      setupQuery({ data: [], error: null });
+
+      expect((await service.getAttemptSummary('usuario-1')).size).toBe(0);
+    });
+
+    /**
+     * El mismo filtro y el mismo motivo que en `getLastAttempt`: con dos políticas de lectura, una
+     * cuenta con rol de profesor recibiría los intentos de todos, e Inicio le diría que lleva
+     * veinte intentos en un ejercicio que no ha abierto.
+     */
+    it('acota la consulta al usuario', async () => {
+      const from = setupQuery({ data: [], error: null });
+
+      await service.getAttemptSummary('usuario-1');
+
+      expect(from).toHaveBeenCalledWith('exercise_attempts');
+      expect(calls.filter((call) => call.method === 'eq').map((call) => call.args)).toContain([
+        'user_id',
+        'usuario-1',
+      ]);
+    });
+
+    it('propaga el error de la base', async () => {
+      setupQuery({ data: null, error: { message: 'permission denied' } });
+
+      await expectAsync(service.getAttemptSummary('usuario-1')).toBeRejectedWithError(
+        /permission denied/,
+      );
+    });
+  });
 });

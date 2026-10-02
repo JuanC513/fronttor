@@ -11,6 +11,13 @@ export interface AttemptSubmission {
   results: CriterionResult[];
 }
 
+/** Lo que Inicio necesita saber de los envíos del estudiante a un ejercicio. */
+export interface ExerciseAttemptSummary {
+  intentos: number;
+  /** El veredicto criterio a criterio del último envío. Vacío si el intento no guardó ninguno. */
+  ultimoResultado: CriterionResult[];
+}
+
 /** El código de un envío anterior, para retomarlo al reabrir el ejercicio. */
 export interface AttemptDraft {
   code: CodeRunnerState;
@@ -130,6 +137,57 @@ export class AttemptService {
    * el estudiante reenvía mientras el modelo piensa, y ahí el profesor leería una retroalimentación
    * que no describe el código de esa fila.
    */
+  /**
+   * Cuántos envíos lleva el estudiante en cada ejercicio, y cómo le fue en el último.
+   *
+   * Lo pide Inicio para dos cosas: señalar dónde se está atascando, y contar las comprobaciones
+   * superadas. Esa segunda cifra arregla un problema real: quien ha intentado el único ejercicio y no
+   * lo ha aprobado ve «0 de 1», que no distingue entre no haberlo intentado y haberse quedado a un
+   * criterio.
+   *
+   * **Solo el último intento**, no la suma del historial: interesa dónde está ahora, no cuántas veces
+   * tropezó por el camino.
+   *
+   * No viene de `get_student_context()`, que ya calcula algo parecido, por dos razones: aquella
+   * devuelve nombres sin ids —así que de ahí no sale un enlace— y cuenta sobre un universo distinto
+   * al de las vistas, de modo que las cifras de dos pantallas contiguas no cuadrarían.
+   *
+   * Se agrupa en el cliente porque PostgREST no agrupa. El `order by id desc` no es decorativo: es lo
+   * que hace que la primera fila de cada ejercicio sea su último intento, y de paso usa
+   * `exercise_attempts_user_recent_idx`, el índice que creó `20260927130000`. El coste es el volumen
+   * de una vida completa de un estudiante: del orden de cientos de filas, ruido al lado de la llamada.
+   *
+   * **El filtro por `user_id` no sobra**, por cuarta vez en este dominio: `exercise_attempts` tiene
+   * dos políticas de lectura, y una cuenta con rol de profesor vería por RLS los intentos de todo el
+   * mundo. Inicio acabaría diciéndole que lleva veinte intentos en algo que no ha abierto.
+   */
+  async getAttemptSummary(userId: string): Promise<Map<number, ExerciseAttemptSummary>> {
+    const { data, error } = await this.supabase
+      .from('exercise_attempts')
+      .select('exercise_id, results')
+      .eq('user_id', userId)
+      .order('id', { ascending: false });
+
+    if (error) throw new Error(error.message);
+
+    const resumen = new Map<number, ExerciseAttemptSummary>();
+
+    for (const row of (data as { exercise_id: number; results: CriterionResult[] | null }[]) ??
+      []) {
+      const previo = resumen.get(row.exercise_id);
+
+      if (previo) {
+        previo.intentos += 1;
+        continue;
+      }
+
+      // La primera fila que se ve de cada ejercicio es la más reciente, por el orden de la consulta.
+      resumen.set(row.exercise_id, { intentos: 1, ultimoResultado: row.results ?? [] });
+    }
+
+    return resumen;
+  }
+
   async setFeedback(attemptId: number, feedback: string): Promise<void> {
     const { error } = await this.supabase.rpc('set_attempt_feedback', {
       p_attempt_id: attemptId,

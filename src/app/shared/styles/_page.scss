@@ -1,0 +1,135 @@
+// La forma de una página y la tarjeta destacada, compartidas entre features.
+//
+// Vivían en `features/learning/_learning-shared.scss`, que es el parcial de esa feature. Se sacaron
+// aquí cuando Inicio necesitó lo mismo: la convención del repo es un parcial por feature —igual que
+// `_auth-shared.scss`—, así que una vista de `home` importando el de `learning` habría atado dos
+// features que no tienen nada que ver.
+//
+// `_learning-shared.scss` los reexporta con `@forward`, de modo que las vistas de learning siguen
+// escribiendo `@include learning.page-shell` sin enterarse del traslado.
+//
+// Se usa así:  `@use '../../../shared/styles/page' as page;`  y luego  `@include page.page-shell;`
+
+/// Lienzo de la página: ocupa el alto disponible y desplaza su propio contenido.
+@mixin page-shell {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background-color: var(--color-surface);
+  overflow-y: auto;
+}
+
+/// Título y bajada de la vista.
+@mixin page-header {
+  margin-bottom: var(--space-lg);
+
+  h1 {
+    margin: 0 0 var(--space-xs);
+    color: var(--color-text-primary);
+  }
+
+  p {
+    color: var(--color-text-secondary);
+  }
+}
+
+/// Tarjeta destacada, la del degradado.
+///
+/// No trae posicionamiento: en learning acompaña al scroll de los temas y en Inicio encabeza la
+/// página. Quien la use decide dónde va.
+@mixin progress-card {
+  .progress-card {
+    position: relative;
+    padding: var(--space-lg);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(
+      135deg,
+      var(--color-primary) 0%,
+      var(--color-primary-container) 100%
+    );
+    color: var(--color-on-primary);
+    overflow: hidden;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 10%);
+
+    h2 {
+      margin: 0 0 var(--space-md);
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+  }
+
+  .progress-figure {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-sm);
+    margin: 0 0 var(--space-sm);
+  }
+
+  .progress-value {
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .progress-caption {
+    font-size: 0.875rem;
+    opacity: 0.85;
+  }
+
+  // El decorativo del diseño; `pointer-events: none` para que no tape lo que haya debajo.
+  .progress-decor {
+    position: absolute;
+    right: -1.5rem;
+    bottom: -1.5rem;
+    font-size: 8rem;
+    opacity: 0.12;
+    pointer-events: none;
+  }
+}
+
+/// Barra de progreso sobre el degradado. Va dentro de un `:host ::ng-deep .progress-card`.
+@mixin progress-card-bar {
+  .progress-bar {
+    display: block;
+    position: relative;
+    margin-bottom: var(--space-lg);
+  }
+
+  .p-progressbar {
+    height: 0.75rem;
+    border-radius: var(--radius-full);
+    background-color: rgb(255 255 255 / 25%);
+  }
+
+  .p-progressbar-value {
+    border-radius: var(--radius-full);
+    background-color: var(--color-surface-white);
+  }
+}
+
+/// Botón invertido sobre el degradado: fondo blanco, texto primario.
+///
+/// Los `severity` de PrimeNG no dan este contraste sobre la tarjeta. Va dentro de un
+/// `:host ::ng-deep .progress-card`, y la clase del botón se pasa como argumento porque cada vista
+/// llama al suyo por su nombre.
+@mixin progress-card-button($clase) {
+  .#{$clase} {
+    display: block;
+    position: relative;
+
+    .p-button {
+      justify-content: center;
+      width: 100%;
+      border: none;
+      background-color: var(--color-surface-white);
+      color: var(--color-primary);
+      font-weight: 600;
+
+      &:not(:disabled):hover {
+        background-color: var(--color-primary-light);
+        color: var(--color-primary-hover);
+      }
+    }
+  }
+}

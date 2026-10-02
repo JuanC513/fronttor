@@ -1,65 +1,173 @@
 <section class="profile-container">
+  <p-confirmpopup />
+
   <header class="profile-header flex flex-wrap align-items-start justify-content-between gap-3">
     <div class="min-w-0">
       <h1>Perfil</h1>
       @if (email(); as correo) {
         <p class="profile-email m-0">{{ correo }}</p>
       }
+      @if (memberSince(); as desde) {
+        <p class="profile-since m-0">Miembro desde {{ desde }}</p>
+      }
     </div>
 
-    <p-button label="Cerrar sesión" variant="outlined" severity="danger" (onClick)="logout()" />
+    <p-button
+      #logoutAnchor
+      label="Cerrar sesión"
+      variant="outlined"
+      severity="danger"
+      (onClick)="onLogout()"
+    />
   </header>
 
-  <!-- El texto de alrededor es lo que decide si alguien rellena esto. Un campo llamado
+  <!-- Va aquí y no dentro de ninguna tarjeta: el aviso tiene que salir junto al botón que se acaba
+      de pulsar, no a media página de él. -->
+  @if (logoutError(); as message) {
+    <p-message severity="error" [text]="message" styleClass="w-full" />
+  }
+
+  <span class="cards-container flex gap-3">
+    <!-- El texto de alrededor es lo que decide si alguien rellena esto. Un campo llamado
       «descripción», sin decir para qué sirve ni qué merece la pena escribir, se queda vacío. -->
-  <div class="tutor-card">
-    <h2 class="tutor-title">Cuéntale a tu tutor sobre ti</h2>
-    <p class="tutor-help">
-      Esto se lo paso al tutor de IA cada vez que le preguntas, le pides una pista o le pides un
-      ejercicio de práctica, para que te responda a tu medida. Tu progreso ya lo conoce: lo que no
-      sabe es de dónde vienes y cómo prefieres que te expliquen.
-    </p>
+    <div class="card w-full">
+      <h2 class="card-title">Cuéntale a tu tutor sobre ti</h2>
+      <p class="card-help">
+        Esto se lo paso al tutor de IA cada vez que le preguntas, le pides una pista o le pides un
+        ejercicio de práctica, para que te responda a tu medida. Tu progreso ya lo conoce: lo que no
+        sabe es de dónde vienes y cómo prefieres que te expliquen.
+      </p>
 
-    <ul class="tutor-examples">
-      <li>Qué sabes ya de programación, aunque sea de otra área.</li>
-      <li>Para qué quieres el frontend: un trabajo, un proyecto propio, la carrera.</li>
-      <li>Cómo aprendes mejor: con ejemplos cortos, con analogías, yendo al grano.</li>
-    </ul>
+      <ul class="tutor-examples">
+        <li>Qué sabes ya de programación, aunque sea de otra área.</li>
+        <li>Para qué quieres el frontend: un trabajo, un proyecto propio, la carrera.</li>
+        <li>Cómo aprendes mejor: con ejemplos cortos, con analogías, yendo al grano.</li>
+      </ul>
 
-    <div class="flex flex-column gap-2">
-      <label for="perfil">Sobre mí</label>
-      <textarea
-        pTextarea
-        id="perfil"
-        rows="5"
-        class="w-full"
-        style="resize: none"
-        placeholder="Ej: Vengo de backend en Java y nunca he hecho CSS. Quiero montar mi portafolio. Prefiero ejemplos cortos y poca teoría."
-        [maxlength]="maxLength"
-        [ngModel]="description()"
-        (ngModelChange)="onDescriptionChange($event)"
-      ></textarea>
-      <small class="counter">{{ description().length }} / {{ maxLength }}</small>
+      <div class="flex flex-column gap-2">
+        <label for="perfil">Sobre mí</label>
+        <textarea
+          pTextarea
+          id="perfil"
+          rows="5"
+          class="w-full"
+          style="resize: none"
+          placeholder="Ej: Vengo de backend en Java y nunca he hecho CSS. Quiero montar mi portafolio. Prefiero ejemplos cortos y poca teoría."
+          [maxlength]="maxLength"
+          [ngModel]="description()"
+          (ngModelChange)="onDescriptionChange($event)"
+        ></textarea>
+        <small class="counter">{{ description().length }} / {{ maxLength }}</small>
+      </div>
+
+      @if (error(); as message) {
+        <p-message severity="error" [text]="message" styleClass="w-full mt-3" />
+      } @else if (saved()) {
+        <p-message
+          severity="success"
+          text="Guardado. Tu tutor ya lo tiene en cuenta."
+          styleClass="w-full mt-3"
+        />
+      }
+
+      <div class="actions mt-3">
+        <p-button
+          label="Guardar"
+          icon="pi pi-check"
+          [loading]="saving()"
+          [disabled]="!canSave()"
+          (onClick)="save()"
+        />
+      </div>
     </div>
 
-    @if (error(); as message) {
-      <p-message severity="error" [text]="message" styleClass="w-full mt-3" />
-    } @else if (saved()) {
-      <p-message
-        severity="success"
-        text="Guardado. Tu tutor ya lo tiene en cuenta."
-        styleClass="w-full mt-3"
-      />
+    <!--
+    Qué ve el tutor. Es texto fijo porque describe el sistema, no datos de nadie: no hay ninguna
+    lectura detrás.
+
+    LA FUENTE DE VERDAD DE ESTA LISTA ES `supabase/functions/_shared/student-context.ts`, que arma
+    los bloques del prompt, y `ai-log.ts`, que decide qué se guarda. Si allí cambia lo que se manda o
+    lo que se registra, esto miente — y una transparencia desactualizada es peor que ninguna.
+  -->
+    <div class="card w-full">
+      <h2 class="card-title">
+        <i class="pi pi-eye" aria-hidden="true"></i>
+        Qué sabe el tutor de ti
+      </h2>
+      <p class="card-help">
+        El tutor es un modelo de IA. Para responderte a tu medida recibe esto cada vez que le
+        escribes, y conviene que lo sepas antes de contarle nada.
+      </p>
+
+      <h3 class="card-subtitle">Lo que recibe</h3>
+      <ul class="facts">
+        <li>
+          <i class="pi pi-user" aria-hidden="true"></i>
+          <span>
+            Lo que escribiste aquí arriba, marcado como escrito por ti. Le sirve para ajustar el
+            nivel, los ejemplos y el tono; nunca para cambiar lo que hace.
+          </span>
+        </li>
+        <li>
+          <i class="pi pi-book" aria-hidden="true"></i>
+          <span>Cuántos subtemas llevas completados y en cuáles estás ahora.</span>
+        </li>
+        <li>
+          <i class="pi pi-list-check" aria-hidden="true"></i>
+          <span>Cuántos ejercicios has aprobado.</span>
+        </li>
+        <li>
+          <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+          <span>En qué ejercicios te has atascado y cuántas veces los has intentado.</span>
+        </li>
+        <li>
+          <i class="pi pi-chart-bar" aria-hidden="true"></i>
+          <span>Qué tipo de comprobaciones fallas más y cuáles se te olvidan a menudo.</span>
+        </li>
+      </ul>
+
+      <h3 class="card-subtitle">Lo que no recibe</h3>
+      <ul class="facts">
+        <li>
+          <i class="pi pi-shield" aria-hidden="true"></i>
+          <span>Tu correo ni tu contraseña. Nada que te identifique sale hacia el modelo.</span>
+        </li>
+      </ul>
+
+      <h3 class="card-subtitle">Lo que queda guardado</h3>
+      <ul class="facts">
+        <li>
+          <i class="pi pi-database" aria-hidden="true"></i>
+          <span>
+            Cada consulta se guarda con lo que preguntaste, lo que respondió el tutor y de qué
+            subtema iba, para poder revisar después si las respuestas son buenas.
+            <b>Tu profesor puede verlas.</b>
+          </span>
+        </li>
+      </ul>
+    </div>
+  </span>
+
+  <div class="card">
+    <h2 class="card-title">
+      <i class="pi pi-lock" aria-hidden="true"></i>
+      Seguridad
+    </h2>
+
+    @if (tienePassword()) {
+      <p class="card-help">
+        Te pedimos la contraseña actual antes de cambiarla. Así, si alguien encuentra tu sesión
+        abierta, no puede dejarte fuera de tu propia cuenta.
+      </p>
+
+      <app-change-password-form />
+    } @else {
+      <!-- Un formulario que no puede funcionar es peor que no tenerlo: se prueba, falla y nadie
+          entiende por qué. -->
+      <p class="card-help m-0">
+        Entraste con Google, así que tu contraseña la gestiona Google y se cambia desde tu cuenta de
+        Google, no desde aquí.
+      </p>
     }
-
-    <div class="actions mt-3">
-      <p-button
-        label="Guardar"
-        icon="pi pi-check"
-        [loading]="saving()"
-        [disabled]="!canSave()"
-        (onClick)="save()"
-      />
-    </div>
   </div>
 </section>
