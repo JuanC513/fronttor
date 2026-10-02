@@ -1,4 +1,11 @@
 // Estilos compartidos por las vistas de autenticación (login, callback y reset de contraseña).
+//
+// El campo de formulario y el ícono del `p-password` ya no viven aquí: los comparte `profile`, que
+// reusa el mismo campo de contraseña en su bloque de seguridad, así que se mudaron a
+// `shared/styles/_form.scss`. El `as auth-*` los reexporta con el nombre de siempre
+// (`auth.auth-field`, `auth.auth-password-icon`) para que las vistas de esta feature no cambien.
+
+@forward '../../shared/styles/form' as auth-*;
 
 /// Lienzo a pantalla completa con los dos halos difuminados del diseño.
 @mixin auth-canvas {
@@ -62,46 +69,6 @@
   span {
     font-size: 1.5rem;
     font-weight: 700;
-  }
-}
-
-/// Campo de formulario: label arriba + control + mensaje de error debajo.
-///
-/// El diseño usa labels estáticos sobre el control (y no el `p-floatlabel` de los formularios del
-/// panel del profesor) porque el label de la contraseña comparte fila con el enlace "¿Olvidaste tu contraseña?".
-@mixin auth-field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-
-  label {
-    color: var(--color-text-secondary);
-    font-size: 0.875rem;
-    font-weight: 600;
-  }
-
-  .field-error {
-    color: var(--color-error);
-    font-size: 0.8125rem;
-  }
-}
-
-/// Ícono decorativo a la izquierda de un `p-password`, que no compone con `p-iconfield`.
-@mixin auth-password-icon {
-  position: relative;
-
-  .input-leading-icon {
-    position: absolute;
-    top: 50%;
-    left: 0.75rem;
-    z-index: 1;
-    color: var(--color-text-muted);
-    transform: translateY(-50%);
-    pointer-events: none;
-  }
-
-  ::ng-deep .p-password-input {
-    padding-left: 2.5rem;
   }
 }
 

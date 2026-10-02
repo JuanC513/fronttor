@@ -1,0 +1,51 @@
+// La forma de un campo de formulario, compartida entre features.
+//
+// Vivían en `features/auth/_auth-shared.scss`, donde nacieron. Se sacaron aquí cuando Perfil
+// necesitó el mismo campo de contraseña para su bloque de seguridad: es el mismo movimiento —y el
+// mismo motivo— que llevó la forma de la página a `_page.scss`. Una vista de `profile` importando
+// el parcial de `auth` habría atado dos features que no tienen nada más en común.
+//
+// `_auth-shared.scss` los reexporta con `@forward ... as auth-*`, así que las vistas de aquella
+// feature los siguen llamando `auth.auth-field` sin enterarse del traslado.
+//
+// Se usa así:  `@use '../../../shared/styles/form' as form;`  y luego  `@include form.field;`
+
+/// Campo de formulario: label arriba + control + mensaje de error debajo.
+///
+/// El diseño usa labels estáticos sobre el control (y no el `p-floatlabel` de los formularios del
+/// panel del profesor) porque el label de la contraseña comparte fila con el enlace "¿Olvidaste tu contraseña?".
+@mixin field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+
+  label {
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .field-error {
+    color: var(--color-error);
+    font-size: 0.8125rem;
+  }
+}
+
+/// Ícono decorativo a la izquierda de un `p-password`, que no compone con `p-iconfield`.
+@mixin password-icon {
+  position: relative;
+
+  .input-leading-icon {
+    position: absolute;
+    top: 50%;
+    left: 0.75rem;
+    z-index: 1;
+    color: var(--color-text-muted);
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  ::ng-deep .p-password-input {
+    padding-left: 2.5rem;
+  }
+}

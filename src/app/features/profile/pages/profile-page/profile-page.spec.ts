@@ -1,11 +1,24 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { AuthService } from '@core/services/auth/auth-service';
 import { ProfileService } from '@core/services/profile/profile-service';
 import { Profile } from '@core/interfaces/profile';
+import { ConfirmationService } from 'primeng/api';
 import { BehaviorSubject } from 'rxjs';
 
 import { ProfilePage } from './profile-page';
+
+/** Lo que la vista mira del usuario de Supabase: de dónde salió la cuenta. */
+interface UsuarioFalso {
+  id: string;
+  email: string;
+  app_metadata: Record<string, unknown>;
+}
+
+interface Opciones {
+  createdAt?: string;
+  appMetadata?: Record<string, unknown>;
+}
 
 describe('ProfilePage', () => {
   let component: ProfilePage;
@@ -13,16 +26,28 @@ describe('ProfilePage', () => {
   let saveDescription: jasmine.Spy;
   let refreshProfile: jasmine.Spy;
   let profile$: BehaviorSubject<Profile | null>;
+  let signOut: jasmine.Spy;
+  let createdAt: string | undefined;
 
   const profile = (description: string | null): Profile => ({
     user_id: 'u1',
     email: 'alguien@ejemplo.com',
+    created_at: createdAt,
     profile_description: description,
     roles: ['student'],
   });
 
-  const setup = async (description: string | null = null) => {
+  const setup = async (description: string | null = null, opciones: Opciones = {}) => {
+    createdAt = opciones.createdAt;
+
+    const user$ = new BehaviorSubject<UsuarioFalso | null>({
+      id: 'u1',
+      email: 'alguien@ejemplo.com',
+      app_metadata: opciones.appMetadata ?? { provider: 'email', providers: ['email'] },
+    });
+
     profile$ = new BehaviorSubject<Profile | null>(profile(description));
+    signOut = jasmine.createSpy('signOut').and.resolveTo(undefined);
     saveDescription = jasmine.createSpy('saveDescription').and.resolveTo(undefined);
     refreshProfile = jasmine.createSpy('refreshProfile').and.callFake(async () => {
       profile$.next(profile(component.description().trim() || null));
@@ -37,9 +62,12 @@ describe('ProfilePage', () => {
           provide: AuthService,
           useValue: {
             profile$,
+            user$,
             refreshProfile,
-            getCurrentUser: () => ({ id: 'u1' }),
-            signOut: () => Promise.resolve(),
+            getCurrentUser: () => ({ id: 'u1', email: 'alguien@ejemplo.com' }),
+            signIn: () => Promise.resolve(),
+            updatePassword: () => Promise.resolve(),
+            signOut,
           },
         },
       ],
@@ -49,6 +77,15 @@ describe('ProfilePage', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
     await fixture.whenStable();
+  };
+
+  /** `onLogout` pide confirmación; la prueba acepta por el estudiante. */
+  const acceptConfirmation = () => {
+    const confirmation = fixture.debugElement.injector.get(ConfirmationService);
+    spyOn(confirmation, 'confirm').and.callFake((options) => {
+      options.accept?.();
+      return confirmation;
+    });
   };
 
   afterEach(() => TestBed.resetTestingModule());
@@ -125,5 +162,121 @@ describe('ProfilePage', () => {
     fixture.detectChanges();
 
     expect(component.description()).toBe('a medio escribir');
+  });
+
+  describe('miembro desde', () => {
+    it('lo muestra en español a partir de created_at', async () => {
+      await setup(null, { createdAt: '2026-09-15T10:00:00Z' });
+
+      expect(component.memberSince()).toBe('septiembre de 2026');
+      expect(fixture.nativeElement.querySelector('.profile-since').textContent).toContain(
+        'septiembre de 2026',
+      );
+    });
+
+    /**
+     * La columna es `not null` en la base, pero la interfaz la declara opcional y un perfil a medio
+     * cargar no puede acabar enseñando «Invalid Date».
+     */
+    it('no pinta la línea si el perfil no trae la fecha', async () => {
+      await setup(null);
+
+      expect(component.memberSince()).toBe('');
+      expect(fixture.nativeElement.querySelector('.profile-since')).toBeNull();
+    });
+  });
+
+  describe('cerrar sesión', () => {
+    /**
+     * El botón vive arriba a la derecha de la cabecera, donde la mano va a parar sola. Sin la
+     * pregunta, un roce echa de la aplicación a quien solo pasaba por ahí.
+     */
+    it('pregunta antes de cerrar la sesión', async () => {
+      await setup();
+
+      component.onLogout();
+
+      expect(signOut).not.toHaveBeenCalled();
+    });
+
+    it('cierra la sesión y vuelve al login cuando se acepta', async () => {
+      await setup();
+      const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+      acceptConfirmation();
+
+      component.onLogout();
+      await fixture.whenStable();
+
+      expect(signOut).toHaveBeenCalled();
+      expect(navigate).toHaveBeenCalledWith(['/login']);
+      expect(component.logoutError()).toBeNull();
+    });
+
+    /**
+     * Sin esto, un `signOut` que falla cerraba la confirmación y no hacía nada más: parecía que
+     * había funcionado con la sesión todavía abierta, que es la peor forma de fallar que hay.
+     */
+    it('avisa y no navega si no se pudo cerrar la sesión', async () => {
+      await setup();
+      const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+      signOut.and.rejectWith({ code: 'over_request_rate_limit' });
+      acceptConfirmation();
+
+      component.onLogout();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(navigate).not.toHaveBeenCalled();
+      expect(component.logoutError()).toBe(
+        'No se pudo cerrar la sesión. Demasiados intentos. Espera unos minutos e inténtalo de nuevo.',
+      );
+      expect(fixture.nativeElement.textContent).toContain('No se pudo cerrar la sesión.');
+    });
+
+    it('limpia el aviso al reintentarlo', async () => {
+      await setup();
+      const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+      signOut.and.rejectWith({ code: 'over_request_rate_limit' });
+      acceptConfirmation();
+
+      component.onLogout();
+      await fixture.whenStable();
+      expect(component.logoutError()).not.toBeNull();
+
+      signOut.and.resolveTo(undefined);
+      component.onLogout();
+      await fixture.whenStable();
+
+      expect(component.logoutError()).toBeNull();
+      expect(navigate).toHaveBeenCalledWith(['/login']);
+    });
+  });
+
+  describe('bloque de seguridad', () => {
+    it('ofrece cambiar la contraseña en una cuenta de correo', async () => {
+      await setup();
+
+      expect(component.tienePassword()).toBeTrue();
+      expect(fixture.nativeElement.querySelector('app-change-password-form')).not.toBeNull();
+    });
+
+    /** Un formulario que no puede funcionar es peor que no tenerlo. */
+    it('no ofrece el formulario en una cuenta de Google', async () => {
+      await setup(null, { appMetadata: { provider: 'google', providers: ['google'] } });
+
+      expect(component.tienePassword()).toBeFalse();
+      expect(fixture.nativeElement.querySelector('app-change-password-form')).toBeNull();
+      expect(fixture.nativeElement.textContent).toContain('la gestiona Google');
+    });
+
+    /**
+     * `provider` es solo el del último inicio de sesión. Quien se registró con correo y alguna vez
+     * entró con Google sigue teniendo contraseña, y seguiría necesitando cambiarla.
+     */
+    it('la ofrece si el correo está entre los proveedores aunque el último fuera Google', async () => {
+      await setup(null, { appMetadata: { provider: 'google', providers: ['email', 'google'] } });
+
+      expect(component.tienePassword()).toBeTrue();
+    });
   });
 });
