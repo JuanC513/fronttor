@@ -75,14 +75,19 @@ Deno.serve(async (req) => {
       responseSchema = PRACTICE_SCHEMA;
     }
 
-    // Mismo `kind` que la generación del profesor: sigue siendo un ejercicio hecho por el modelo, y
-    // separarlos obligaría a tocar el check de la columna para contar lo mismo en dos cubos. El
-    // `lessonId` es el subtema que el estudiante eligió en el desplegable.
+    // `kind` PROPIO, distinto del `exercise` que registra la generación del profesor. Antes
+    // compartían valor con el argumento de que ambas son un ejercicio escrito por el modelo; el
+    // argumento era cierto y la conclusión equivocada, porque lo que la columna discrimina no es
+    // qué se produjo sino QUIÉN lo pidió. `get_my_tutor_activity()` cuenta las prácticas como uso
+    // del tutor, así que con el kind compartido una cuenta con los dos roles veía como suyas las
+    // partes de ejercicio que había redactado ella misma. Ver `20261004120000_practice_kind.sql`.
+    //
+    // El `lessonId` es el subtema que el estudiante eligió en el desplegable.
     const texto = await callGeminiLogged(
       {
         client: user.client,
         userId: user.id,
-        kind: 'exercise',
+        kind: 'practice',
         model: GEMINI_MODEL_CONTENIDO,
         lessonId: body.lessonId,
       },

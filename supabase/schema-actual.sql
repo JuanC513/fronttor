@@ -138,6 +138,46 @@ COMMENT ON FUNCTION "public"."get_exercise_for_edit"("p_id" integer) IS 'Unica l
 
 
 
+CREATE OR REPLACE FUNCTION "public"."get_my_tutor_activity"() RETURNS "jsonb"
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  with mias as (
+    select kind, lesson_id, created_at
+    from ai_interactions
+    where user_id = auth.uid()
+      and status = 'ok'
+  )
+  select jsonb_build_object(
+    'preguntas', (select count(*) from mias where kind = 'question'),
+    'pistas',    (select count(*) from mias where kind = 'feedback'),
+    'practicas', (select count(*) from mias where kind = 'exercise'),
+
+    -- La ultima, para poder decir de que iba. El left join es necesario: las
+    -- practicas generadas en el taller libre no cuelgan de ningun subtema, y una
+    -- interaccion sobre un subtema ya borrado tampoco debe esconder la fila.
+    'ultima', (
+      select jsonb_build_object(
+        'tipo',    m.kind,
+        'cuando',  m.created_at,
+        'subtema', l.name
+      )
+      from mias m
+      left join lessons l on l.id = m.lesson_id
+      order by m.created_at desc
+      limit 1
+    )
+  );
+$$;
+
+
+ALTER FUNCTION "public"."get_my_tutor_activity"() OWNER TO "postgres";
+
+
+COMMENT ON FUNCTION "public"."get_my_tutor_activity"() IS 'Cuantas veces ha usado el tutor el usuario actual, y de que iba la ultima. Solo el agregado: no da acceso a las filas, que llevan el prompt.';
+
+
+
 CREATE OR REPLACE FUNCTION "public"."get_student_context"() RETURNS "jsonb"
     LANGUAGE "sql" STABLE SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -1147,6 +1187,10 @@ CREATE INDEX "ai_interactions_errors_idx" ON "public"."ai_interactions" USING "b
 
 
 
+CREATE INDEX "ai_interactions_user_recent_idx" ON "public"."ai_interactions" USING "btree" ("user_id", "created_at" DESC);
+
+
+
 CREATE INDEX "exercise_attempts_user_exercise_idx" ON "public"."exercise_attempts" USING "btree" ("user_id", "exercise_id");
 
 
@@ -1461,6 +1505,12 @@ GRANT SELECT("is_published") ON TABLE "public"."exercises" TO "authenticated";
 REVOKE ALL ON FUNCTION "public"."get_exercise_for_edit"("p_id" integer) FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."get_exercise_for_edit"("p_id" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."get_exercise_for_edit"("p_id" integer) TO "service_role";
+
+
+
+REVOKE ALL ON FUNCTION "public"."get_my_tutor_activity"() FROM PUBLIC;
+GRANT ALL ON FUNCTION "public"."get_my_tutor_activity"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_my_tutor_activity"() TO "service_role";
 
 
 

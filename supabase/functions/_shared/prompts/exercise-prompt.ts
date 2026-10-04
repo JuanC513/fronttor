@@ -156,7 +156,8 @@ REGLAS DE LOS CRITERIOS (críticas, y aquí es donde más se falla):
 10. "computed_style" se compara contra lo que devuelve getComputedStyle, que normaliza los valores. Escribe "rgb(255, 0, 0)" y no "red"; "16px" y no "1em". Si no estás seguro del valor normalizado, usa otro tipo de criterio.
 11. "text_contains" distingue mayúsculas. Usa un fragmento corto y textual del que estés seguro.
 12. "console_contains" solo sirve si el ejercicio pide imprimir algo por consola.
-13. "description" es lo que el estudiante lee como lista de comprobación: una frase corta en español, en tercera persona, describiendo qué se comprueba. Ej: "Existe un elemento con id saludo".`,
+13. "description" es lo que el estudiante lee como lista de comprobación: una frase corta en español, en tercera persona, describiendo qué se comprueba. Ej: "Existe un elemento con id saludo".
+14. LA DESCRIPCIÓN Y EL SELECTOR TIENEN QUE COMPROBAR LO MISMO. Si la descripción nombra una etiqueta concreta —"un h1", "un párrafo", "una imagen"—, el selector debe incluirla: "h1#titulo", no "#titulo". Con el id a secas, un <div id="titulo"> aprobaría un criterio que dice exigir un h1, y en un subtema sobre etiquetas eso es justo lo que había que comprobar. Si prefieres no atar el criterio a una etiqueta, entonces quítala también de la descripción.`,
 };
 
 const ETIQUETA_POR_PARTE: Record<ExercisePart, string> = {
