@@ -1,0 +1,32 @@
+.app-layout-container {
+  display: grid;
+  grid-template-areas: 'sidebar content';
+  grid-template-columns: auto 1fr;
+  height: 100%;
+}
+
+.app-layout-sidebar {
+  grid-area: sidebar;
+  display: flex;
+}
+
+.app-layout-content {
+  grid-area: content;
+  display: grid;
+  grid-template-areas:
+    'topbar'
+    'content';
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.topbar {
+  grid-area: topbar;
+}
+
+.content {
+  grid-area: content;
+  background-color: lightgray;
+  overflow: hidden;
+}

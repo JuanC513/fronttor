@@ -1,0 +1,119 @@
+// El taller ocupa la pantalla en vez de hacer scroll, que es lo que distingue una herramienta de
+// un documento: los paneles se estiran hasta el borde y cada uno desplaza su propio contenido.
+//
+// Esto se apoya en el encadenado de alturas del layout: `html`/`body` al 100%, y
+// `.app-layout-content` es un grid cuya fila de contenido es `1fr`, así que `.content` tiene altura
+// definida y un hijo puede ocuparla.
+//
+// El archivo va de estrecho a ancho, y no al revés, por un motivo concreto: las reglas de tamaño
+// de los paneles empatan en especificidad con las del `@media`, así que gana la última que lea el
+// navegador. Con el caso estrecho como base y el ancho dentro del `@media`, el orden trabaja a
+// favor en vez de en contra.
+
+:host {
+  display: block;
+  height: 100%;
+  overflow-y: auto;
+  background-color: var(--color-surface);
+}
+
+.playground {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  min-height: 100%;
+  padding: var(--space-lg);
+}
+
+/* ─── Encabezado y barra ─── */
+
+.playground-header {
+  flex-shrink: 0;
+
+  h1 {
+    margin: 0 0 var(--space-xs);
+    color: var(--color-text-primary);
+    font-size: 1.5rem;
+    line-height: 1.3;
+  }
+
+  p {
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+  }
+}
+
+.auto-run label {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ─── Apilado: una columna y scroll de página ─── */
+
+.workspace {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+}
+
+.editor-slot {
+  display: block;
+}
+
+// Apilado, el editor lleva una altura propia: sin ella se encogería a nada, porque aquí no hay
+// ningún contenedor que le reparta espacio.
+.editor-slot ::ng-deep .editor {
+  height: 24rem;
+}
+
+/* ─── A partir de 1024px: dos columnas ocupando la pantalla ─── */
+
+// Por debajo de este ancho las columnas se apilan, porque un editor de código a media pantalla
+// deja de ser usable antes que cualquier otra cosa. Es el mismo criterio de la vista de
+// resolución, con el umbral más bajo porque aquí no hay enunciado que quepa al lado.
+@media (min-width: 1024px) {
+  :host {
+    overflow: hidden;
+  }
+
+  .playground {
+    height: 100%;
+  }
+
+  .workspace {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    flex: 1;
+    // `min-height: 0` es lo que hace que esto funcione, y es el detalle que rompe la vista en
+    // silencio si falta: un hijo flexible no baja de su tamaño de contenido salvo que se le diga.
+    // Sin él los paneles no se encogen, se desbordan, y el scroll aparece en la página en vez de
+    // dentro de cada panel. Lo mismo vale para las dos columnas.
+    min-height: 0;
+  }
+
+  .editor-slot,
+  .output-column {
+    min-height: 0;
+  }
+
+  .editor-slot ::ng-deep .code-editor-container {
+    height: 100%;
+  }
+
+  // Aquí el editor no tiene altura propia: ocupa lo que quede tras repartir la pantalla.
+  .editor-slot ::ng-deep .editor {
+    height: auto;
+  }
+
+  // La vista previa se lleva el sitio que sobre; la consola se queda con su franja fija abajo.
+  .preview-slot {
+    flex: 1;
+    min-height: 8rem;
+    height: auto;
+  }
+
+  .console-slot {
+    flex-shrink: 0;
+  }
+}

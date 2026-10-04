@@ -1,0 +1,71 @@
+// El editor trae su propio aspecto; el tamaño lo decide quien lo usa.
+//
+// Antes esto tenía `width: 500px` y un `border: 1px solid #333` pensados para el prototipo del
+// Playground, y las tres vistas que lo montan los sobrescribían desde fuera. Con el aspecto aquí,
+// a los consumidores solo les queda la altura, que es lo único que de verdad cambia entre una
+// pestaña de un diálogo y un taller a pantalla completa.
+
+.code-editor-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  // El editor es oscuro y va pegado al borde: sin esto sus esquinas asoman por fuera del radio.
+  overflow: hidden;
+}
+
+/* ─── Pestañas de lenguaje ─── */
+
+.tabs {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-surface-low);
+}
+
+// Son `button`, así que hay que apagar lo que el navegador les pone. A cambio sale gratis el foco
+// por teclado, que en una tira de pestañas importa.
+.tab {
+  padding: var(--space-xs) var(--space-md);
+  border: none;
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+
+  &:hover:not(.is-active) {
+    background-color: var(--color-surface-container);
+    color: var(--color-text-primary);
+  }
+}
+
+.tab.is-active {
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+/* ─── El editor ─── */
+
+// Altura por defecto para quien no diga nada. Los consumidores la sobrescriben; en el taller es la
+// que sobra tras repartir la pantalla, y en el diálogo del profesor un valor fijo.
+//
+// La base es `auto` y no `0` —es decir, `flex: 1 1 auto` y no el `flex: 1` de siempre— porque en
+// un contenedor flex vertical la base manda sobre `height`. Con `flex: 1` el editor se encogía a
+// unos pocos píxeles en cuanto el contenedor no tenía altura propia, ignorando el `height` que le
+// pusiera quien lo monta. Así el alto se respeta cuando lo hay, y se estira cuando sobra sitio.
+.editor {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 20rem;
+}

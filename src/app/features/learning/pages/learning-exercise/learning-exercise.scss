@@ -1,0 +1,175 @@
+@use '../../learning-shared' as learning;
+
+:host {
+  @include learning.page-shell;
+}
+
+/* ─── Encabezado ─── */
+
+.exercise-header {
+  margin-bottom: var(--space-md);
+}
+
+.exercise-title {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 1.5rem;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─── Disposición ─── */
+
+// El enunciado a la izquierda y el taller a la derecha, que es como se lee: primero qué hay que
+// hacer, después dónde hacerlo. Por debajo de 1200px se apilan, porque un editor de código a media
+// pantalla deja de ser usable antes que el texto.
+.exercise-body,
+.skeleton-columns {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-lg);
+}
+
+@media (min-width: 1200px) {
+  .exercise-body,
+  .skeleton-columns {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    align-items: start;
+  }
+
+  // El enunciado acompaña al scroll: se consulta mientras se escribe, no una sola vez al empezar.
+  .statement-column {
+    position: sticky;
+    top: var(--space-lg);
+  }
+}
+
+/* ─── Enunciado y criterios ─── */
+
+.statement-card,
+.criteria-card {
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface-white);
+}
+
+.criteria-title {
+  margin: 0 0 var(--space-md);
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+// Los criterios son la especificación del ejercicio, así que se ven desde el principio, no solo
+// al fallar. El color llega con el primer envío; antes son una lista neutra de lo que se pide.
+.criterion-row {
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface-low);
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.criterion-icon {
+  margin-top: 0.15rem;
+  color: var(--color-text-muted);
+}
+
+.criterion-row.is-passed {
+  background-color: var(--color-success-bg);
+
+  .criterion-icon {
+    color: var(--color-success);
+  }
+}
+
+.criterion-row.is-failed {
+  background-color: var(--color-error-bg);
+
+  .criterion-icon {
+    color: var(--color-error);
+  }
+}
+
+// El criterio que la pista señala. Es un realce, no un estado más: el color de fondo lo sigue
+// poniendo `is-failed`, y esto solo dice «empieza por aquí».
+.criterion-row.is-focused {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+  font-weight: 600;
+}
+
+/* ─── La ayuda del tutor ─── */
+
+.hint-card {
+  padding: var(--space-md);
+  border: 1px solid var(--color-accent-container);
+  border-left: 3px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-white);
+}
+
+// La de un envío anterior se presenta apagada: sigue siendo útil, pero no acaba de llegar.
+.hint-card.is-previous {
+  border-left-color: var(--color-border-strong);
+  background-color: var(--color-surface-low);
+}
+
+.hint-title {
+  margin-bottom: var(--space-sm);
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.hint-card.is-previous .hint-title {
+  color: var(--color-text-muted);
+}
+
+/* ─── Taller ─── */
+
+// Los tres componentes del taller traen ya su propio aspecto —borde, radio y colores del sistema—,
+// así que aquí solo queda decir cuánto miden en esta vista.
+//
+// El selector arranca en `.work-column` y no en `:host` por especificidad, no por estilo: con
+// `:host ::ng-deep .editor` se empata con la regla propia del componente —las dos suman una clase
+// y un atributo— y gana la que el navegador reciba después. La clase intermedia rompe el empate.
+.work-column ::ng-deep .editor {
+  height: 22rem;
+}
+
+.output-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+}
+
+@media (min-width: 768px) {
+  .output-row {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+}
+
+.preview-slot {
+  height: 14rem;
+}
+
+.console-slot ::ng-deep .console {
+  height: 14rem;
+}
+
+// Una nota, no una alerta: que el editor traiga tu propio código es lo esperable, no un problema.
+.draft-notice {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+.actions {
+  padding-top: var(--space-sm);
+}

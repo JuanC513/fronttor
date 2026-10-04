@@ -1,0 +1,24 @@
+<div class="app-layout-container">
+  <aside class="app-layout-sidebar">
+    <app-sidebar />
+  </aside>
+  <div class="app-layout-content">
+    <app-topbar class="topbar" />
+    <section class="content">
+      <router-outlet></router-outlet>
+    </section>
+  </div>
+</div>
+
+<!-- Se monta una sola vez para toda la app: se muestra solo cuando una vista publica
+    contexto en AiChatService, así cualquier vista futura puede reutilizarlo. -->
+<app-ai-chat-panel />
+
+<!-- Igual que el panel de arriba: una sola vez para toda la aplicación, y FUERA del
+    `router-outlet`. Los diálogos del profesor se destruyen al guardar, así que un toast dentro de
+    uno moriría en el mismo instante en que se emite el mensaje.
+
+    Arriba al centro y no en la esquina, que es el valor por defecto: a la derecha están el botón
+    «Tutor IA» del topbar y el cajón del chat, que ocupa toda la altura. Medido, el aviso tapaba el
+    botón justo los segundos en que el estudiante puede querer pulsarlo. -->
+<p-toast position="bottom-right" />

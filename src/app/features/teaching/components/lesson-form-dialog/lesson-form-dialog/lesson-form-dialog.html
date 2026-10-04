@@ -1,0 +1,90 @@
+<p-confirmpopup />
+
+<p-dialog
+  [header]="isEditForm ? 'Editar subtema' : 'Crear subtema'"
+  [modal]="true"
+  [visible]="true"
+  [style]="{ width: '30rem' }"
+  (onHide)="closeDialog()"
+>
+  <span class="flex flex-column">
+    <form [formGroup]="lessonForm" (ngSubmit)="onSubmit()" class="flex flex-column gap-4 pt-2">
+      <div>
+        <p-floatlabel variant="on">
+          <p-select
+            id="moduleList"
+            class="w-full"
+            appendTo="body"
+            [options]="modulesList()"
+            optionLabel="name"
+            optionValue="id"
+            [filter]="true"
+            [checkmark]="true"
+            [showClear]="true"
+            formControlName="module_id"
+          />
+          <label for="on_label">Selecciona un tema</label>
+        </p-floatlabel>
+        <app-field-error
+          [control]="lessonForm.controls['module_id']"
+          [customMessages]="{ required: 'Selecciona un tema.' }"
+        />
+      </div>
+      <div>
+        <p-floatlabel variant="on">
+          <input
+            pInputText
+            id="submodulename"
+            class="flex-auto w-full"
+            autocomplete="off"
+            maxlength="100"
+            formControlName="name"
+          />
+          <label for="on_label">Nombre</label>
+        </p-floatlabel>
+        <app-field-error
+          [control]="lessonForm.controls['name']"
+          [customMessages]="{ required: 'Ingresa un nombre para el subtema.' }"
+        />
+      </div>
+      <app-publication-field
+        [control]="isPublishedControl"
+        [isEditForm]="isEditForm"
+        [impact]="impact()"
+        [highlight]="highlightImpact()"
+        [deleteNotice]="deleteNotice()"
+        entityLabel="el subtema"
+      />
+      <div class="flex justify-content-between align-items-center gap-2">
+        <span #deleteAnchor>
+          @if (isEditForm) {
+            <p-button
+              label="Borrar"
+              icon="pi pi-trash"
+              severity="danger"
+              variant="outlined"
+              [disabled]="isConfirming()"
+              (onClick)="onDelete()"
+            />
+          }
+        </span>
+        <div class="flex gap-2">
+          <p-button
+            label="Cancelar"
+            variant="outlined"
+            severity="danger"
+            [disabled]="isConfirming()"
+            (click)="closeDialog()"
+          />
+          <span #saveAnchor>
+            <p-button
+              [label]="isEditForm ? 'Actualizar' : 'Crear'"
+              type="submit"
+              [disabled]="lessonForm.invalid || isConfirming()"
+            />
+          </span>
+        </div>
+      </div>
+    </form>
+  </span>
+</p-dialog>

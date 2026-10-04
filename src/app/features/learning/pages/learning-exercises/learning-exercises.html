@@ -1,0 +1,198 @@
+<section class="learning-exercises">
+  <header class="page-header">
+    <h1>Ejercicios</h1>
+    <p>
+      Practica lo que has aprendido. Los ejercicios de un subtema se abren cuando completas el
+      anterior.
+    </p>
+  </header>
+
+  @if (loading()) {
+    <div class="grid">
+      <div class="col-12 lg:col-8">
+        @for (item of skeletons; track $index) {
+          <p-skeleton height="6.5rem" borderRadius="0.75rem" styleClass="mb-3" />
+        }
+      </div>
+      <div class="col-12 lg:col-4">
+        <p-skeleton height="12rem" borderRadius="0.75rem" />
+      </div>
+    </div>
+  }
+
+  @if (error(); as message) {
+    <p-message severity="error" [text]="message" styleClass="w-full" />
+  }
+
+  @if (!loading() && !error()) {
+    <div class="grid flex-column-reverse lg:flex-row">
+      <div class="col-12 lg:col-8">
+        <p-accordion [(value)]="activePanel" class="modules-accordion">
+          @for (module of moduleViews(); track module.id) {
+            <p-accordion-panel [value]="module.id" [disabled]="module.locked">
+              <p-accordion-header>
+                <span class="flex flex-1 align-items-center gap-3 min-w-0">
+                  <span
+                    class="module-icon flex flex-shrink-0 align-items-center justify-content-center"
+                    aria-hidden="true"
+                  >
+                    <i [class]="module.locked ? 'pi pi-lock' : 'pi pi-file-edit'"></i>
+                  </span>
+                  <span class="flex flex-column min-w-0">
+                    <span class="module-name">{{ module.name }}</span>
+                    <span class="module-meta">
+                      {{ module.lessons.length }}
+                      {{ module.lessons.length === 1 ? 'subtema' : 'subtemas' }}
+                      @if (module.locked) {
+                        · Bloqueado
+                      }
+                    </span>
+                  </span>
+                </span>
+
+                <!-- Mismo recambio del chevron que en Contenido: un tema cerrado no se abre, y el
+                    candado lo dice mejor que una flecha inerte. -->
+                <ng-template #toggleicon let-active="active">
+                  <i
+                    [class.pi]="true"
+                    [class.pi-lock]="module.locked"
+                    [class.pi-chevron-up]="!module.locked && active"
+                    [class.pi-chevron-down]="!module.locked && !active"
+                    aria-hidden="true"
+                  ></i>
+                </ng-template>
+              </p-accordion-header>
+
+              <p-accordion-content>
+                <ul class="flex flex-column gap-3 list-none m-0 p-0">
+                  @for (lesson of module.lessons; track lesson.lessonId) {
+                    <li class="lesson-card" [class.is-locked]="lesson.locked">
+                      <div class="lesson-head flex align-items-center gap-3">
+                        <i
+                          class="lesson-icon flex-shrink-0"
+                          [class]="
+                            lesson.locked
+                              ? 'pi pi-lock'
+                              : lesson.completed
+                                ? 'pi pi-check-circle'
+                                : 'pi pi-play-circle'
+                          "
+                          aria-hidden="true"
+                        ></i>
+
+                        <span class="flex-1 min-w-0">
+                          <span class="lesson-name">{{ lesson.name }}</span>
+                          <span class="lesson-meta">
+                            @if (lesson.locked) {
+                              Completa el subtema anterior para desbloquearlo
+                            } @else {
+                              {{ lesson.passed }} de {{ lesson.total }}
+                              {{ lesson.total === 1 ? 'ejercicio' : 'ejercicios' }}
+                            }
+                          </span>
+                        </span>
+
+                        @if (lesson.completed) {
+                          <p-tag severity="success" value="Completado" />
+                        }
+                      </div>
+
+                      @if (!lesson.locked && lesson.total > 0) {
+                        <p-progressbar
+                          [value]="lesson.percent"
+                          [showValue]="false"
+                          class="lesson-progress"
+                          [attr.aria-label]="
+                            'Progreso de ' + lesson.name + ': ' + lesson.percent + '%'
+                          "
+                        />
+                      }
+
+                      @if (lesson.exercises.length) {
+                        <ul class="exercise-list flex flex-column gap-2 list-none m-0 p-0">
+                          @for (item of lesson.exercises; track item.exercise.id) {
+                            <li>
+                              <!-- Un `button` y no un enlace, igual que las tarjetas de subtema:
+                                  `disabled` deja el bloqueo dicho de una vez para el ratón y para
+                                  el lector de pantalla, sin `aria-disabled` ni estilos a mano. -->
+                              <button
+                                type="button"
+                                class="exercise-row flex align-items-center gap-3 w-full text-left"
+                                [class]="'is-' + item.status"
+                                [disabled]="item.status === 'locked'"
+                                (click)="openExercise(item.exercise.id)"
+                              >
+                                <i
+                                  class="exercise-icon flex-shrink-0"
+                                  [class]="statusIcon(item.status)"
+                                  [attr.aria-label]="statusLabel(item.status)"
+                                ></i>
+
+                                <span class="exercise-name flex-1 min-w-0">
+                                  {{ item.exercise.name }}
+                                </span>
+
+                                @if (item.status === 'new') {
+                                  <!-- Se deduce de la regla de completado: si el subtema está
+                                      completado, todos sus ejercicios estaban aprobados, así que uno
+                                      sin aprobar solo puede haber llegado después. -->
+                                  <p-tag severity="info" value="Nuevo" />
+                                }
+
+                                <p-tag
+                                  severity="secondary"
+                                  [value]="difficultyLabel(item.exercise.difficulty)"
+                                />
+
+                                @if (item.status !== 'locked') {
+                                  <i
+                                    class="exercise-arrow pi pi-arrow-right"
+                                    aria-hidden="true"
+                                  ></i>
+                                }
+                              </button>
+                            </li>
+                          }
+                        </ul>
+                      } @else if (!lesson.locked) {
+                        <p class="lesson-empty m-0">
+                          Este subtema todavía no tiene ejercicios, así que cuenta como completado.
+                        </p>
+                      }
+                    </li>
+                  }
+                </ul>
+              </p-accordion-content>
+            </p-accordion-panel>
+          } @empty {
+            <p-message
+              severity="info"
+              text="Aún no hay ejercicios disponibles."
+              styleClass="w-full"
+            />
+          }
+        </p-accordion>
+      </div>
+
+      <aside class="col-12 lg:col-4">
+        <div class="progress-card">
+          <h2>Ejercicios resueltos</h2>
+
+          <p class="progress-figure">
+            <span class="progress-value">{{ summary().passed }}</span>
+            <span class="progress-caption">de {{ summary().total }} en todo el curso</span>
+          </p>
+
+          <p-progressbar
+            [value]="summary().percent"
+            [showValue]="false"
+            class="progress-bar"
+            [attr.aria-label]="'Ejercicios resueltos: ' + summary().percent + '%'"
+          />
+
+          <i class="progress-decor pi pi-sparkles" aria-hidden="true"></i>
+        </div>
+      </aside>
+    </div>
+  }
+</section>

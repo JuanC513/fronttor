@@ -1,0 +1,23 @@
+<div class="console">
+  <div class="console-header flex align-items-center justify-content-between gap-2">
+    <span class="console-title">Consola</span>
+
+    <button
+      type="button"
+      class="console-clear"
+      aria-label="Limpiar la consola"
+      [disabled]="!getLogs().length"
+      (click)="clear()"
+    >
+      <i class="pi pi-trash" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <div class="console-body">
+    @for (log of getLogs(); track $index) {
+      <div class="console-line">{{ log }}</div>
+    } @empty {
+      <p class="console-empty m-0">La salida de <code>console.log()</code> aparecerá aquí.</p>
+    }
+  </div>
+</div>

@@ -1,0 +1,138 @@
+// La vista se lee como un documento y se queda estrecha: son tres tarjetas de texto seguidas, y una
+// línea de 1400px de ancho no se lee, se escanea.
+@use '../../../../shared/styles/page' as page;
+
+:host {
+  // Antes repetía a mano `display/min-height/padding/background`, que era casi lo mismo pero sin el
+  // `overflow-y: auto`. Eso daba igual con una sola tarjeta; con tres, la página no desplazaba.
+  @include page.page-shell;
+
+  padding: var(--space-lg);
+}
+
+.profile-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.profile-header {
+  h1 {
+    margin: 0 0 var(--space-xs);
+    color: var(--color-text-primary);
+    font-size: 1.5rem;
+    line-height: 1.3;
+  }
+}
+
+.profile-email {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.profile-since {
+  margin-top: var(--space-xs);
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+/* ─── Las tarjetas ─── */
+
+.card {
+  padding: var(--space-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface-white);
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin: 0 0 var(--space-sm);
+  color: var(--color-text-primary);
+  font-size: 1.125rem;
+  font-weight: 600;
+
+  .pi {
+    color: var(--color-primary);
+    font-size: 1rem;
+  }
+}
+
+.card-help {
+  margin: 0 0 var(--space-md);
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+/* ─── Lo que se le cuenta al tutor ─── */
+
+// Ejemplos y no reglas: el objetivo es que se le ocurra qué escribir, no que rellene un formulario.
+.tutor-examples {
+  margin: 0 0 var(--space-lg);
+  padding-left: var(--space-lg);
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+}
+
+.card label {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.counter {
+  align-self: flex-end;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
+/* ─── Qué sabe el tutor ─── */
+
+.card-subtitle {
+  margin: var(--space-md) 0 var(--space-sm);
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+// Lista con ícono propio en vez de viñeta: cada línea es un hecho distinto sobre los datos, y el
+// ícono ayuda a distinguirlos de un vistazo en una tarjeta que es toda texto.
+.facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+
+  .pi {
+    flex-shrink: 0;
+    // Centrado sobre la primera línea del texto, que con `line-height: 1.6` no cae en el borde.
+    margin-top: 0.2rem;
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+  }
+
+  b {
+    color: var(--color-text-primary);
+  }
+}
+
+@media (max-width: 1374px) {
+  .cards-container {
+    flex-wrap: wrap;
+  }
+}

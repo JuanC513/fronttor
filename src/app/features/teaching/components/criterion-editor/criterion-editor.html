@@ -1,0 +1,158 @@
+<div class="criterion-editor flex flex-column gap-3">
+  @if (!rows.length) {
+    <p-message severity="warn" size="small" variant="simple">
+      Este ejercicio todavía no tiene criterios. Sin al menos uno nadie puede aprobarlo, y no se
+      puede publicar.
+    </p-message>
+  }
+
+  @for (row of rows; track row; let index = $index) {
+    <div class="criterion-row flex flex-column gap-3 p-3" [formGroup]="row">
+      <div class="flex gap-3 align-items-start">
+        <div class="type-field">
+          <p-floatlabel variant="on" class="w-full">
+            <p-select
+              [inputId]="'criterionType' + index"
+              class="w-full"
+              appendTo="body"
+              [options]="types"
+              optionLabel="label"
+              optionValue="type"
+              formControlName="type"
+              (onChange)="onTypeChange(index, row)"
+            />
+            <label [for]="'criterionType' + index">Tipo de comprobación</label>
+          </p-floatlabel>
+        </div>
+
+        @if (meta(row).selector) {
+          <div class="w-full">
+            <p-floatlabel variant="on" class="w-full">
+              <input
+                pInputText
+                [id]="'criterionSelector' + index"
+                class="w-full"
+                autocomplete="off"
+                maxlength="200"
+                formControlName="selector"
+              />
+              <label [for]="'criterionSelector' + index">Selector CSS</label>
+            </p-floatlabel>
+            <app-field-error
+              [control]="row.controls['selector']"
+              [customMessages]="{ required: 'Escribe el selector que se va a buscar.' }"
+            />
+          </div>
+        }
+
+        @if (meta(row).attribute) {
+          <div class="w-full">
+            <p-floatlabel variant="on" class="w-full">
+              <input
+                pInputText
+                [id]="'criterionAttribute' + index"
+                class="w-full"
+                autocomplete="off"
+                maxlength="200"
+                formControlName="attribute"
+              />
+              <label [for]="'criterionAttribute' + index">Atributo</label>
+            </p-floatlabel>
+            <app-field-error
+              [control]="row.controls['attribute']"
+              [customMessages]="{ required: 'Indica el atributo.' }"
+            />
+          </div>
+        }
+
+        @if (meta(row).property) {
+          <div class="w-full">
+            <p-floatlabel variant="on" class="w-full">
+              <input
+                pInputText
+                [id]="'criterionProperty' + index"
+                class="w-full"
+                autocomplete="off"
+                maxlength="200"
+                formControlName="property"
+              />
+              <label [for]="'criterionProperty' + index">Propiedad CSS</label>
+            </p-floatlabel>
+            <app-field-error
+              [control]="row.controls['property']"
+              [customMessages]="{ required: 'Indica la propiedad.' }"
+            />
+          </div>
+        }
+
+        @if (meta(row).value !== 'none') {
+          <div class="w-full">
+            <p-floatlabel variant="on" class="w-full">
+              @if (meta(row).value === 'number') {
+                <p-inputnumber
+                  [inputId]="'criterionValue' + index"
+                  class="w-full"
+                  [min]="0"
+                  [showButtons]="true"
+                  formControlName="value"
+                />
+              } @else {
+                <input
+                  pInputText
+                  [id]="'criterionValue' + index"
+                  class="w-full"
+                  autocomplete="off"
+                  maxlength="200"
+                  formControlName="value"
+                />
+              }
+              <label [for]="'criterionValue' + index">Valor esperado</label>
+            </p-floatlabel>
+            <app-field-error
+              [control]="row.controls['value']"
+              [customMessages]="{ required: 'Indica el valor esperado.' }"
+            />
+          </div>
+        }
+
+        <p-button
+          icon="pi pi-trash"
+          severity="danger"
+          variant="outlined"
+          [ariaLabel]="'Quitar criterio ' + (index + 1)"
+          (onClick)="remove(index)"
+        />
+      </div>
+
+      <div>
+        <p-floatlabel variant="on" class="w-full">
+          <input
+            pInputText
+            [id]="'criterionDescription' + index"
+            class="w-full"
+            autocomplete="off"
+            maxlength="200"
+            formControlName="description"
+          />
+          <label [for]="'criterionDescription' + index">Lo que ve el estudiante</label>
+        </p-floatlabel>
+        <app-field-error
+          [control]="row.controls['description']"
+          [customMessages]="{ required: 'Escribe qué comprueba este criterio.' }"
+        />
+      </div>
+
+      <small class="criterion-hint">{{ meta(row).hint }}</small>
+    </div>
+  }
+
+  <div>
+    <p-button
+      label="Añadir criterio"
+      icon="pi pi-plus"
+      severity="secondary"
+      variant="outlined"
+      (onClick)="add()"
+    />
+  </div>
+</div>

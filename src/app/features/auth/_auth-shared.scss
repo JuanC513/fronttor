@@ -1,0 +1,141 @@
+// Estilos compartidos por las vistas de autenticación (login, callback y reset de contraseña).
+//
+// El campo de formulario y el ícono del `p-password` ya no viven aquí: los comparte `profile`, que
+// reusa el mismo campo de contraseña en su bloque de seguridad, así que se mudaron a
+// `shared/styles/_form.scss`. El `as auth-*` los reexporta con el nombre de siempre
+// (`auth.auth-field`, `auth.auth-password-icon`) para que las vistas de esta feature no cambien.
+
+@forward '../../shared/styles/form' as auth-*;
+
+/// Lienzo a pantalla completa con los dos halos difuminados del diseño.
+@mixin auth-canvas {
+  display: block;
+  position: relative;
+  min-height: 100vh;
+  padding: var(--space-lg);
+  background-color: var(--color-surface);
+  overflow: hidden;
+
+  // Halos decorativos. `pointer-events: none` para que nunca intercepten clics del formulario.
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    width: 24rem;
+    height: 24rem;
+    border-radius: var(--radius-full);
+    filter: blur(100px);
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
+  &::before {
+    top: 5rem;
+    left: 5rem;
+    background-color: var(--color-primary);
+  }
+
+  &::after {
+    right: 5rem;
+    bottom: 5rem;
+    background-color: var(--color-accent);
+  }
+}
+
+/// La card flotante blanca. `$max-width` cambia según la vista (partida vs. simple).
+@mixin auth-card($max-width: 1000px) {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: $max-width;
+  background-color: var(--color-surface-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 5%);
+}
+
+/// Encabezado "FronTTor" con el ícono de birrete, para las vistas sin panel de marca.
+@mixin auth-brand-inline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--color-primary);
+
+  i {
+    font-size: 1.75rem;
+  }
+
+  span {
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+}
+
+/// Enlace con aspecto de texto pero semántica de botón (no navega, dispara una acción).
+@mixin auth-link-button {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-primary);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+/// Separador con texto centrado ("O continúa con").
+@mixin auth-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    border-top: 1px solid var(--color-border);
+  }
+}
+
+/// Botón de proveedor externo: neutro y con borde, según el diseño.
+///
+/// Es un `<button>` nativo y no un `p-button` porque `.p-button-secondary` tiene un override
+/// global con `!important` en `styles.scss` que lo pintaría del color de acento.
+@mixin auth-provider-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-white);
+  color: var(--color-text-primary);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  &:hover:not(:disabled) {
+    background-color: var(--color-surface-low);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}

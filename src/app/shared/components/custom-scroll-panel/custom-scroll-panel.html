@@ -1,0 +1,15 @@
+<div class="relative px-4 h-full">
+  <p-scrollpanel #myScroll class="px-2 pt-4 h-full">
+    <ng-content />
+  </p-scrollpanel>
+
+  <p-button
+    class="scroll-top-btn"
+    [class.visible]="showScrollTop"
+    icon="pi pi-chevron-up"
+    [rounded]="true"
+    [raised]="true"
+    severity="contrast"
+    (onClick)="scrollToTop()"
+  />
+</div>

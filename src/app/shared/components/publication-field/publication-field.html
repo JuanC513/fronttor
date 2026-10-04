@@ -1,0 +1,31 @@
+<div class="publication-field flex flex-column gap-2">
+  <div class="flex align-items-center gap-3">
+    <p-toggleswitch inputId="isPublished" [formControl]="control()" />
+    <label for="isPublished" class="cursor-pointer">
+      {{ control().value ? 'Publicado' : 'Borrador' }}
+    </label>
+  </div>
+
+  @if (blockedReason(); as reason) {
+    <p-message severity="warn" size="small" variant="simple">{{ reason }}</p-message>
+  }
+
+  @if (!blockedReason() && !isEditForm() && !control().value) {
+    <p-message severity="info" size="small" variant="simple">
+      Se guardará como borrador y no se mostrará a los estudiantes. Puedes publicar
+      {{ entityLabel() }} ahora o más adelante desde este mismo formulario.
+    </p-message>
+  }
+
+  @if (deleteNotice(); as notice) {
+    <div class="impact is-highlighted">
+      <p-message severity="error" size="small" variant="simple">{{ notice }}</p-message>
+    </div>
+  } @else if (impact(); as change) {
+    <div class="impact" [class.is-highlighted]="highlight()">
+      <p-message [severity]="change.severity" size="small" variant="simple">
+        {{ change.message }}
+      </p-message>
+    </div>
+  }
+</div>

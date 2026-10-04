@@ -1,0 +1,22 @@
+.p-divider-horizontal {
+  margin: 0;
+}
+
+.topbar-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+
+  &__action {
+    padding-right: var(--space-md);
+    margin-left: auto;
+  }
+}
+
+:host ::ng-deep .p-breadcrumb-item:last-child .p-breadcrumb-item-label {
+  display: block;
+  max-width: 28ch;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

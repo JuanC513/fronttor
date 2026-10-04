@@ -1,0 +1,125 @@
+// Estilos compartidos por las vistas del estudiante (contenido y ejercicios).
+//
+// Las dos presentan el mismo recorrido —los mismos temas, los mismos subtemas, el mismo candado—
+// y solo cambia qué se lista dentro. Tener una sola definición es lo que impide que acaben
+// pareciendo dos productos distintos.
+//
+// Se usa igual que `_auth-shared.scss`: `@use '../../learning-shared' as learning;` y luego
+// `@include learning.page-shell;`.
+//
+// La forma de la página y la tarjeta del degradado ya no viven aquí: las comparte `home`, así que
+// se mudaron a `shared/styles/_page.scss`. Se reexportan para que las vistas de esta feature las
+// sigan llamando por `learning.*` sin enterarse del traslado.
+
+@forward '../../shared/styles/page';
+
+/// Acordeón de temas. Va dentro de un `:host ::ng-deep` porque toca las clases de PrimeNG.
+@mixin modules-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+
+  .p-accordionpanel {
+    border: 1px solid var(--color-border);
+    // La franja de color del diseño. `--module-accent` se asigna más abajo por posición.
+    border-left: 4px solid var(--module-accent, var(--color-primary));
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface-white);
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+    transition:
+      box-shadow 0.2s,
+      border-color 0.2s;
+
+    &:not(.p-disabled):hover {
+      box-shadow: 0 4px 12px rgb(0 0 0 / 8%);
+    }
+  }
+
+  // Degradado de azules a lo largo de los temas; el ciclo evita que se agote la paleta.
+  @each $position, $shade in (1: 700, 2: 600, 3: 500, 4: 400, 5: 300) {
+    .p-accordionpanel:nth-child(5n + #{$position}) {
+      --module-accent: var(--p-primary-#{$shade});
+    }
+  }
+
+  .p-accordionheader {
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    border: none;
+    border-radius: 0;
+    background-color: var(--color-surface-white);
+    color: var(--color-text-primary);
+
+    &:not([data-p-disabled='true']):hover {
+      background-color: var(--color-surface-low);
+    }
+  }
+
+  .p-accordionpanel-active .p-accordionheader {
+    background-color: var(--color-surface-low);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .p-accordioncontent-content {
+    padding: var(--space-md) var(--space-lg) var(--space-lg);
+    border: none;
+    background-color: var(--color-surface-white);
+  }
+
+  // Tema bloqueado: sin color y sin afordancia de clic (PrimeNG ya impide expandirlo).
+  // Apagar `--module-accent` basta para grisar la franja y el ícono a la vez.
+  .p-accordionpanel.p-disabled {
+    --module-accent: var(--color-border-strong);
+
+    background-color: var(--color-surface-container);
+    opacity: 0.65;
+
+    .p-accordionheader {
+      background-color: transparent;
+      cursor: not-allowed;
+    }
+
+    .module-name {
+      color: var(--color-text-muted);
+    }
+  }
+}
+
+/// Cabecera de un tema dentro del acordeón: ícono, nombre y línea secundaria.
+@mixin module-header {
+  // Ícono genérico de "tema": el contenido es dinámico, así que no se personaliza por módulo.
+  .module-icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: var(--radius-md);
+    background-color: color-mix(in srgb, var(--module-accent, var(--color-primary)) 12%, white);
+    color: var(--module-accent, var(--color-primary));
+    font-size: 1.25rem;
+  }
+
+  .module-name {
+    color: var(--color-text-primary);
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  .module-meta {
+    color: var(--color-text-muted);
+    font-size: 0.8125rem;
+  }
+}
+
+/// La tarjeta acompañando al scroll de los temas, en pantallas anchas.
+///
+/// Se quedó en esta feature porque solo aplica cuando la tarjeta va en una columna al lado de una
+/// lista larga. En Inicio encabeza la página y fijarla no tendría sentido.
+@mixin progress-card-sticky {
+  @media (min-width: 992px) {
+    .progress-card {
+      position: sticky;
+      top: 0;
+    }
+  }
+}
