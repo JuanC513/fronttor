@@ -3,7 +3,7 @@ import { SupabaseService } from '@core/services/supabase/supabase-service';
 
 /** La última vez que el estudiante usó el tutor. */
 export interface UltimaInteraccion {
-  tipo: 'question' | 'feedback' | 'exercise';
+  tipo: 'question' | 'feedback' | 'practice';
   cuando: string;
   /** El subtema sobre el que fue, o `null`: una práctica del taller libre no cuelga de ninguno. */
   subtema: string | null;

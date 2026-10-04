@@ -2,7 +2,7 @@ import { SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 import { callGemini, GeminiError, GeminiGenerationConfig } from './gemini-client.ts';
 
 /** Espejo del check de la columna `kind` en `ai_interactions`. */
-export type AiKind = 'question' | 'feedback' | 'content' | 'exercise';
+export type AiKind = 'question' | 'feedback' | 'content' | 'exercise' | 'practice';
 
 /**
  * Ids que solo sirven para el registro: NO entran en ningun prompt.
