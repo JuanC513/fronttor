@@ -15,8 +15,19 @@ export class BlockService {
     this.refreshTrigger.update((v) => v + 1);
   }
 
+  /**
+   * Todos los bloques del curso, ordenados.
+   *
+   * El `order` no es decorativo: quien llama filtra por subtema en el cliente y numera por la
+   * POSICIÓN en el array. Sin ordenar, PostgREST devuelve las filas en el orden físico de la tabla
+   * —que cambia cada vez que se actualiza una—, así que editar un bloque lo movía de sitio en la
+   * lista aunque su columna `order` siguiera igual.
+   */
   async getAll(): Promise<Block[]> {
-    const { data, error } = await this.supabase.from('blocks').select('*');
+    const { data, error } = await this.supabase
+      .from('blocks')
+      .select('*')
+      .order(this.orderColumn, { ascending: true });
 
     if (error) throw new Error(error.message);
     return (data as Block[]) ?? [];

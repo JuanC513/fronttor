@@ -1,4 +1,4 @@
-import { Component, effect, inject, OnInit, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { ModuleService } from '@domain/learning/services/module-service';
 import { ButtonModule } from 'primeng/button';
@@ -37,7 +37,7 @@ import { PublicationBadge } from '@shared/components/publication-badge/publicati
   templateUrl: './teaching-content.html',
   styleUrl: './teaching-content.scss',
 })
-export class TeachingContent implements OnInit {
+export class TeachingContent {
   private readonly router = inject(Router);
   private readonly moduleService = inject(ModuleService);
   private readonly lessonService = inject(LessonService);
@@ -54,26 +54,60 @@ export class TeachingContent implements OnInit {
   selectedLesson = signal<Lesson | undefined>(undefined);
   blocksList = signal<Block[]>([]);
 
+  /** El id del tema elegido en la pasada anterior. Ver el segundo efecto del constructor. */
+  private lastModuleId: number | undefined;
+
   constructor() {
+    // Toda escritura —crear, editar, borrar o reordenar, en cualquiera de los tres niveles—
+    // incrementa su `refreshTrigger`. Leerlos los tres aquí es lo que recarga la vista sola.
+    // El efecto corre también en el arranque, así que no hace falta `ngOnInit`.
     effect(() => {
-      // Cada vez que refreshTrigger cambie, recarga
-      this.selectedModule.set(undefined);
-      this.selectedLesson.set(undefined);
       this.moduleService.refreshTrigger();
       this.lessonService.refreshTrigger();
       this.blockService.refreshTrigger();
-      this.fetchModules();
-      this.fetchBlocks();
+      void this.reload();
     });
+
+    // Cambiar de tema vacía el subtema elegido, pero SOLO si de verdad es otro tema.
+    //
+    // Se compara por id y no por referencia a propósito: `resyncSelection` reasigna el mismo tema
+    // como objeto nuevo en cada recarga, y comparando referencias esto lo borraría todo otra vez.
     effect(() => {
-      this.selectedModule();
+      const moduleId = this.selectedModule()?.id;
+      if (moduleId === this.lastModuleId) return;
+
+      this.lastModuleId = moduleId;
       this.selectedLesson.set(undefined);
     });
   }
 
-  ngOnInit() {
-    this.fetchModules();
-    this.fetchBlocks();
+  private async reload(): Promise<void> {
+    await Promise.all([this.fetchModules(), this.fetchBlocks()]);
+    this.resyncSelection();
+  }
+
+  /**
+   * Devuelve la selección a los objetos recién cargados, o la vacía si ya no existen.
+   *
+   * Hace falta porque `fetchModules` sustituye el array entero por objetos nuevos y el elegido se
+   * quedaría obsoleto. La plantilla lee de él dos cosas que importan: `lessons.length`, que decide
+   * si se pinta la lista de subtemas, y `order`, que numera las etiquetas.
+   *
+   * Las LISTAS no necesitan esto —`currentLessons` y `currentBlocks` ya se derivan por id de lo
+   * recién traído, y los `p-listbox` llevan `dataKey="id"`—, así que basta con refrescar el objeto.
+   *
+   * Antes el problema se evitaba vaciando la selección en cada recarga, lo que obligaba a elegir
+   * tema y subtema otra vez después de cambiar una sola palabra de un bloque.
+   */
+  private resyncSelection(): void {
+    const moduleId = this.selectedModule()?.id;
+    const lessonId = this.selectedLesson()?.id;
+
+    // `find` devuelve `undefined` si lo elegido se borró, que es justo lo que se quiere.
+    const module = this.modules().find((item) => item.id === moduleId);
+
+    this.selectedModule.set(module);
+    this.selectedLesson.set((module?.lessons ?? []).find((item) => item.id === lessonId));
   }
 
   get isReorderingOrSaving(): boolean {
