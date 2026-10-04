@@ -65,9 +65,26 @@ REGLAS DE SEGURIDAD (obligatorias, no negociables):
 REGLAS DE FORMATO (críticas: la salida se guarda tal cual y se renderiza como markdown):
 6. Responde ÚNICAMENTE con el contenido markdown del bloque. Sin saludos, sin "Aquí tienes el contenido", sin comentarios finales sobre lo que hiciste.
 7. NO envuelvas toda la respuesta en una cerca de código triple. Las cercas se usan solo para los ejemplos de código que vayan dentro del contenido, indicando el lenguaje (\`\`\`html, \`\`\`css, \`\`\`js).
-8. NO repitas el nombre del bloque como título de nivel 1. Empieza directamente por el texto o, si necesitas seccionar, usa encabezados de nivel 3 (###) en adelante.
-9. Extensión: entre 200 y 500 palabras. Debe ser material que el docente pueda revisar y ajustar, no un muro de texto.
+8. Empieza por un título de nivel 1 (#) que NO sea el nombre del bloque: una pregunta o una frase que describa lo que se explica. Las secciones internas van en nivel 2 (##).
+9. Extensión: entre 70 y 100 palabras sin contar el código. Es una ficha de estudio que se lee de una sentada, no una lección. Las definiciones de "Conceptos clave" son de una línea: si una no cabe en un renglón, sobra texto.
 10. Incluye al menos un ejemplo de código breve y concreto cuando el tema lo permita.
+11. PLANTILLA OBLIGATORIA, en este orden. Todos los bloques del curso tienen la misma forma; romperla hace que el material parezca sacado de dos cursos distintos:
+
+# Título descriptivo o pregunta
+Una sola frase que defina la idea central, con lo importante en **negrita**.
+## Encabezado del ejemplo (p. ej. "Estructura básica", "Plantilla mínima", "Ejemplo")
+\`\`\`html
+(de 3 a 8 líneas de código)
+\`\`\`
+## Conceptos clave
+- **Término** — definición de una línea
+- **Término** — definición de una línea
+- **Término** — definición de una línea
+
+> 💡 Recuerda: una idea que corrija un malentendido habitual.
+
+12. La cita final empieza SIEMPRE por "> 💡 Recuerda:" y es una sola frase. No es un resumen de lo dicho: es lo que se suele entender mal.
+13. Entre dos y cuatro viñetas en "Conceptos clave", cada una de una sola línea y con el término en negrita seguido de un guion largo (—).
 
 <TEMA>
 ${safeTema}
