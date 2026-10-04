@@ -3,6 +3,7 @@ import { provideRouter, Router } from '@angular/router';
 import { AuthService } from '@core/services/auth/auth-service';
 import { ProfileService } from '@core/services/profile/profile-service';
 import { Profile } from '@core/interfaces/profile';
+import { NotificationService } from '@core/services/notification/notification-service';
 import { ConfirmationService } from 'primeng/api';
 import { BehaviorSubject } from 'rxjs';
 
@@ -27,6 +28,8 @@ describe('ProfilePage', () => {
   let refreshProfile: jasmine.Spy;
   let profile$: BehaviorSubject<Profile | null>;
   let signOut: jasmine.Spy;
+  let exito: jasmine.Spy;
+  let error: jasmine.Spy;
   let createdAt: string | undefined;
 
   const profile = (description: string | null): Profile => ({
@@ -48,6 +51,8 @@ describe('ProfilePage', () => {
 
     profile$ = new BehaviorSubject<Profile | null>(profile(description));
     signOut = jasmine.createSpy('signOut').and.resolveTo(undefined);
+    exito = jasmine.createSpy('exito');
+    error = jasmine.createSpy('error');
     saveDescription = jasmine.createSpy('saveDescription').and.resolveTo(undefined);
     refreshProfile = jasmine.createSpy('refreshProfile').and.callFake(async () => {
       profile$.next(profile(component.description().trim() || null));
@@ -58,6 +63,8 @@ describe('ProfilePage', () => {
       providers: [
         provideRouter([]),
         { provide: ProfileService, useValue: { saveDescription } },
+        // El aviso ya no vive en una señal del componente: se emite y se olvida.
+        { provide: NotificationService, useValue: { exito, error } },
         {
           provide: AuthService,
           useValue: {
@@ -123,8 +130,8 @@ describe('ProfilePage', () => {
 
     expect(saveDescription).toHaveBeenCalledWith('u1', 'Nuevo');
     expect(refreshProfile).toHaveBeenCalled();
-    expect(component.saved()).toBeTrue();
-    expect(component.error()).toBeNull();
+    expect(exito).toHaveBeenCalledWith('Guardado. Tu tutor ya lo tiene en cuenta');
+    expect(error).not.toHaveBeenCalled();
   });
 
   it('avisa si no se pudo guardar y no dice que guardó', async () => {
@@ -134,8 +141,8 @@ describe('ProfilePage', () => {
 
     await component.save();
 
-    expect(component.error()).toContain('permission denied');
-    expect(component.saved()).toBeFalse();
+    expect(error).toHaveBeenCalledWith('No se pudo guardar', 'permission denied');
+    expect(exito).not.toHaveBeenCalled();
   });
 
   /** Borrarlo todo es una decisión, no un campo sin rellenar: no puede volver solo el texto viejo. */
@@ -209,7 +216,9 @@ describe('ProfilePage', () => {
 
       expect(signOut).toHaveBeenCalled();
       expect(navigate).toHaveBeenCalledWith(['/login']);
-      expect(component.logoutError()).toBeNull();
+      expect(error).not.toHaveBeenCalled();
+      // Sin aviso de éxito: `/login` queda fuera del layout donde vive el toast.
+      expect(exito).not.toHaveBeenCalled();
     });
 
     /**
@@ -227,13 +236,13 @@ describe('ProfilePage', () => {
       fixture.detectChanges();
 
       expect(navigate).not.toHaveBeenCalled();
-      expect(component.logoutError()).toBe(
-        'No se pudo cerrar la sesión. Demasiados intentos. Espera unos minutos e inténtalo de nuevo.',
+      expect(error).toHaveBeenCalledWith(
+        'No se pudo cerrar la sesión',
+        'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.',
       );
-      expect(fixture.nativeElement.textContent).toContain('No se pudo cerrar la sesión.');
     });
 
-    it('limpia el aviso al reintentarlo', async () => {
+    it('deja reintentar después de un fallo', async () => {
       await setup();
       const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
       signOut.and.rejectWith({ code: 'over_request_rate_limit' });
@@ -241,13 +250,13 @@ describe('ProfilePage', () => {
 
       component.onLogout();
       await fixture.whenStable();
-      expect(component.logoutError()).not.toBeNull();
+      expect(error).toHaveBeenCalledTimes(1);
 
       signOut.and.resolveTo(undefined);
       component.onLogout();
       await fixture.whenStable();
 
-      expect(component.logoutError()).toBeNull();
+      expect(error).toHaveBeenCalledTimes(1);
       expect(navigate).toHaveBeenCalledWith(['/login']);
     });
   });

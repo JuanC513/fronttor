@@ -1,5 +1,6 @@
 import { Component, effect, inject, signal } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
+import { NotificationService } from '@core/services/notification/notification-service';
 import { ModuleService } from '@domain/learning/services/module-service';
 import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -7,6 +8,7 @@ import { SplitterModule } from 'primeng/splitter';
 import { OrderListModule } from 'primeng/orderlist';
 import { Lesson } from '@domain/learning/models/lesson-model';
 import { ListboxModule } from 'primeng/listbox';
+import { MessageModule } from 'primeng/message';
 import { FormsModule } from '@angular/forms';
 import { ModuleWithLessons } from '@domain/learning/models/module-with-lessons';
 import { LessonService } from '@domain/learning/services/lesson-service';
@@ -30,6 +32,7 @@ import { PublicationBadge } from '@shared/components/publication-badge/publicati
     RouterOutlet,
     OrderListModule,
     ListboxModule,
+    MessageModule,
     FormsModule,
     PublicationBadge,
     TeachingTabs,
@@ -42,12 +45,15 @@ export class TeachingContent {
   private readonly moduleService = inject(ModuleService);
   private readonly lessonService = inject(LessonService);
   private readonly blockService = inject(BlockService);
+  private readonly notifications = inject(NotificationService);
 
   isModuleReordering = signal(false);
   isModuleSaving = signal(false);
   modules = signal<ModuleWithLessons[]>([]);
   modulesBuffer: ModuleWithLessons[] = [];
   loading = signal(true);
+  /** Solo fallos de CARGA: dejan la pantalla vacía, así que el aviso tiene que permanecer. El
+   * resultado de guardar o reordenar va por toast. */
   error = signal<string | null>(null);
   skeletons = Array(4).fill(0);
   selectedModule = signal<ModuleWithLessons | undefined>(undefined);
@@ -208,9 +214,13 @@ export class TeachingContent {
       this.modules.set(this.modulesBuffer.map((m, i) => ({ ...m, order: i + 1 })));
       this.isModuleReordering.set(false);
       this.isModuleSaving.set(false);
-    } catch {
+      this.notifications.exito('Orden de los temas guardado');
+    } catch (err) {
       this.isModuleSaving.set(false);
-      this.error.set('No se pudo guardar el orden.');
+      this.notifications.error(
+        'No se pudo guardar el orden',
+        err instanceof Error ? err.message : String(err),
+      );
       await this.fetchModules();
     }
   }
@@ -256,9 +266,13 @@ export class TeachingContent {
       await this.lessonService.reorderAll(ids);
       this.isLessonReordering.set(false);
       this.isLessonSaving.set(false);
-    } catch {
+      this.notifications.exito('Orden de los subtemas guardado');
+    } catch (err) {
       this.isLessonSaving.set(false);
-      this.error.set('No se pudo guardar el orden.');
+      this.notifications.error(
+        'No se pudo guardar el orden',
+        err instanceof Error ? err.message : String(err),
+      );
     }
   }
 
@@ -304,9 +318,13 @@ export class TeachingContent {
       await this.blockService.reorderAll(ids);
       this.isBlockReordering.set(false);
       this.isBlockSaving.set(false);
-    } catch {
+      this.notifications.exito('Orden de los bloques guardado');
+    } catch (err) {
       this.isBlockSaving.set(false);
-      this.error.set('No se pudo guardar el orden.');
+      this.notifications.error(
+        'No se pudo guardar el orden',
+        err instanceof Error ? err.message : String(err),
+      );
     }
   }
 }

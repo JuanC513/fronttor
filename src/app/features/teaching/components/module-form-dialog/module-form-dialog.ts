@@ -20,6 +20,7 @@ import {
 import { FieldError } from '@shared/components/field-error/field-error';
 import { publicationConfirmation } from '@shared/components/publication-field/publication-confirm';
 import { PublicationField } from '@shared/components/publication-field/publication-field';
+import { NotificationService } from '@core/services/notification/notification-service';
 import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmPopup, ConfirmPopupModule } from 'primeng/confirmpopup';
@@ -50,6 +51,7 @@ export class ModuleFormDialog implements OnInit {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly formBuilder = inject(FormBuilder);
   private readonly moduleService = inject(ModuleService);
+  private readonly notifications = inject(NotificationService);
   private readonly blockService = inject(BlockService);
   private readonly confirmationService = inject(ConfirmationService);
   moduleForm!: FormGroup;
@@ -200,20 +202,48 @@ export class ModuleFormDialog implements OnInit {
   }
 
   private async remove(id: number): Promise<void> {
-    await this.moduleService.delete(id);
+    try {
+      await this.moduleService.delete(id);
+    } catch (err) {
+      this.notifications.error(
+        'No se pudo eliminar el tema',
+        err instanceof Error ? err.message : String(err),
+      );
+      return;
+    }
+
+    this.notifications.exito('Tema eliminado');
     this.router.navigate(['/teaching']);
   }
 
+  /**
+   * Guarda y cierra.
+   *
+   * El `catch` no es ceremonia: antes no existía, así que un fallo dejaba el diálogo abierto, mudo
+   * y con una promesa rechazada sin recoger. Ahora avisa y **se queda abierto a propósito**, con lo
+   * escrito intacto, para poder reintentar sin volver a teclear.
+   */
   private async save(): Promise<void> {
-    const { nombre, is_published } = this.moduleForm.value;
+    const editando = this.isEditForm;
 
-    if (this.isEditForm) {
-      const id = this.activatedRoute.snapshot.paramMap.get('id');
-      await this.moduleService.update(Number(id), nombre, is_published);
-    } else {
-      await this.moduleService.insert(nombre, is_published);
+    try {
+      const { nombre, is_published } = this.moduleForm.value;
+
+      if (this.isEditForm) {
+        const id = this.activatedRoute.snapshot.paramMap.get('id');
+        await this.moduleService.update(Number(id), nombre, is_published);
+      } else {
+        await this.moduleService.insert(nombre, is_published);
+      }
+    } catch (err) {
+      this.notifications.error(
+        'No se pudo guardar el tema',
+        err instanceof Error ? err.message : String(err),
+      );
+      return;
     }
 
+    this.notifications.exito(editando ? 'Tema actualizado' : 'Tema creado');
     this.router.navigate(['/teaching']);
   }
 }

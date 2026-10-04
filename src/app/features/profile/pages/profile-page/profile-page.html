@@ -21,12 +21,6 @@
     />
   </header>
 
-  <!-- Va aquí y no dentro de ninguna tarjeta: el aviso tiene que salir junto al botón que se acaba
-      de pulsar, no a media página de él. -->
-  @if (logoutError(); as message) {
-    <p-message severity="error" [text]="message" styleClass="w-full" />
-  }
-
   <span class="cards-container flex gap-3">
     <!-- El texto de alrededor es lo que decide si alguien rellena esto. Un campo llamado
       «descripción», sin decir para qué sirve ni qué merece la pena escribir, se queda vacío. -->
@@ -59,16 +53,6 @@
         ></textarea>
         <small class="counter">{{ description().length }} / {{ maxLength }}</small>
       </div>
-
-      @if (error(); as message) {
-        <p-message severity="error" [text]="message" styleClass="w-full mt-3" />
-      } @else if (saved()) {
-        <p-message
-          severity="success"
-          text="Guardado. Tu tutor ya lo tiene en cuenta."
-          styleClass="w-full mt-3"
-        />
-      }
 
       <div class="actions mt-3">
         <p-button

@@ -7,6 +7,7 @@ import { ModuleWithLessons } from '@domain/learning/models/module-with-lessons';
 import { BlockService } from '@domain/learning/services/block-service';
 import { LessonService } from '@domain/learning/services/lesson-service';
 import { ModuleService } from '@domain/learning/services/module-service';
+import { NotificationService } from '@core/services/notification/notification-service';
 
 import { TeachingContent } from './teaching-content';
 
@@ -22,6 +23,9 @@ describe('TeachingContent', () => {
   let getAllBlocks: jasmine.Spy;
   let moduleTrigger: ReturnType<typeof signal<number>>;
   let blockTrigger: ReturnType<typeof signal<number>>;
+  let reorderModules: jasmine.Spy;
+  let exito: jasmine.Spy;
+  let error: jasmine.Spy;
 
   const subtema = (id: number, moduleId: number, name: string) =>
     ({ id, module_id: moduleId, name, order: id, is_published: true }) as never;
@@ -49,13 +53,24 @@ describe('TeachingContent', () => {
     blockTrigger = signal(0);
     getAllWithLessons = jasmine.createSpy('getAllWithLessons').and.callFake(async () => arbol());
     getAllBlocks = jasmine.createSpy('getAll').and.callFake(async () => bloques());
+    reorderModules = jasmine.createSpy('reorderAll').and.resolveTo(undefined);
+    exito = jasmine.createSpy('exito');
+    error = jasmine.createSpy('error');
 
     await TestBed.configureTestingModule({
       imports: [TeachingContent],
       providers: [
         provideRouter([]),
         { provide: SupabaseService, useValue: { client: {} } },
-        { provide: ModuleService, useValue: { refreshTrigger: moduleTrigger, getAllWithLessons } },
+        { provide: NotificationService, useValue: { exito, error } },
+        {
+          provide: ModuleService,
+          useValue: {
+            refreshTrigger: moduleTrigger,
+            getAllWithLessons,
+            reorderAll: reorderModules,
+          },
+        },
         { provide: LessonService, useValue: { refreshTrigger: signal(0) } },
         { provide: BlockService, useValue: { refreshTrigger: blockTrigger, getAll: getAllBlocks } },
       ],
@@ -170,5 +185,33 @@ describe('TeachingContent', () => {
     await fixture.whenStable();
 
     expect(component.selectedLesson()).toBeUndefined();
+  });
+
+  describe('guardar el orden', () => {
+    /** Reordenar no cierra ningún diálogo ni cambia de pantalla: sin aviso no se sabe si cuajó. */
+    it('avisa cuando el nuevo orden se guarda', async () => {
+      await setup();
+      component.startModulesReorder();
+
+      await component.saveModulesOrder();
+
+      expect(reorderModules).toHaveBeenCalled();
+      expect(exito).toHaveBeenCalledWith('Orden de los temas guardado');
+      expect(error).not.toHaveBeenCalled();
+    });
+
+    it('avisa del fallo y vuelve a leer el orden real de la base', async () => {
+      await setup();
+      reorderModules.and.rejectWith(new Error('permission denied'));
+      const lecturasPrevias = getAllWithLessons.calls.count();
+      component.startModulesReorder();
+
+      await component.saveModulesOrder();
+
+      expect(error).toHaveBeenCalledWith('No se pudo guardar el orden', 'permission denied');
+      expect(exito).not.toHaveBeenCalled();
+      // Sin este refetch la pantalla se quedaría mostrando un orden que la base no tiene.
+      expect(getAllWithLessons.calls.count()).toBeGreaterThan(lecturasPrevias);
+    });
   });
 });

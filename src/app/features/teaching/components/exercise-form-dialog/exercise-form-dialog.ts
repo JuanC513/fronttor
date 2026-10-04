@@ -63,6 +63,7 @@ import {
 import { publicationConfirmation } from '@shared/components/publication-field/publication-confirm';
 import { PreviewPanel } from '@shared/components/preview-panel/preview-panel';
 import { PublicationField } from '@shared/components/publication-field/publication-field';
+import { NotificationService } from '@core/services/notification/notification-service';
 import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmPopup, ConfirmPopupModule } from 'primeng/confirmpopup';
@@ -114,6 +115,7 @@ export class ExerciseFormDialog implements OnInit, OnDestroy {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly formBuilder = inject(FormBuilder);
   private readonly exerciseService = inject(ExerciseService);
+  private readonly notifications = inject(NotificationService);
   private readonly moduleService = inject(ModuleService);
   private readonly lessonService = inject(LessonService);
   private readonly confirmationService = inject(ConfirmationService);
@@ -647,7 +649,17 @@ export class ExerciseFormDialog implements OnInit, OnDestroy {
   }
 
   private async remove(id: number): Promise<void> {
-    await this.exerciseService.delete(id);
+    try {
+      await this.exerciseService.delete(id);
+    } catch (err) {
+      this.notifications.error(
+        'No se pudo eliminar el ejercicio',
+        err instanceof Error ? err.message : String(err),
+      );
+      return;
+    }
+
+    this.notifications.exito('Ejercicio eliminado');
     this.closeDialog();
   }
 
@@ -673,6 +685,9 @@ export class ExerciseFormDialog implements OnInit, OnDestroy {
       is_published: raw.is_published,
     };
 
+    // El `catch` faltaba: el `finally` limpiaba el indicador pero el fallo se propagaba sin que
+    // nadie lo recogiera, así que el diálogo se quedaba abierto y mudo. Ahora avisa y se queda
+    // abierto a propósito, con lo escrito intacto, para poder reintentar.
     try {
       if (this.isEditForm) {
         const id = Number(this.activatedRoute.snapshot.paramMap.get('id'));
@@ -681,7 +696,13 @@ export class ExerciseFormDialog implements OnInit, OnDestroy {
         await this.exerciseService.insert(input);
       }
 
+      this.notifications.exito(this.isEditForm ? 'Ejercicio actualizado' : 'Ejercicio creado');
       this.closeDialog();
+    } catch (err) {
+      this.notifications.error(
+        'No se pudo guardar el ejercicio',
+        err instanceof Error ? err.message : String(err),
+      );
     } finally {
       this.isSaving.set(false);
     }

@@ -23,8 +23,8 @@
 
   <app-teaching-tabs />
 
-  @if (error()) {
-    Error
+  @if (error(); as message) {
+    <p-message severity="error" [text]="message" styleClass="w-full mb-3" />
   }
 
   <div class="h-full overflow-hidden">

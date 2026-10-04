@@ -12,13 +12,13 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '@core/services/auth/auth-service';
+import { NotificationService } from '@core/services/notification/notification-service';
 import { ProfileService } from '@core/services/profile/profile-service';
 import { authErrorMessage } from '@features/auth/utils/auth-error-messages';
 import { ChangePasswordForm } from '@features/profile/components/change-password-form/change-password-form';
 import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmPopupModule } from 'primeng/confirmpopup';
-import { MessageModule } from 'primeng/message';
 import { TextareaModule } from 'primeng/textarea';
 
 /**
@@ -32,14 +32,7 @@ export const MAX_PERFIL_LENGTH = 1_000;
 
 @Component({
   selector: 'app-profile-page',
-  imports: [
-    ButtonModule,
-    ChangePasswordForm,
-    ConfirmPopupModule,
-    FormsModule,
-    MessageModule,
-    TextareaModule,
-  ],
+  imports: [ButtonModule, ChangePasswordForm, ConfirmPopupModule, FormsModule, TextareaModule],
   templateUrl: './profile-page.html',
   styleUrl: './profile-page.scss',
   // Local y no global, como en el resto de la aplicación: cada vista trae el suyo con el
@@ -49,6 +42,7 @@ export const MAX_PERFIL_LENGTH = 1_000;
 export class ProfilePage {
   private readonly authService = inject(AuthService);
   private readonly profileService = inject(ProfileService);
+  private readonly notifications = inject(NotificationService);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly router = inject(Router);
 
@@ -105,17 +99,6 @@ export class ProfilePage {
 
   readonly description = signal('');
   readonly saving = signal(false);
-  readonly error = signal<string | null>(null);
-  readonly saved = signal(false);
-
-  /**
-   * Por qué no se pudo cerrar la sesión.
-   *
-   * Señal aparte de `error`, que se pinta dentro de la tarjeta del tutor: un fallo al salir no
-   * tiene nada que ver con la descripción, y aparecería a media página del botón que se acaba de
-   * pulsar.
-   */
-  readonly logoutError = signal<string | null>(null);
 
   /** Lo guardado, para saber si hay algo que guardar. */
   private readonly stored = computed(() => this.profile()?.profile_description ?? '');
@@ -151,8 +134,6 @@ export class ProfilePage {
     if (!userId || !this.canSave()) return;
 
     this.saving.set(true);
-    this.error.set(null);
-    this.saved.set(false);
 
     try {
       await this.profileService.saveDescription(userId, this.description());
@@ -160,9 +141,12 @@ export class ProfilePage {
       // Sin esto `profile$` se quedaría con el texto anterior, y la vista mostraría lo viejo justo
       // después de haber escrito lo nuevo.
       await this.authService.refreshProfile();
-      this.saved.set(true);
+      this.notifications.exito('Guardado. Tu tutor ya lo tiene en cuenta');
     } catch (err) {
-      this.error.set('No se pudo guardar. ' + (err instanceof Error ? err.message : String(err)));
+      this.notifications.error(
+        'No se pudo guardar',
+        err instanceof Error ? err.message : String(err),
+      );
     } finally {
       this.saving.set(false);
     }
@@ -171,7 +155,6 @@ export class ProfilePage {
   onDescriptionChange(value: string): void {
     this.touched.set(true);
     this.description.set(value);
-    this.saved.set(false);
   }
 
   /**
@@ -210,16 +193,16 @@ export class ProfilePage {
    * es de quien es ese trabajo.
    */
   async logout() {
-    this.logoutError.set(null);
-
     try {
       await this.authService.signOut();
     } catch (err) {
       // `AuthService` relanza el `AuthError` crudo, que es justo lo que este traductor necesita.
-      this.logoutError.set('No se pudo cerrar la sesión. ' + authErrorMessage(err));
+      this.notifications.error('No se pudo cerrar la sesión', authErrorMessage(err));
       return;
     }
 
+    // Sin aviso de éxito: `/login` queda fuera de `AppLayout`, donde vive el toast, así que no
+    // llegaría a verse. Y la propia pantalla de inicio de sesión ya es la confirmación.
     this.router.navigate(['/login']);
   }
 }

@@ -1,12 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '@core/services/auth/auth-service';
+import { NotificationService } from '@core/services/notification/notification-service';
 import { authErrorMessage } from '@features/auth/utils/auth-error-messages';
 import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from '@features/auth/utils/auth-input-limits';
 import { passwordsMatch } from '@features/auth/utils/passwords-match.validator';
 import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
 import { PasswordModule } from 'primeng/password';
 
 /**
@@ -35,20 +34,19 @@ import { PasswordModule } from 'primeng/password';
  */
 @Component({
   selector: 'app-change-password-form',
-  imports: [ReactiveFormsModule, PasswordModule, ButtonModule, MessageModule],
+  imports: [ReactiveFormsModule, PasswordModule, ButtonModule],
   templateUrl: './change-password-form.html',
   styleUrl: './change-password-form.scss',
 })
 export class ChangePasswordForm {
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly authService = inject(AuthService);
+  private readonly notifications = inject(NotificationService);
 
   readonly minPasswordLength = MIN_PASSWORD_LENGTH;
   readonly maxPasswordLength = MAX_PASSWORD_LENGTH;
 
   readonly loading = signal(false);
-  readonly serverError = signal<string | null>(null);
-  readonly changed = signal(false);
 
   readonly form = this.formBuilder.group(
     {
@@ -66,15 +64,6 @@ export class ChangePasswordForm {
     { validators: passwordsMatch('password', 'confirmPassword') },
   );
 
-  constructor() {
-    // Los avisos se refieren al último envío, así que dejan de valer en cuanto el formulario cambia.
-    // El `reset()` de abajo también pasa por aquí, y por eso `changed` se marca DESPUÉS de él.
-    this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
-      this.serverError.set(null);
-      this.changed.set(false);
-    });
-  }
-
   async onSubmit(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -86,13 +75,11 @@ export class ChangePasswordForm {
     const email = this.authService.getCurrentUser()?.email;
 
     if (!email) {
-      this.serverError.set('Tu sesión expiró. Inicia sesión de nuevo.');
+      this.notifications.error('Tu sesión expiró. Inicia sesión de nuevo.');
       return;
     }
 
     this.loading.set(true);
-    this.serverError.set(null);
-    this.changed.set(false);
 
     const { currentPassword, password } = this.form.getRawValue();
 
@@ -101,9 +88,9 @@ export class ChangePasswordForm {
       await this.authService.updatePassword(password);
 
       this.form.reset();
-      this.changed.set(true);
+      this.notifications.exito('Contraseña actualizada');
     } catch (error) {
-      this.serverError.set(authErrorMessage(error));
+      this.notifications.error('No se pudo cambiar la contraseña', authErrorMessage(error));
     } finally {
       this.loading.set(false);
     }

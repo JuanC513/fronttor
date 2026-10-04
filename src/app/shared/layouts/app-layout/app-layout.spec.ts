@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { AuthService } from '@core/services/auth/auth-service';
 import { SupabaseService } from '@core/services/supabase/supabase-service';
+import { MessageService } from 'primeng/api';
 import { of } from 'rxjs';
 
 import { AppLayout } from './app-layout';
@@ -20,6 +21,9 @@ describe('AppLayout', () => {
         provideRouter([]),
         { provide: AuthService, useValue: { isStudent$: of(true), isTeacher$: of(false) } },
         { provide: SupabaseService, useValue: { client: {} } },
+        // El `p-toast` del layout lo necesita, y en la aplicación lo provee `app.config.ts`, que
+        // los tests no cargan.
+        MessageService,
       ],
     }).compileComponents();
 
