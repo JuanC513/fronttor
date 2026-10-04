@@ -54,3 +54,29 @@
     color: var(--color-text-muted);
   }
 }
+
+:host ::ng-deep .p-splitterpanel {
+  > div {
+    min-height: 0;
+  }
+
+  > div > span {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    height: auto;
+  }
+
+  > div > span > div {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+  }
+
+  p-listbox,
+  p-orderlist {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+}
