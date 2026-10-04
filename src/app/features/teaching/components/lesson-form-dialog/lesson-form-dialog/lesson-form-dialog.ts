@@ -21,6 +21,7 @@ import {
 import { FieldError } from '@shared/components/field-error/field-error';
 import { publicationConfirmation } from '@shared/components/publication-field/publication-confirm';
 import { PublicationField } from '@shared/components/publication-field/publication-field';
+import { NotificationService } from '@core/services/notification/notification-service';
 import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmPopup, ConfirmPopupModule } from 'primeng/confirmpopup';
@@ -53,6 +54,7 @@ export class LessonFormDialog implements OnInit {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly formBuilder = inject(FormBuilder);
   private readonly lessonService = inject(LessonService);
+  private readonly notifications = inject(NotificationService);
   private readonly moduleService = inject(ModuleService);
   private readonly blockService = inject(BlockService);
   private readonly confirmationService = inject(ConfirmationService);
@@ -228,20 +230,48 @@ export class LessonFormDialog implements OnInit {
   }
 
   private async remove(id: number): Promise<void> {
-    await this.lessonService.delete(id);
+    try {
+      await this.lessonService.delete(id);
+    } catch (err) {
+      this.notifications.error(
+        'No se pudo eliminar el subtema',
+        err instanceof Error ? err.message : String(err),
+      );
+      return;
+    }
+
+    this.notifications.exito('Subtema eliminado');
     this.router.navigate(['/teaching']);
   }
 
+  /**
+   * Guarda y cierra.
+   *
+   * El `catch` no es ceremonia: antes no existía, así que un fallo dejaba el diálogo abierto, mudo
+   * y con una promesa rechazada sin recoger. Ahora avisa y **se queda abierto a propósito**, con lo
+   * escrito intacto, para poder reintentar sin volver a teclear.
+   */
   private async save(): Promise<void> {
-    const { name, module_id, is_published } = this.lessonForm.value;
+    const editando = this.isEditForm;
 
-    if (this.isEditForm) {
-      const id = this.activatedRoute.snapshot.paramMap.get('id');
-      await this.lessonService.update(Number(id), name, module_id, is_published);
-    } else {
-      await this.lessonService.insert(name, module_id, is_published);
+    try {
+      const { name, module_id, is_published } = this.lessonForm.value;
+
+      if (this.isEditForm) {
+        const id = this.activatedRoute.snapshot.paramMap.get('id');
+        await this.lessonService.update(Number(id), name, module_id, is_published);
+      } else {
+        await this.lessonService.insert(name, module_id, is_published);
+      }
+    } catch (err) {
+      this.notifications.error(
+        'No se pudo guardar el subtema',
+        err instanceof Error ? err.message : String(err),
+      );
+      return;
     }
 
+    this.notifications.exito(editando ? 'Subtema actualizado' : 'Subtema creado');
     this.router.navigate(['/teaching']);
   }
 }

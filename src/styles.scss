@@ -138,3 +138,25 @@ body {
 .p-floatlabel .ng-invalid.ng-touched label {
   color: var(--color-error) !important;
 }
+
+// Toast
+//
+// Los `severity` de PrimeNG traen los verdes y rojos de Aura, que no son los del proyecto. Es la
+// misma divergencia que ya obligó a invertir el botón de la tarjeta de progreso en `_page.scss`.
+// Se redefinen los tokens del toast en vez de pelear con sus clases internas.
+
+.p-toast-message-success {
+  --p-toast-success-background: var(--color-success-bg);
+  --p-toast-success-border-color: var(--color-success);
+  --p-toast-success-color: var(--color-success);
+  --p-toast-success-detail-color: var(--color-text-secondary);
+  --p-toast-success-close-button-focus-ring-color: var(--color-success);
+}
+
+.p-toast-message-error {
+  --p-toast-error-background: var(--color-error-bg);
+  --p-toast-error-border-color: var(--color-error);
+  --p-toast-error-color: var(--color-error);
+  --p-toast-error-detail-color: var(--color-text-secondary);
+  --p-toast-error-close-button-focus-ring-color: var(--color-error);
+}

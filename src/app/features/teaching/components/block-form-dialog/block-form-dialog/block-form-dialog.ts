@@ -24,6 +24,7 @@ import { BlockService } from '@domain/learning/services/block-service';
 import { LessonService } from '@domain/learning/services/lesson-service';
 import { ModuleService } from '@domain/learning/services/module-service';
 import { describeBlockImpact } from '@domain/learning/utils/publication-state';
+import { NotificationService } from '@core/services/notification/notification-service';
 import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmPopup, ConfirmPopupModule } from 'primeng/confirmpopup';
@@ -71,6 +72,7 @@ export class BlockFormDialog implements OnInit, OnDestroy {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly formBuilder = inject(FormBuilder);
   private readonly blockService = inject(BlockService);
+  private readonly notifications = inject(NotificationService);
   private readonly moduleService = inject(ModuleService);
   private readonly lessonService = inject(LessonService);
   private readonly aiService = inject(AiService);
@@ -392,20 +394,48 @@ export class BlockFormDialog implements OnInit, OnDestroy {
   }
 
   private async remove(id: number): Promise<void> {
-    await this.blockService.delete(id);
+    try {
+      await this.blockService.delete(id);
+    } catch (err) {
+      this.notifications.error(
+        'No se pudo eliminar el bloque',
+        err instanceof Error ? err.message : String(err),
+      );
+      return;
+    }
+
+    this.notifications.exito('Bloque eliminado');
     this.router.navigate(['/teaching']);
   }
 
+  /**
+   * Guarda y cierra.
+   *
+   * El `catch` no es ceremonia: antes no existía, así que un fallo dejaba el diálogo abierto, mudo
+   * y con una promesa rechazada sin recoger. Ahora avisa y **se queda abierto a propósito**, con lo
+   * escrito intacto, para poder reintentar sin volver a teclear.
+   */
   private async save(): Promise<void> {
-    const { name, content, lesson_id, is_published } = this.blockForm.value;
+    const editando = this.isEditForm;
 
-    if (this.isEditForm) {
-      const id = this.activatedRoute.snapshot.paramMap.get('id');
-      await this.blockService.update(Number(id), name, content, lesson_id, is_published);
-    } else {
-      await this.blockService.insert(name, content, lesson_id, is_published);
+    try {
+      const { name, content, lesson_id, is_published } = this.blockForm.value;
+
+      if (this.isEditForm) {
+        const id = this.activatedRoute.snapshot.paramMap.get('id');
+        await this.blockService.update(Number(id), name, content, lesson_id, is_published);
+      } else {
+        await this.blockService.insert(name, content, lesson_id, is_published);
+      }
+    } catch (err) {
+      this.notifications.error(
+        'No se pudo guardar el bloque',
+        err instanceof Error ? err.message : String(err),
+      );
+      return;
     }
 
+    this.notifications.exito(editando ? 'Bloque actualizado' : 'Bloque creado');
     this.router.navigate(['/teaching']);
   }
 }

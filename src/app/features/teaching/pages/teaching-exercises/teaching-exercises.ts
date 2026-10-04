@@ -1,6 +1,7 @@
 import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
+import { NotificationService } from '@core/services/notification/notification-service';
 import { ExerciseWithLesson } from '@domain/learning/models/exercise-with-lesson';
 import { ModuleWithLessons } from '@domain/learning/models/module-with-lessons';
 import { ExerciseService } from '@domain/learning/services/exercise-service';
@@ -41,6 +42,7 @@ export class TeachingExercises implements OnInit {
   private readonly router = inject(Router);
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly exerciseService = inject(ExerciseService);
+  private readonly notifications = inject(NotificationService);
   private readonly moduleService = inject(ModuleService);
 
   readonly exercises = signal<ExerciseWithLesson[]>([]);
@@ -172,8 +174,12 @@ export class TeachingExercises implements OnInit {
     try {
       await this.exerciseService.reorderAll(this.buffer.map((exercise) => exercise.id));
       this.isReordering.set(false);
-    } catch {
-      this.error.set('No se pudo guardar el orden.');
+      this.notifications.exito('Orden de los ejercicios guardado');
+    } catch (err) {
+      this.notifications.error(
+        'No se pudo guardar el orden',
+        err instanceof Error ? err.message : String(err),
+      );
     } finally {
       this.isSaving.set(false);
     }

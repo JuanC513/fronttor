@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AuthService } from '@core/services/auth/auth-service';
+import { NotificationService } from '@core/services/notification/notification-service';
 
 import { ChangePasswordForm } from './change-password-form';
 
@@ -9,6 +10,8 @@ describe('ChangePasswordForm', () => {
   let signIn: jasmine.Spy;
   let updatePassword: jasmine.Spy;
   let signOut: jasmine.Spy;
+  let exito: jasmine.Spy;
+  let error: jasmine.Spy;
 
   // `null` y no `undefined` para el caso sin correo: pasarle `undefined` a un parámetro con valor
   // por defecto lo deja en el valor por defecto, así que el caso nunca se probaría.
@@ -16,10 +19,14 @@ describe('ChangePasswordForm', () => {
     signIn = jasmine.createSpy('signIn').and.resolveTo(undefined);
     updatePassword = jasmine.createSpy('updatePassword').and.resolveTo(undefined);
     signOut = jasmine.createSpy('signOut').and.resolveTo(undefined);
+    exito = jasmine.createSpy('exito');
+    error = jasmine.createSpy('error');
 
     await TestBed.configureTestingModule({
       imports: [ChangePasswordForm],
       providers: [
+        // Los avisos salen por toast, así que ya no quedan en señales del componente.
+        { provide: NotificationService, useValue: { exito, error } },
         {
           provide: AuthService,
           useValue: {
@@ -97,8 +104,11 @@ describe('ChangePasswordForm', () => {
     await component.onSubmit();
 
     expect(updatePassword).not.toHaveBeenCalled();
-    expect(component.serverError()).toBe('Correo o contraseña incorrectos.');
-    expect(component.changed()).toBeFalse();
+    expect(error).toHaveBeenCalledWith(
+      'No se pudo cambiar la contraseña',
+      'Correo o contraseña incorrectos.',
+    );
+    expect(exito).not.toHaveBeenCalled();
   });
 
   it('limpia el formulario y confirma cuando el cambio sale bien', async () => {
@@ -107,8 +117,8 @@ describe('ChangePasswordForm', () => {
 
     await component.onSubmit();
 
-    expect(component.changed()).toBeTrue();
-    expect(component.serverError()).toBeNull();
+    expect(exito).toHaveBeenCalledWith('Contraseña actualizada');
+    expect(error).not.toHaveBeenCalled();
     expect(component.form.getRawValue().password).toBe('');
   });
 
@@ -132,6 +142,6 @@ describe('ChangePasswordForm', () => {
     await component.onSubmit();
 
     expect(signIn).not.toHaveBeenCalled();
-    expect(component.serverError()).toContain('sesión expiró');
+    expect(error).toHaveBeenCalledWith('Tu sesión expiró. Inicia sesión de nuevo.');
   });
 });
