@@ -8,14 +8,20 @@ import { Lesson } from '../models/lesson-model';
 export class LessonService {
   private readonly supabaseService = inject(SupabaseService);
   private readonly supabase = this.supabaseService.client;
+  private readonly orderColumn: keyof Lesson = 'order';
   readonly refreshTrigger = signal(0);
 
   private notifyRefresh(): void {
     this.refreshTrigger.update((v) => v + 1);
   }
 
+  /** Ordenado por el mismo motivo que {@link BlockService.getAll}: sin `order by` el orden de las
+   * filas depende de su posición física, que cambia al actualizar cualquiera de ellas. */
   async getAll(): Promise<Lesson[]> {
-    const { data, error } = await this.supabase.from('lessons').select('*');
+    const { data, error } = await this.supabase
+      .from('lessons')
+      .select('*')
+      .order(this.orderColumn, { ascending: true });
 
     if (error) throw new Error(error.message);
     return (data as Lesson[]) ?? [];
