@@ -9,6 +9,7 @@ import { ModuleService } from '@domain/learning/services/module-service';
 import { PublicationStatus, resolveExerciseStatus } from '@domain/learning/utils/publication-state';
 import { TeachingTabs } from '@features/teaching/components/teaching-tabs/teaching-tabs';
 import { PublicationBadge } from '@shared/components/publication-badge/publication-badge';
+import { PublicationLegend } from '@shared/components/publication-legend/publication-legend';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { OrderListModule } from 'primeng/orderlist';
@@ -28,6 +29,7 @@ import { DIFFICULTY_LABEL, ExerciseDifficulty } from '@domain/learning/models/ex
     MessageModule,
     OrderListModule,
     PublicationBadge,
+    PublicationLegend,
     RouterOutlet,
     SelectModule,
     SkeletonModule,

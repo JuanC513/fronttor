@@ -22,6 +22,7 @@ import {
 } from '@domain/learning/utils/publication-state';
 import { TeachingTabs } from '@features/teaching/components/teaching-tabs/teaching-tabs';
 import { PublicationBadge } from '@shared/components/publication-badge/publication-badge';
+import { PublicationLegend } from '@shared/components/publication-legend/publication-legend';
 
 @Component({
   selector: 'app-teaching-content',
@@ -35,6 +36,7 @@ import { PublicationBadge } from '@shared/components/publication-badge/publicati
     MessageModule,
     FormsModule,
     PublicationBadge,
+    PublicationLegend,
     TeachingTabs,
   ],
   templateUrl: './teaching-content.html',
