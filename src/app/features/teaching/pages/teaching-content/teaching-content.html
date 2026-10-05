@@ -1,24 +1,16 @@
 <section class="flex flex-column h-full">
   <span class="px-4">
     <h1>Enseñanza</h1>
-    <p style="white-space: pre">
-      {{
-        `En esta sección se puede editar o crear cada uno de los contenidos para el aprendizaje, ya sea temas, subtemas o bloques.
-        \n¡Haz clic en algún elemento para editar!`
-      }}
+    <!-- El salto va con <br> y no con `white-space: pre`: aquel impedía que el texto envolviera,
+        así que en una ventana estrecha se desbordaba en vez de pasar a la línea siguiente. -->
+    <p>
+      En esta sección se puede editar o crear cada uno de los contenidos para el aprendizaje, ya sea
+      temas, subtemas o bloques.<br />
+      ¡Haz clic en algún elemento para editar!
     </p>
-    <div class="publication-legend flex flex-wrap align-items-center gap-3">
-      <span class="flex align-items-center gap-2">
-        <i class="pi pi-check-circle is-published"></i> Publicado
-      </span>
-      <span class="flex align-items-center gap-2">
-        <i class="pi pi-exclamation-triangle is-hidden"></i> Publicado pero no se muestra
-      </span>
-      <span class="flex align-items-center gap-2">
-        <i class="pi pi-eye-slash is-draft"></i> Borrador
-      </span>
-      <p>El contenido se crea como borrador: publícalo desde su formulario cuando esté listo.</p>
-    </div>
+    <app-publication-legend
+      hint="El contenido se crea como borrador: publícalo desde su formulario cuando esté listo."
+    />
   </span>
 
   <app-teaching-tabs />
