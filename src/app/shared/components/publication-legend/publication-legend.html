@@ -1,0 +1,14 @@
+<div class="publication-legend flex flex-wrap align-items-center gap-3">
+  <span class="flex align-items-center gap-2">
+    <i class="pi pi-check-circle is-published"></i> Publicado
+  </span>
+  <span class="flex align-items-center gap-2">
+    <i class="pi pi-exclamation-triangle is-hidden"></i> Publicado pero no se muestra
+  </span>
+  <span class="flex align-items-center gap-2">
+    <i class="pi pi-eye-slash is-draft"></i> Borrador
+  </span>
+  @if (hint()) {
+    <p>{{ hint() }}</p>
+  }
+</div>
