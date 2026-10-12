@@ -32,39 +32,65 @@ import { Module } from '../models/module-model';
  */
 export type PublicationState = 'published' | 'hidden' | 'draft';
 
+/** Estado de publicación ya resuelto, con el motivo cuando hace falta. */
 export interface PublicationStatus {
+  /** Publicado, oculto o borrador. */
   state: PublicationState;
   /** Por qué no se muestra. Solo viene con `hidden`. */
   reason?: string;
 }
 
+/** Lo que va a pasar si se mueve el interruptor, en palabras que se le enseñan al profesor. */
 export interface ToggleImpact {
+  /** `warn` cuando algo deja de verse; `info` cuando el cambio es inocuo. */
   severity: 'info' | 'warn';
+
+  /** El aviso, ya redactado para mostrarlo tal cual. */
   message: string;
+
   /** El cambio oculta algo que hoy sí se ve; es el único caso que merece confirmación al guardar. */
   hides: boolean;
 }
 
 /** Un tema con sus subtemas. `blocks` puede ser la lista completa: se filtra por `lesson_id`. */
 export interface ModuleScope {
+  /** El tema sobre el que se decide. */
   module: Module;
+
+  /** Sus subtemas. */
   lessons: Lesson[];
+
+  /** Bloques de los que colgar la visibilidad; se filtran por `lesson_id`. */
   blocks: Block[];
 }
 
 /** `siblingLessons` incluye al propio subtema; `blocks` puede ser la lista completa. */
 export interface LessonScope {
+  /** El subtema sobre el que se decide. */
   lesson: Lesson;
+
+  /** Su tema padre, para comprobar el ancestro. */
   module: Module;
+
+  /** Los subtemas del tema, incluido él mismo. */
   siblingLessons: Lesson[];
+
+  /** Bloques de los que depende su visibilidad. */
   blocks: Block[];
 }
 
 /** `siblingBlocks` incluye al propio bloque. */
 export interface BlockScope {
+  /** El bloque sobre el que se decide. */
   block: Block;
+
+  /** Su subtema padre. */
   lesson: Lesson;
+
+  /** Su tema, para comprobar el ancestro más alto. */
   module: Module;
+
+  /** Los bloques del subtema, incluido él mismo. */
   siblingBlocks: Block[];
 }
 
@@ -274,9 +300,16 @@ function unchanged(): ToggleImpact {
  * entrega.
  */
 export interface ExerciseScope {
+  /** El ejercicio sobre el que se decide. */
   exercise: ExerciseWithoutSolution;
+
+  /** Su subtema padre. */
   lesson: Lesson;
+
+  /** Su tema, para comprobar el ancestro más alto. */
   module: Module;
+
+  /** Los ejercicios del subtema, incluido él mismo. */
   siblingExercises: ExerciseWithoutSolution[];
 }
 

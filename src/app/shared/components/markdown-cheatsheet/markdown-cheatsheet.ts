@@ -3,8 +3,12 @@ import { ButtonModule } from 'primeng/button';
 import { PopoverModule } from 'primeng/popover';
 import { MarkdownRenderer } from '@shared/components/markdown-renderer/markdown-renderer';
 
+/** Una fila de la chuleta de Markdown: cómo se llama y cómo se escribe. */
 interface MarkdownCheatsheetEntry {
+  /** Nombre del recurso, por ejemplo «Negrita». */
   label: string;
+
+  /** La sintaxis de ejemplo, que se muestra en monoespaciado. */
   syntax: string;
 }
 

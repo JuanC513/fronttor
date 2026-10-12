@@ -13,11 +13,22 @@ import { CriterionType, ExerciseCriterion } from '../models/exercise-criterion-m
  *   no son fiables y `value` es número en `element_count` y cadena en el resto—.
  */
 export interface RawCriterion {
+  /** El unico campo que siempre viene: decide a que tipo se recorta. */
   type: CriterionType;
+
+  /** Lo que vera el estudiante. Obligatorio una vez recortado, opcional aqui. */
   description?: string | null;
+
+  /** Selector CSS. Lo usan todos los tipos menos `console_contains`. */
   selector?: string | null;
+
+  /** Nombre del atributo. Solo en los dos tipos de atributo. */
   attribute?: string | null;
+
+  /** Propiedad CSS. Solo en `computed_style`. */
   property?: string | null;
+
+  /** Valor esperado. Llega como cadena aunque `element_count` lo necesite numerico. */
   value?: string | number | null;
 }
 

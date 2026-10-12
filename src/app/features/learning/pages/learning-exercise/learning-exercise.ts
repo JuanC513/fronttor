@@ -34,6 +34,7 @@ import { PreviewPanel } from '@shared/components/preview-panel/preview-panel';
 
 /** Una fila de la lista de criterios, ya cruzada con el resultado del último envío. */
 export interface CriterionRow {
+  /** El texto del criterio, el que lee el estudiante en «Qué se comprueba». */
   description: string;
   /** `null` mientras no se haya enviado nada: todavía no se sabe. */
   passed: boolean | null;

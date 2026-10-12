@@ -12,12 +12,21 @@ export type { RawCriterion };
  * tipo al catálogo es añadir una entrada aquí y un caso en `toCriterion`.
  */
 export interface CriterionTypeMeta {
+  /** El tipo de criterio que describe esta entrada. */
   type: CriterionType;
+
+  /** Como se lee el tipo en el desplegable del formulario. */
   label: string;
   /** Ayuda corta bajo la fila, con un ejemplo de lo que se espera. */
   hint: string;
+
+  /** Si el formulario debe mostrar el campo de selector. */
   selector: boolean;
+
+  /** Si debe mostrar el campo de atributo. */
   attribute: boolean;
+
+  /** Si debe mostrar el campo de propiedad CSS. */
   property: boolean;
   /**
    * `number` en `element_count` no es un detalle de presentación: `resultsFor` compara el valor

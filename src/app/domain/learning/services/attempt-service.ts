@@ -4,24 +4,40 @@ import { CodeRunnerState } from '@domain/code-runner/models/code-runner-model';
 import { CriterionResult } from '@domain/code-runner/validation/probe-model';
 
 /** Lo que la vista de resolución entrega al registrar un envío. */
+/** Lo que se manda a la RPC al enviar un ejercicio. */
 export interface AttemptSubmission {
+  /** Ejercicio que se resuelve. */
   exerciseId: number;
+
+  /** Las tres pestañas tal y como estaban al pulsar «Enviar». */
   code: CodeRunnerState;
+
+  /** Veredicto global. Lo calcula el cliente; ver la nota de `ExerciseAttempt`. */
   passed: boolean;
+
+  /** Resultado criterio a criterio, en el orden del ejercicio. */
   results: CriterionResult[];
 }
 
 /** Lo que Inicio necesita saber de los envíos del estudiante a un ejercicio. */
+/** Resumen del historial de un ejercicio, para no traerse todos los intentos. */
 export interface ExerciseAttemptSummary {
+  /** Cuántas veces lo ha enviado. */
   intentos: number;
   /** El veredicto criterio a criterio del último envío. Vacío si el intento no guardó ninguno. */
   ultimoResultado: CriterionResult[];
 }
 
 /** El código de un envío anterior, para retomarlo al reabrir el ejercicio. */
+/** El último envío, para devolver al estudiante donde lo dejó al reabrir un ejercicio. */
 export interface AttemptDraft {
+  /** El código que envió. */
   code: CodeRunnerState;
+
+  /** Si ese envío aprobó. */
   passed: boolean;
+
+  /** Cuándo lo envió, en ISO 8601. */
   createdAt: string;
   /** La pista que la IA dio sobre este envío, si el estudiante llegó a pedirla. */
   feedback: string | null;
@@ -45,10 +61,14 @@ export interface AttemptDraft {
   providedIn: 'root',
 })
 export class AttemptService {
+  /** Envoltorio del cliente, inyectado para poder sustituirlo en pruebas. */
   private readonly supabaseService = inject(SupabaseService);
+  /** Atajo al cliente de Supabase, que es lo que se usa en cada consulta. */
   private readonly supabase = this.supabaseService.client;
+  /** Se incrementa tras cada envío, para que las vistas de progreso releaan. */
   readonly refreshTrigger = signal(0);
 
+  /** Avisa de que hay un intento nuevo. */
   private notifyRefresh(): void {
     this.refreshTrigger.update((v) => v + 1);
   }
@@ -188,6 +208,7 @@ export class AttemptService {
     return resumen;
   }
 
+  /** Anota en el intento la pista que dio la IA, para poder revisarla después. */
   async setFeedback(attemptId: number, feedback: string): Promise<void> {
     const { error } = await this.supabase.rpc('set_attempt_feedback', {
       p_attempt_id: attemptId,

@@ -23,7 +23,9 @@ import { GeneratePracticeResponse, PracticeRequest } from '../models/generate-pr
   providedIn: 'root',
 })
 export class AiService {
+  /** Envoltorio del cliente, inyectado para poder sustituirlo en pruebas. */
   private readonly supabaseService = inject(SupabaseService);
+  /** Atajo al cliente de Supabase, que es lo que se usa en cada consulta. */
   private readonly supabase = this.supabaseService.client;
 
   /**

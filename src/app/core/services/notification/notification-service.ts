@@ -34,8 +34,10 @@ const VIDA_ERROR_MS = 6_000;
   providedIn: 'root',
 })
 export class NotificationService {
+  /** El servicio de PrimeNG que alimenta el `<p-toast />` de `AppLayout`. */
   private readonly messageService = inject(MessageService);
 
+  /** Aviso verde: algo salió bien. Dura poco porque se asimila de un vistazo. */
   exito(mensaje: string): void {
     this.messageService.add({ severity: 'success', summary: mensaje, life: VIDA_EXITO_MS });
   }
