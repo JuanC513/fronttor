@@ -7,10 +7,18 @@
   align-items: center;
   gap: var(--space-md);
 
+  // `--space-lg` y no `--space-md` para que el botón termine en la misma derecha que el contenido
+  // de la página, que usa ese mismo valor de padding. Con 16px sobresalía 8px, el reflejo exacto
+  // del desajuste que tenía la miga por la izquierda.
   &__action {
-    padding-right: var(--space-md);
+    padding-right: var(--space-lg);
     margin-left: auto;
   }
+}
+
+:host ::ng-deep .p-breadcrumb {
+  background: transparent;
+  padding: var(--space-lg);
 }
 
 :host ::ng-deep .p-breadcrumb-item:last-child .p-breadcrumb-item-label {
