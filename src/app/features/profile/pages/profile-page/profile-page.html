@@ -1,14 +1,14 @@
-<section class="profile-container">
-  <p-confirmpopup />
+<p-confirmpopup />
 
+<section class="profile-container">
   <header class="profile-header flex flex-wrap align-items-start justify-content-between gap-3">
     <div class="min-w-0">
       <h1>Perfil</h1>
       @if (email(); as correo) {
-        <p class="profile-email m-0">{{ correo }}</p>
+        <p>{{ correo }}</p>
       }
       @if (memberSince(); as desde) {
-        <p class="profile-since m-0">Miembro desde {{ desde }}</p>
+        <p class="profile-since">Miembro desde {{ desde }}</p>
       }
     </div>
 

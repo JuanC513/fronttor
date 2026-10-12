@@ -27,6 +27,9 @@
 
 .content {
   grid-area: content;
-  background-color: lightgray;
+
+  // Era `lightgray`, un color de relleno de cuando se montó la rejilla. No se notaba porque cada
+  // página pinta su propio `--color-surface` encima, pero asomaba al navegar entre vistas.
+  background-color: var(--color-surface);
   overflow: hidden;
 }

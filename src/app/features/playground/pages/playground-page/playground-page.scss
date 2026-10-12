@@ -10,6 +10,8 @@
 // navegador. Con el caso estrecho como base y el ancho dentro del `@media`, el orden trabaja a
 // favor en vez de en contra.
 
+@use '../../../../shared/styles/page' as page;
+
 :host {
   display: block;
   height: 100%;
@@ -27,20 +29,13 @@
 
 /* ─── Encabezado y barra ─── */
 
+// Hereda el encabezado común y solo añade lo propio del taller: aquí el header no empuja el
+// contenido hacia abajo, porque los paneles se reparten el alto restante.
 .playground-header {
+  @include page.page-header;
+
   flex-shrink: 0;
-
-  h1 {
-    margin: 0 0 var(--space-xs);
-    color: var(--color-text-primary);
-    font-size: 1.5rem;
-    line-height: 1.3;
-  }
-
-  p {
-    color: var(--color-text-secondary);
-    font-size: 0.875rem;
-  }
+  margin-bottom: 0;
 }
 
 .auto-run label {
