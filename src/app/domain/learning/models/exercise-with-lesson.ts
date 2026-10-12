@@ -9,6 +9,7 @@ import { ExerciseWithoutSolution } from './exercise-model';
  * Sin la solucion de referencia: el listado no la necesita y la API ya no la entrega.
  */
 export interface ExerciseWithLesson extends ExerciseWithoutSolution {
+  /** Subtema del ejercicio, con su tema anidado dentro. */
   lessons: {
     id: number;
     name: string;

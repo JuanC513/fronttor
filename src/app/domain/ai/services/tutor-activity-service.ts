@@ -2,18 +2,30 @@ import { inject, Injectable } from '@angular/core';
 import { SupabaseService } from '@core/services/supabase/supabase-service';
 
 /** La última vez que el estudiante usó el tutor. */
+/** La última vez que el estudiante usó el tutor, sea por donde fuera. */
 export interface UltimaInteraccion {
+  /** Por dónde fue: una duda, una pista sobre un envío o un ejercicio de práctica. */
   tipo: 'question' | 'feedback' | 'practice';
+
+  /** Cuándo, en ISO 8601. */
   cuando: string;
   /** El subtema sobre el que fue, o `null`: una práctica del taller libre no cuelga de ninguno. */
   subtema: string | null;
 }
 
 /** Cuánto ha usado el estudiante el tutor, para el panel de Inicio. */
+/** Cuánto ha usado el estudiante el tutor, desglosado por vía. */
 export interface TutorActivity {
+  /** Dudas que le ha hecho al chat. */
   preguntas: number;
+
+  /** Pistas que ha pedido tras enviar un ejercicio. */
   pistas: number;
+
+  /** Ejercicios de práctica que ha generado. */
   practicas: number;
+
+  /** La más reciente de las tres, o `null` si nunca lo ha usado. */
   ultima: UltimaInteraccion | null;
 }
 
@@ -41,7 +53,9 @@ export const SIN_ACTIVIDAD: TutorActivity = {
   providedIn: 'root',
 })
 export class TutorActivityService {
+  /** Envoltorio del cliente, inyectado para poder sustituirlo en pruebas. */
   private readonly supabaseService = inject(SupabaseService);
+  /** Atajo al cliente de Supabase, que es lo que se usa en cada consulta. */
   private readonly supabase = this.supabaseService.client;
 
   /**

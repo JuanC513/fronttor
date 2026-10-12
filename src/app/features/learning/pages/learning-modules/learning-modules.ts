@@ -20,15 +20,27 @@ import { Lesson } from '@domain/learning/models/lesson-model';
  */
 export type LessonStatus = 'completed' | 'in-progress' | 'available' | 'locked';
 
+/** Un subtema con su estado ya resuelto, listo para la tarjeta. */
 export interface LessonView {
+  /** El subtema. */
   lesson: Lesson;
+
+  /** Si está completado, disponible o bloqueado. */
   status: LessonStatus;
 }
 
+/** Un tema con sus subtemas, que es como se agrupa el recorrido. */
 export interface ModuleView {
+  /** Id del tema. */
   id: number;
+
+  /** Nombre del tema. */
   name: string;
+
+  /** Sus subtemas, en orden. */
   lessons: LessonView[];
+
+  /** Cierto cuando ninguno de sus subtemas se puede abrir todavía. */
   locked: boolean;
 }
 

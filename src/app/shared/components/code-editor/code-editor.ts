@@ -12,11 +12,20 @@ import { CodeRunnerState } from '@domain/code-runner/models/code-runner-model';
 import type * as Monaco from 'monaco-editor';
 
 declare global {
+  /**
+   * Lo que Monaco cuelga de `window` al cargarse por su propio `loader.js`.
+   *
+   * Se declara aqui porque Monaco no se importa como modulo: llega por script, y sin esto
+   * TypeScript no sabria que estas dos propiedades existen.
+   */
   interface Window {
+    /** El cargador AMD de Monaco: se configura con la ruta y luego se le piden modulos. */
     require: {
       config: (config: { paths: { vs: string } }) => void;
       (modules: string[], callback: () => void): void;
     };
+
+    /** El espacio de nombres de Monaco, disponible una vez que el cargador termina. */
     monaco: typeof Monaco;
   }
 }

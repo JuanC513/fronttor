@@ -17,11 +17,18 @@ interface ChatContextBase {
 
 /** Una duda mientras se lee un subtema. El material de la plataforma es la fuente de la respuesta. */
 export interface LessonChatContext extends ChatContextBase {
+  /** Discriminante: decide que el prompt trate el material como fuente fiable. */
   tipo: 'leccion';
   /** Id del subtema. No se usa en el prompt: viaja para que la interacción quede registrada. */
   lessonId: number;
+
+  /** Nombre del módulo. */
   tema: string;
+
+  /** Nombre del subtema. */
   subtema: string;
+
+  /** Bloque que el estudiante tiene abierto, si hay uno concreto. */
   nombreBloque?: string;
   /** Markdown del bloque que el estudiante está viendo. */
   contenidoBloque?: string;
@@ -39,8 +46,13 @@ export interface LessonChatContext extends ChatContextBase {
  * Las señales de Angular ya son funciones `() => T`, así que una vista puede pasar la suya tal cual.
  */
 export interface CodeChatContext extends ChatContextBase {
+  /** Discriminante: decide que el prompt trate el código como contenido no confiable. */
   tipo: 'codigo';
+
+  /** Devuelve las tres pestañas en el momento de preguntar, no cuando se publicó el contexto. */
   obtenerCodigo: () => CodeRunnerState;
+
+  /** Devuelve la salida de la consola en ese mismo momento. */
   obtenerConsola: () => string[];
 }
 
@@ -54,8 +66,14 @@ export interface CodeChatContext extends ChatContextBase {
  */
 export type ChatContext = LessonChatContext | CodeChatContext;
 
+/** Un mensaje ya pintado en el panel del chat. */
 export interface ChatMessage {
+  /** Identificador local, solo para el `track` de la lista. No viaja a ninguna parte. */
   id: string;
+
+  /** Quién lo escribió. */
   rol: 'estudiante' | 'tutor';
+
+  /** El texto del mensaje, en Markdown cuando es del tutor. */
   texto: string;
 }

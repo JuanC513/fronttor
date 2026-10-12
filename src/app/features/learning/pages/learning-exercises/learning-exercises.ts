@@ -21,26 +21,54 @@ import {
   orderedLessons,
 } from '@domain/learning/utils/learning-progress';
 
+/** Un ejercicio con su estado ya resuelto, listo para pintar en la tarjeta. */
 export interface ExerciseView {
+  /** El ejercicio, con lo mínimo que la lista necesita. */
   exercise: StudentExercise;
+
+  /** Si está aprobado, disponible o aún bloqueado. */
   status: ExerciseProgressStatus;
 }
 
+/** Un subtema con sus ejercicios y el avance agregado que muestra la barra. */
 export interface LessonExercisesView {
+  /** Id del subtema, para navegar. */
   lessonId: number;
+
+  /** Nombre del subtema. */
   name: string;
+
+  /** Si todavía no se ha abierto: sus ejercicios no se pueden resolver. */
   locked: boolean;
+
+  /** Si el subtema está completado. */
   completed: boolean;
+
+  /** Sus ejercicios, en orden. */
   exercises: ExerciseView[];
+
+  /** Cuántos lleva aprobados. */
   passed: number;
+
+  /** Cuántos hay en total. */
   total: number;
+
+  /** `passed` sobre `total`, ya redondeado, para la barra de progreso. */
   percent: number;
 }
 
+/** Un tema con sus subtemas, que es como se agrupa el acordeón. */
 export interface ModuleExercisesView {
+  /** Id del tema. */
   id: number;
+
+  /** Nombre del tema. */
   name: string;
+
+  /** Sus subtemas, cada uno con su avance. */
   lessons: LessonExercisesView[];
+
+  /** Cierto cuando todos sus subtemas están bloqueados; colapsa el acordeón entero. */
   locked: boolean;
 }
 

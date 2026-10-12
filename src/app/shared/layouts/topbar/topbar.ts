@@ -9,8 +9,12 @@ import { ButtonModule } from 'primeng/button';
 import { DividerModule } from 'primeng/divider';
 import { filter, map } from 'rxjs/operators';
 
+/** Una sección de la aplicación, tal y como la miga de pan necesita conocerla. */
 interface Seccion {
+  /** Ruta de la vista de lista. Es con lo que se compara la URL actual. */
   lista: string;
+
+  /** Lo que se lee en el escalón. */
   etiqueta: string;
   /** Opcional: una sección plana, sin vista de detalle, solo aporta su propio escalón. */
   detalle?: RegExp;

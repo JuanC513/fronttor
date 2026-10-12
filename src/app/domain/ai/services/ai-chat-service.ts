@@ -32,21 +32,36 @@ export const MAX_PREGUNTA_LENGTH = 1_500;
   providedIn: 'root',
 })
 export class AiChatService {
+  /** Quien habla de verdad con las Edge Functions. */
   private readonly aiService = inject(AiService);
 
+  /** El contexto publicado por la vista activa. */
   private readonly _context = signal<ChatContext | null>(null);
+  /** La conversación, recortada al tope visible. */
   private readonly _messages = signal<ChatMessage[]>([]);
+  /** Si el panel está desplegado. */
   private readonly _isOpen = signal(false);
+  /** Si hay una respuesta en vuelo. */
   private readonly _isSending = signal(false);
+  /** El último error, o `null`. */
   private readonly _error = signal<string | null>(null);
 
   /** Mientras sea `null`, el chat no está disponible y su disparador no se muestra. */
   readonly context = this._context.asReadonly();
+
+  /** La conversación visible, ya recortada al tope de mensajes. */
   readonly messages = this._messages.asReadonly();
+
+  /** Si el panel está desplegado. */
   readonly isOpen = this._isOpen.asReadonly();
+
+  /** Si hay una respuesta en vuelo. Bloquea el envío y muestra el indicador. */
   readonly isSending = this._isSending.asReadonly();
+
+  /** El último error, o `null`. Se limpia al reiniciar la conversación. */
   readonly error = this._error.asReadonly();
 
+  /** Permite cancelar la petición en curso al cerrar o al cambiar de contexto. */
   private pendingController: AbortController | null = null;
 
   /**
@@ -72,6 +87,7 @@ export class AiChatService {
     this.resetConversation();
   }
 
+  /** Despliega el panel y, la primera vez, siembra el saludo. No hace nada sin contexto. */
   open(): void {
     const context = this._context();
     if (!context) return;
@@ -91,12 +107,27 @@ export class AiChatService {
     this._isOpen.set(false);
   }
 
+  /**
+   * Cancela la respuesta en vuelo, si la hay.
+   *
+   * Es idempotente: llamarlo sin nada pendiente no hace nada.
+   */
   abort(): void {
     this.pendingController?.abort();
     this.pendingController = null;
     this._isSending.set(false);
   }
 
+  /**
+   * Manda la pregunta al tutor y añade su respuesta a la conversación.
+   *
+   * Ignora en silencio las llamadas sin contexto, con texto vacío o mientras ya hay una en vuelo:
+   * son estados que la interfaz ya debería impedir, y lanzar aquí obligaría a cada vista a
+   * repetir las mismas comprobaciones.
+   *
+   * En un contexto de código, es aquí donde se lee el editor: por eso {@link CodeChatContext}
+   * guarda funciones y no valores.
+   */
   async send(pregunta: string): Promise<void> {
     const context = this._context();
     const texto = pregunta.trim();
@@ -169,6 +200,7 @@ export class AiChatService {
     };
   }
 
+  /** Los últimos turnos como contexto, sin incluir la pregunta que se acaba de añadir. */
   private buildHistorial(): ChatTurn[] {
     return this._messages()
       .slice(0, -1) // sin la pregunta recién agregada
@@ -176,6 +208,7 @@ export class AiChatService {
       .map(({ rol, texto }) => ({ rol, texto }));
   }
 
+  /** Arma un mensaje con su id local, que solo sirve para el `track` de la lista. */
   private buildMessage(rol: ChatMessage['rol'], texto: string): ChatMessage {
     return { id: crypto.randomUUID(), rol, texto };
   }
@@ -185,6 +218,7 @@ export class AiChatService {
     this._messages.update((messages) => [...messages, message].slice(-MAX_MENSAJES_VISIBLES));
   }
 
+  /** Deja la conversación en blanco y cancela lo que hubiera en vuelo. */
   private resetConversation(): void {
     this.abort();
     this._messages.set([]);

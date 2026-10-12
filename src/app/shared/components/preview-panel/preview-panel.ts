@@ -15,9 +15,15 @@ import { ExerciseCriterion } from '@domain/learning/models/exercise-criterion-mo
  */
 export const VALIDATION_TIMEOUT_MS = 3_000;
 
+/** Una validación en vuelo: se resuelve cuando llega el informe del iframe, o cuando vence. */
 interface PendingValidation {
+  /** Identifica la ejecución; se compara con el `runId` del informe para descartar los rezagados. */
   runId: string;
+
+  /** Cierra la promesa de quien pidió validar. Recibe `null` si se agotó el tiempo. */
   resolve: (report: ProbeReport | null) => void;
+
+  /** El temporizador del plazo, para cancelarlo si el informe llega a tiempo. */
   timer: ReturnType<typeof setTimeout>;
 }
 

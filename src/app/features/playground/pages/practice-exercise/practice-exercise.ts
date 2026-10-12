@@ -50,22 +50,36 @@ const STEP_MESSAGE: Record<GenerationStep, string> = {
 };
 
 /** Un subtema del curso, ya con el nombre de su módulo al lado. */
+/** Una entrada del desplegable de subtemas sobre los que pedir práctica. */
 interface LessonOption {
+  /** Lo que se lee en el desplegable. */
   label: string;
+
+  /** Id del subtema. */
   value: number;
+
+  /** Nombre del tema padre, que viaja al prompt junto al subtema. */
   tema: string;
 }
 
 /** Un ejercicio generado, ya comprobado. Vive en memoria y muere con la vista. */
 interface PracticeExerciseData {
+  /** Título que encabeza el enunciado. */
   titulo: string;
+
+  /** Enunciado en Markdown. */
   enunciado: string;
+
+  /** Criterios ya tipados con `toCriterion`. */
   criteria: ExerciseCriterion[];
+
+  /** Código con el que arranca el editor. */
   inicial: CodeRunnerState;
 }
 
 /** Una fila de la lista de comprobación, cruzada con el último resultado. */
 export interface PracticeCriterionRow {
+  /** El texto del criterio, el que lee el estudiante. */
   description: string;
   /** `null` mientras no se haya comprobado nada. */
   passed: boolean | null;
