@@ -12,6 +12,7 @@ import { ValidationErrors } from '@angular/forms';
   providedIn: 'root',
 })
 export class FormErrorService {
+  /** Traduce los errores de un control al texto que se muestra bajo el campo. */
   getErrorMessage(errors: ValidationErrors | null): string | null {
     if (!errors) return null;
 

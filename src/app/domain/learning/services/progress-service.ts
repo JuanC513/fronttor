@@ -13,10 +13,14 @@ import { LessonProgress } from '../models/lesson-progress-model';
   providedIn: 'root',
 })
 export class ProgressService {
+  /** Envoltorio del cliente, inyectado para poder sustituirlo en pruebas. */
   private readonly supabaseService = inject(SupabaseService);
+  /** Atajo al cliente de Supabase, que es lo que se usa en cada consulta. */
   private readonly supabase = this.supabaseService.client;
+  /** Se incrementa tras cada escritura, para que las vistas releaan el progreso. */
   readonly refreshTrigger = signal(0);
 
+  /** Avisa de que el progreso cambió. */
   private notifyRefresh(): void {
     this.refreshTrigger.update((v) => v + 1);
   }

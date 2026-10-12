@@ -19,28 +19,60 @@ export const DIFFICULTY_LABEL: Record<ExerciseDifficulty, string> = {
 /** Espejo del check de la columna `source` */
 export type ExerciseSource = 'manual' | 'ia';
 
+/** Un ejercicio completo, con su solucion de referencia. */
 export interface Exercise {
+  /** Clave primaria en `public.exercises`. */
   id: number;
+
+  /** Subtema al que pertenece. Borrar la leccion arrastra el ejercicio en cascada. */
   lesson_id: number;
+
+  /** Titulo que ve el estudiante en la lista y en la cabecera del enunciado. */
   name: string;
-  // Markdown; se renderiza con MarkdownRenderer
+
+  /** Enunciado en Markdown; se renderiza con `MarkdownRenderer`. */
   statement: string;
+
+  /** Etiqueta de dificultad. Se muestra con `DIFFICULTY_LABEL`, no en crudo. */
   difficulty: ExerciseDifficulty;
+
+  /** HTML con el que arranca el editor del estudiante. */
   starter_html: string;
+
+  /** CSS con el que arranca el editor del estudiante. */
   starter_css: string;
+
+  /** JavaScript con el que arranca el editor del estudiante. */
   starter_js: string;
-  // Codigo que SI cumple los criterios. Sirve para comprobar que estan bien escritos: un
-  // computed_style con el valor mal normalizado solo se delata al correrlo contra algo que
-  // deberia aprobarlo.
+
+  /**
+   * HTML que SI cumple los criterios.
+   *
+   * Las tres columnas de solucion sirven para comprobar que los criterios estan bien escritos: un
+   * `computed_style` con el valor mal normalizado solo se delata al correrlo contra algo que
+   * deberia aprobarlo.
+   */
   solution_html: string;
+
+  /** CSS de la solucion de referencia. Ver {@link Exercise.solution_html}. */
   solution_css: string;
+
+  /** JavaScript de la solucion de referencia. Ver {@link Exercise.solution_html}. */
   solution_js: string;
-  // Un ejercicio sin criterios nunca se aprueba
+
+  /** Comprobaciones que decide si el envio aprueba. Un ejercicio sin criterios no se aprueba nunca. */
   criteria: ExerciseCriterion[];
+
+  /** Si lo escribio un profesor a mano o lo genero el modelo. */
   source: ExerciseSource;
-  // Nace en borrador; solo los publicados cuentan para completar el subtema
+
+  /** Nace en borrador; solo los publicados cuentan para completar el subtema. */
   is_published: boolean;
+
+  /** Posicion dentro del subtema. Los ejercicios se abren en este orden. */
   order: number;
+
+  /** Marca de creacion que pone la base, en ISO 8601. */
   created_at: string;
 }
 
@@ -67,17 +99,47 @@ export type ExerciseWithoutSolution = Omit<
  * facil de descuadrar sin que el compilador lo note, porque casi todos son cadenas.
  */
 export interface ExerciseInput {
+  /** Subtema al que se asigna. */
   lesson_id: number;
+
+  /** Titulo del ejercicio. */
   name: string;
+
+  /** Enunciado en Markdown. */
   statement: string;
+
+  /** Dificultad declarada por quien lo crea. */
   difficulty: ExerciseDifficulty;
+
+  /** HTML de partida para el estudiante. */
   starter_html: string;
+
+  /** CSS de partida para el estudiante. */
   starter_css: string;
+
+  /** JavaScript de partida para el estudiante. */
   starter_js: string;
+
+  /** HTML de la solucion de referencia. */
   solution_html: string;
+
+  /** CSS de la solucion de referencia. */
   solution_css: string;
+
+  /** JavaScript de la solucion de referencia. */
   solution_js: string;
+
+  /**
+   * Criterios con los que se evalua.
+   *
+   * Cambiarlos invalida los intentos anteriores para `fallosPorTipo`: `get_student_context`
+   * descarta los intentos cuyo numero de resultados no cuadra con los criterios vigentes.
+   */
   criteria: ExerciseCriterion[];
+
+  /** Origen del ejercicio, manual o generado. */
   source: ExerciseSource;
+
+  /** Si se guarda publicado o como borrador. */
   is_published: boolean;
 }

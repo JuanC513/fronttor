@@ -19,8 +19,17 @@ export const MAX_INSTRUCCION_LENGTH = 2_000;
  * acaba de pulsar. Hay cuatro paneles montados a la vez, uno por pestaña, así que el padre no
  * puede deducir cuál fue desde fuera.
  */
+/** Lo que el panel emite cuando el profesor pulsa «Generar». */
 export interface GenerateRequest {
+  /** Lo que escribió pidiendo el contenido. Puede ir vacío. */
   instruccion: string;
+
+  /**
+   * El elemento que disparó la petición.
+   *
+   * Viaja porque el diálogo de confirmación de PrimeNG se ancla a un elemento concreto, y quien
+   * escucha el evento no tiene forma de saber cuál fue desde fuera del panel.
+   */
   target: HTMLElement;
 }
 

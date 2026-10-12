@@ -32,24 +32,43 @@ export type RecorridoEstado = 'empezar' | 'continuar' | 'completado' | 'sin-cont
 
 /** El subtema al que lleva la tarjeta principal. */
 export interface SiguientePaso {
+  /** Tema al que pertenece, para armar la ruta. */
   moduleId: number;
+
+  /** Subtema al que lleva el botón. */
   lessonId: number;
+
+  /** Nombre del subtema, que es lo que se lee en la tarjeta. */
   nombre: string;
 }
 
 /** Un ejercicio intentado y nunca aprobado. */
 export interface Atasco {
+  /** Ejercicio donde se quedó, para enlazar directo. */
   exerciseId: number;
+
+  /** Nombre del ejercicio. */
   nombre: string;
+
+  /** Cuántas veces lo ha enviado sin aprobarlo. */
   intentos: number;
 }
 
 /** Una barra del progreso por tema. */
 export interface TemaProgreso {
+  /** Id del tema. */
   id: number;
+
+  /** Nombre del tema. */
   nombre: string;
+
+  /** Subtemas completados. */
   completados: number;
+
+  /** Subtemas que tiene el tema. */
   total: number;
+
+  /** `completados` sobre `total`, ya redondeado. */
   porcentaje: number;
   /** Ningún subtema suyo se puede abrir todavía. */
   bloqueado: boolean;
@@ -57,8 +76,13 @@ export interface TemaProgreso {
 
 /** El ejercicio que le toca resolver ahora. */
 export interface SiguienteEjercicio {
+  /** Id del ejercicio, para enlazar. */
   id: number;
+
+  /** Nombre del ejercicio. */
   nombre: string;
+
+  /** Dificultad, para la etiqueta de color. */
   dificultad: ExerciseDifficulty;
 }
 

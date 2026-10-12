@@ -30,11 +30,21 @@ import { LessonProgress } from '../models/lesson-progress-model';
  */
 
 /** Un subtema del recorrido, con el tema al que pertenece. */
+/**
+ * Un subtema dentro del recorrido lineal, con su tema a cuestas.
+ *
+ * El recorrido se aplana para poder preguntar «cuál es el siguiente» sin tener que saltar de tema
+ * en tema; por eso cada entrada arrastra su `moduleId`.
+ */
 export interface TrackLesson {
+  /** El subtema, con el recuento de bloques que decide si cuenta. */
   lesson: LessonWithBlockCount;
+
+  /** Tema al que pertenece, para poder armar la ruta. */
   moduleId: number;
 }
 
+/** Qué puede hacer el estudiante con un subtema concreto, ya resuelto en cuatro banderas. */
 export interface LessonAvailability {
   /** Si se puede abrir el subtema y leer sus bloques. */
   content: boolean;

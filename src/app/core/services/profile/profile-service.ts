@@ -26,6 +26,7 @@ import { SupabaseService } from '@core/services/supabase/supabase-service';
   providedIn: 'root',
 })
 export class ProfileService {
+  /** Atajo al cliente de Supabase, que es lo que se usa en cada consulta. */
   private readonly supabase = inject(SupabaseService).client;
 
   /** Guarda la descripción del estudiante. Una cadena vacía se guarda como `null`. */

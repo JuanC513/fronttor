@@ -18,15 +18,32 @@ import { StudentExerciseDetail } from '../models/student-exercise-detail';
 const COLUMNAS_SIN_SOLUCION =
   'id, lesson_id, name, statement, difficulty, starter_html, starter_css, starter_js, criteria, source, is_published, "order", created_at';
 
+/**
+ * Acceso a los ejercicios.
+ *
+ * Es el servicio con más variantes de lectura, y el motivo es la solución de referencia: hay un
+ * camino para el profesor que la trae (vía RPC) y varios para el estudiante que no la piden
+ * siquiera, porque desde `20260926120000_hide_exercise_solution.sql` la API ya no se la entrega.
+ */
 @Injectable({
   providedIn: 'root',
 })
 export class ExerciseService {
+  /** Envoltorio del cliente, inyectado para poder sustituirlo en pruebas. */
   private readonly supabaseService = inject(SupabaseService);
+  /** Atajo al cliente de Supabase, que es lo que se usa en cada consulta. */
   private readonly supabase = this.supabaseService.client;
+  /** Columna por la que se ordena. Tipada contra `Exercise` para que un renombrado no pase. */
   private readonly orderColumn: keyof Exercise = 'order';
+  /**
+   * Se incrementa tras cada escritura.
+   *
+   * Es el aviso de «algo cambió» para quien esté mostrando esta lista, sin obligarle a
+   * suscribirse ni a acordarse de cancelar.
+   */
   readonly refreshTrigger = signal(0);
 
+  /** Avisa a los consumidores de que `exercises` cambió. */
   private notifyRefresh(): void {
     this.refreshTrigger.update((v) => v + 1);
   }
@@ -50,6 +67,7 @@ export class ExerciseService {
     return (data as unknown as ExerciseWithLesson[]) ?? [];
   }
 
+  /** Los ejercicios de un subtema, sin la solución de referencia. */
   async getAllByLessonId(lessonId: number): Promise<ExerciseWithoutSolution[]> {
     const { data, error } = await this.supabase
       .from('exercises')
@@ -156,6 +174,7 @@ export class ExerciseService {
     return data;
   }
 
+  /** Crea un ejercicio al final de su subtema. */
   async insert(input: ExerciseInput): Promise<void> {
     const { error } = await this.supabase.rpc('insert_exercise', this.toRpcParams(input));
 
@@ -163,6 +182,12 @@ export class ExerciseService {
     this.notifyRefresh();
   }
 
+  /**
+   * Reescribe un ejercicio.
+   *
+   * Cambiar `criteria` invalida los intentos anteriores para `fallosPorTipo`, porque
+   * `get_student_context` descarta aquellos cuyo número de resultados ya no cuadra.
+   */
   async update(id: number, input: ExerciseInput): Promise<void> {
     const { error } = await this.supabase.rpc('update_exercise', {
       p_id: id,
@@ -173,6 +198,12 @@ export class ExerciseService {
     this.notifyRefresh();
   }
 
+  /**
+   * Borra un ejercicio.
+   *
+   * Arrastra en cascada los intentos de los estudiantes. Durante una recogida de datos esto
+   * destruye evidencia.
+   */
   async delete(id: number): Promise<void> {
     const { error } = await this.supabase.rpc('delete_exercise', { p_id: id });
 

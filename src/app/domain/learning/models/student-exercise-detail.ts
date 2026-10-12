@@ -15,15 +15,30 @@ import { ExerciseDifficulty } from './exercise-model';
  * forma de lograrlo, y el estudiante necesita verlos para saber qué se le pide.
  */
 export interface StudentExerciseDetail {
+  /** Clave primaria del ejercicio. */
   id: number;
+
+  /** Subtema al que pertenece. */
   lesson_id: number;
+
+  /** Titulo que se muestra en la cabecera. */
   name: string;
   /** Markdown; se renderiza con `MarkdownRenderer`. */
   statement: string;
+
+  /** Dificultad declarada. */
   difficulty: ExerciseDifficulty;
+
+  /** HTML con el que arranca el editor. */
   starter_html: string;
+
+  /** CSS con el que arranca el editor. */
   starter_css: string;
+
+  /** JavaScript con el que arranca el editor. */
   starter_js: string;
+
+  /** Lo que se le pide lograr. Es la especificacion, no la solucion. */
   criteria: ExerciseCriterion[];
   /**
    * Si ya tiene al menos un intento aprobado. Misma condición que usa la base para completar un

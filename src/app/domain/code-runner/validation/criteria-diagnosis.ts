@@ -11,12 +11,21 @@ import { CriterionResult } from './probe-model';
  */
 export type CriterionVerdict = 'ok' | 'fails_solution' | 'passes_starter';
 
+/** Un criterio probado contra las dos ejecuciones, con su veredicto. */
 export interface CriterionCheck {
+  /** El texto del criterio que se diagnostica. */
   description: string;
   /** Si se cumple con la solución de referencia. */
   solution: boolean;
   /** Si se cumple ya con el código inicial. */
   starter: boolean;
+
+  /**
+   * Las dos comprobaciones anteriores, resumidas.
+   *
+   * Un criterio sano aprueba con la solución y falla con el inicial. Si aprueba con los dos no
+   * mide nada, y si falla con los dos está mal escrito.
+   */
   verdict: CriterionVerdict;
 }
 
