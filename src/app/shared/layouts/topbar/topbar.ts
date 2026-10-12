@@ -12,7 +12,8 @@ import { filter, map } from 'rxjs/operators';
 interface Seccion {
   lista: string;
   etiqueta: string;
-  detalle: RegExp;
+  /** Opcional: una sección plana, sin vista de detalle, solo aporta su propio escalón. */
+  detalle?: RegExp;
   /**
    * Etiqueta fija para el detalle, cuando lo que se abre no es una entidad guardada y por tanto no
    * tiene un nombre que publicar. Si falta, el escalón lo pone la vista con `BreadcrumbService`.
@@ -22,6 +23,11 @@ interface Seccion {
 
 /** Las secciones con miga de pan: la lista y, debajo, su vista de detalle. */
 const SECCIONES: Seccion[] = [
+  // Inicio y Perfil no tienen detalle, pero entran igual: sin un escalón, `breadcrumbItems` vuelve
+  // vacío y el `@if` de la plantilla esconde la barra entera, así que esas dos vistas empezaban
+  // más arriba que las demás y el salto se notaba al navegar entre ellas.
+  { lista: '/home', etiqueta: 'Inicio' },
+  { lista: '/profile', etiqueta: 'Perfil' },
   {
     lista: '/learning/modules',
     etiqueta: 'Módulos',
@@ -75,7 +81,7 @@ export class Topbar {
     const titulo = this.breadcrumbService.title();
 
     for (const seccion of SECCIONES) {
-      if (seccion.detalle.test(url)) {
+      if (seccion.detalle?.test(url)) {
         // Con etiqueta fija el escalón está desde el primer momento; con nombre publicado llega
         // cuando la vista termina de cargar, y hasta entonces se pinta solo el padre. Rellenar el
         // hueco con un número sería peor: el ejercicio `id` 2 se llama «Ejercicio 01», así que la

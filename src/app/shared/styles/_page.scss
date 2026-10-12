@@ -20,16 +20,25 @@
 }
 
 /// Título y bajada de la vista.
+///
+/// Los tamaños van explícitos a propósito. Antes no estaban, así que el `h1` caía en el `2em` que
+/// trae el navegador por defecto —no había `reset` ni regla global que lo fijara— y las vistas que
+/// sí lo definían a mano (Libre y Perfil, en `1.5rem`) se veían más pequeñas que el resto. Al
+/// declararlo aquí, el tamaño de los cinco encabezados se cambia en un solo sitio.
 @mixin page-header {
   margin-bottom: var(--space-lg);
 
   h1 {
     margin: 0 0 var(--space-xs);
     color: var(--color-text-primary);
+    font-size: 2rem;
+    line-height: 1.3;
   }
 
   p {
+    margin: 0;
     color: var(--color-text-secondary);
+    font-size: 1rem;
   }
 }
 
