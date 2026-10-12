@@ -2,6 +2,8 @@
 // crece, así que la página scrollea en vez de ocupar la pantalla exacta. Es lo contrario que el
 // taller de Libre, y lo mismo que la vista de resolución, porque es la misma tarea.
 
+@use '../../../../shared/styles/page' as page;
+
 :host {
   display: block;
   min-height: 100%;
@@ -15,18 +17,12 @@
   gap: var(--space-md);
 }
 
+// La separación con lo que sigue la pone ya el `gap` de `.practice`, así que se anula la del mixin
+// para no sumar dos.
 .practice-header {
-  h1 {
-    margin: 0 0 var(--space-xs);
-    color: var(--color-text-primary);
-    font-size: 1.5rem;
-    line-height: 1.3;
-  }
+  @include page.page-header;
 
-  p {
-    color: var(--color-text-secondary);
-    font-size: 0.875rem;
-  }
+  margin-bottom: 0;
 }
 
 /* ─── Disposición ─── */

@@ -16,24 +16,23 @@
   gap: var(--space-lg);
 }
 
+// El `margin-bottom` del mixin lo aporta ya el `gap` del contenedor, así que se anula para no
+// sumar dos separaciones.
 .profile-header {
-  h1 {
-    margin: 0 0 var(--space-xs);
-    color: var(--color-text-primary);
-    font-size: 1.5rem;
-    line-height: 1.3;
+  @include page.page-header;
+
+  margin-bottom: 0;
+
+  // Va anidado y no suelto porque el mixin estiliza `p` dentro de `.profile-header`: una regla
+  // `.profile-since` a secas empata en clases pero pierde por el selector de tipo, y «Miembro
+  // desde» saldría con el tamaño de la bajada.
+  //
+  // El correo, en cambio, sí ocupa el lugar de la bajada, así que hereda del mixin sin más.
+  .profile-since {
+    margin-top: var(--space-xs);
+    color: var(--color-text-muted);
+    font-size: 0.8125rem;
   }
-}
-
-.profile-email {
-  color: var(--color-text-secondary);
-  font-size: 0.875rem;
-}
-
-.profile-since {
-  margin-top: var(--space-xs);
-  color: var(--color-text-muted);
-  font-size: 0.8125rem;
 }
 
 /* ─── Las tarjetas ─── */
