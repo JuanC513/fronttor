@@ -1,6 +1,7 @@
 {
   "name": "tg-smart-tutor",
   "version": "0.0.0",
+  "license": "MIT",
   "scripts": {
     "ng": "ng",
     "start": "set CHOKIDAR_USEPOLLING=1 && ng serve",
