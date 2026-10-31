@@ -110,6 +110,18 @@
           <p-message [severity]="message.severity" [text]="message.text" styleClass="w-full" />
         }
 
+        <!-- Al aprobar, la vista no ofrecía salida y la miga de pan pasaba desapercibida: en la
+            prueba con usuarios, cuatro participantes no supieron qué hacer al terminar. -->
+        @if (passed()) {
+          <p-button
+            label="Volver a los ejercicios"
+            icon="pi pi-arrow-left"
+            variant="outlined"
+            routerLink="/learning/exercises"
+            styleClass="w-full"
+          />
+        }
+
         @if (submitError(); as message) {
           <p-message severity="error" [text]="message" styleClass="w-full" />
         }
