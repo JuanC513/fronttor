@@ -42,9 +42,20 @@ describe('Topbar', () => {
     expect(component).toBeTruthy();
   });
 
+  // Enseñar no está en `SECCIONES`. Antes este caso usaba `/home`, pero Inicio ganó su escalón para
+  // que la barra no desaparezca al entrar y el contenido no salte de altura al navegar.
   it('no pinta miga en una sección que no la tiene', async () => {
-    await setup('/home');
+    await setup('/teaching');
     expect(component.breadcrumbItems()).toEqual([]);
+  });
+
+  it('en Inicio y Perfil pinta su propio escalón, sin enlace', async () => {
+    await setup('/home');
+    expect(etiquetas()).toEqual(['Inicio']);
+    expect(component.breadcrumbItems()[0].routerLink).toBeUndefined();
+
+    await router.navigateByUrl('/profile');
+    expect(etiquetas()).toEqual(['Perfil']);
   });
 
   it('en una lista pinta un solo escalón, y sin enlace', async () => {
