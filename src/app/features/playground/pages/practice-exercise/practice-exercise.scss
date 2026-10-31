@@ -4,11 +4,14 @@
 
 @use '../../../../shared/styles/page' as page;
 
+// El scroll lo tiene que poner el `:host`, como en las demás vistas: el contenedor del layout es
+// `overflow: hidden`, así que con `min-height` la página crecía por debajo del borde y lo que
+// quedaba fuera (el final del enunciado, la pista) no se podía alcanzar. Lo reportaron dos
+// participantes de la prueba con usuarios.
 :host {
-  display: block;
-  min-height: 100%;
+  @include page.page-shell;
+
   padding: var(--space-lg);
-  background-color: var(--color-surface);
 }
 
 .practice {

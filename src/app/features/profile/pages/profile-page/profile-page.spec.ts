@@ -143,6 +143,24 @@ describe('ProfilePage', () => {
 
     expect(error).toHaveBeenCalledWith('No se pudo guardar', 'permission denied');
     expect(exito).not.toHaveBeenCalled();
+    expect(component.justSaved()).toBeFalse();
+  });
+
+  /** El toast se va en tres segundos; la marca junto al botón se queda mientras siga siendo cierta. */
+  it('deja «Guardado» junto al botón hasta que se vuelve a escribir', async () => {
+    await setup('Viejo');
+    component.onDescriptionChange('Nuevo');
+
+    await component.save();
+    fixture.detectChanges();
+
+    const aviso = () => (fixture.nativeElement as HTMLElement).querySelector('.saved-notice');
+    expect(aviso()?.textContent).toContain('Guardado');
+
+    component.onDescriptionChange('Nuevo, corregido');
+    fixture.detectChanges();
+
+    expect(aviso()).toBeNull();
   });
 
   /** Borrarlo todo es una decisión, no un campo sin rellenar: no puede volver solo el texto viejo. */

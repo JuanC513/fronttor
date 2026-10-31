@@ -251,6 +251,29 @@ describe('LearningExercise', () => {
     expect(component.passed()).toBeTrue();
   });
 
+  /* ─── La salida al aprobar ─── */
+
+  const volver = (fixture: ComponentFixture<LearningExercise>) =>
+    (fixture.nativeElement as HTMLElement).querySelector(
+      'p-button[label="Volver a los ejercicios"]',
+    );
+
+  it('sin aprobar no ofrece volver: el estudiante sigue trabajando', async () => {
+    const { fixture } = await setup({});
+
+    expect(volver(fixture)).toBeNull();
+  });
+
+  it('al aprobar ofrece volver a la lista de ejercicios', async () => {
+    const { fixture, component } = await setup({});
+    stubValidation(fixture, outcome());
+
+    await component.submit();
+    fixture.detectChanges();
+
+    expect(volver(fixture)).not.toBeNull();
+  });
+
   /* ─── El borrador: el último envío ─── */
 
   const draftOf = (html: string, feedback: string | null = null): AttemptDraft => ({
