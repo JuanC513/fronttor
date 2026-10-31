@@ -100,6 +100,15 @@ export class ProfilePage {
   readonly description = signal('');
   readonly saving = signal(false);
 
+  /**
+   * Si lo que se ve en el campo es lo que se acaba de guardar.
+   *
+   * El toast solo no bastaba: dura tres segundos en una esquina, y en la prueba con usuarios hubo
+   * quien no lo vio y tuvo que salir y volver para comprobar que se había guardado. Esta marca se
+   * queda junto al botón hasta que el estudiante vuelve a escribir, que es cuando deja de ser cierta.
+   */
+  readonly justSaved = signal(false);
+
   /** Lo guardado, para saber si hay algo que guardar. */
   private readonly stored = computed(() => this.profile()?.profile_description ?? '');
 
@@ -141,6 +150,7 @@ export class ProfilePage {
       // Sin esto `profile$` se quedaría con el texto anterior, y la vista mostraría lo viejo justo
       // después de haber escrito lo nuevo.
       await this.authService.refreshProfile();
+      this.justSaved.set(true);
       this.notifications.exito('Guardado. Tu tutor ya lo tiene en cuenta');
     } catch (err) {
       this.notifications.error(
@@ -154,6 +164,7 @@ export class ProfilePage {
 
   onDescriptionChange(value: string): void {
     this.touched.set(true);
+    this.justSaved.set(false);
     this.description.set(value);
   }
 

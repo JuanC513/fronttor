@@ -54,7 +54,7 @@
         <small class="counter">{{ description().length }} / {{ maxLength }}</small>
       </div>
 
-      <div class="actions mt-3">
+      <div class="actions mt-3 flex align-items-center gap-3">
         <p-button
           label="Guardar"
           icon="pi pi-check"
@@ -62,6 +62,13 @@
           [disabled]="!canSave()"
           (onClick)="save()"
         />
+
+        @if (justSaved()) {
+          <span class="saved-notice flex align-items-center gap-2" role="status">
+            <i class="pi pi-check-circle" aria-hidden="true"></i>
+            Guardado
+          </span>
+        }
       </div>
     </div>
 
