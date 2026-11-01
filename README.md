@@ -83,8 +83,8 @@ una cuenta de [Supabase](https://supabase.com) y una clave de la
 1. **Clonar e instalar.**
 
    ```bash
-   git clone https://github.com/JuanC513/tg-smart-tutor.git
-   cd tg-smart-tutor
+   git clone https://github.com/JuanC513/fronttor.git
+   cd fronttor
    npm install
    ```
 
