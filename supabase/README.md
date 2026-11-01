@@ -49,19 +49,22 @@ npx supabase db dump --linked --schema public -f supabase/schema-actual.sql
 17. `migrations/20260929120000_enforce_lesson_order.sql`
 18. `migrations/20260930120000_content_publication_rls.sql`
 19. `migrations/20261001120000_tutor_activity.sql`
-20. `seed.sql`
+20. `migrations/20261004120000_practice_kind.sql`
+21. `seed.sql`
 
 El orden **no es opcional**: la 3 usa la función `is_admin()`, que crea la 2; la 4 redefine funciones que crea la 2; la 5 redefine las que deja la 4; la 6 redefine `is_admin()` y `handle_new_user()`, la 7 depende de esa última, la 10 renombra `is_admin()` a `is_teacher()` junto con el rol y las políticas, y la 11 recrea `submit_exercise_attempt`, que existe desde la 2. La 12 usa `is_teacher()`, que deja la 10; la 14 lee `lesson_progress` y `exercise_attempts`, que crea la 2, y `profiles.profile_description`, que la 8 dejó como la única columna editable del propio perfil; y la 15 recrea `get_student_context()`, que crea la 14.
 
-La 18 reemplaza policies que declaran la 3 y la 12, así que va después de las dos; y la 19 lee
-`ai_interactions.status`, que añade la 13.
+La 18 reemplaza policies que declaran la 3 y la 12, así que va después de las dos; la 19 lee
+`ai_interactions.status`, que añade la 13; y la 20 reemplaza `get_my_tutor_activity()`, que crea
+la 19, y admite el tipo `practice` en `ai_interactions`, sin el cual las Edge Functions no pueden
+registrar los ejercicios de práctica.
 
 La 17 recrea `mark_lesson_viewed` —que viene de la 4— y `submit_exercise_attempt` —de la 11—, así que
 va después de las dos. Y va **después de la 16** por un motivo concreto: crea una función nueva, y
 desde la 16 las funciones nuevas nacen sin permisos, de modo que su `grant execute` explícito es
 obligatorio. Es la primera migración escrita bajo esa regla.
 
-**La 16 va después de las que crean objetos**, y no por dependencia sino por alcance: revoca permisos sobre *todas* las funciones y secuencias del esquema, así que tiene que ver ya creado todo lo que las anteriores crean. También después de la 1, porque `schema-actual.sql` trae consigo las concesiones a `anon` y el `ALTER DEFAULT PRIVILEGES` que las reintroduce.
+**La 16 va después de las que crean objetos**, y no por dependencia sino por alcance: revoca permisos sobre _todas_ las funciones y secuencias del esquema, así que tiene que ver ya creado todo lo que las anteriores crean. También después de la 1, porque `schema-actual.sql` trae consigo las concesiones a `anon` y el `ALTER DEFAULT PRIVILEGES` que las reintroduce.
 
 Y la 1 **no es opcional en un proyecto nuevo**: seis funciones que la aplicación llama —`delete_module`, `delete_lesson`, `delete_block`, `reorder_modules`, `reorder_lessons` y `reorder_blocks`— se crearon en el dashboard y no las crea ninguna migración, así que solo llegan por ahí. Sin ellas el panel de profesor falla al borrar y al reordenar.
 
@@ -113,15 +116,15 @@ Lo que **no** se transfiere y hay que rehacer:
 
 Esto es lo que importa antes de ejecutar nada:
 
-| Tabla                                                     | Efecto                                                       |
-| --------------------------------------------------------- | ------------------------------------------------------------ |
-| `auth.users`                                              | **Intacta.** Ninguna migración la toca.                      |
+| Tabla                                                     | Efecto                                                                                              |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `auth.users`                                              | **Intacta.** Ninguna migración la toca.                                                             |
 | `profiles`                                                | **Pierde la columna `role_id`**, cuyo contenido se traslada a `user_roles`. Las filas se conservan. |
-| `roles`                                                   | **Datos intactos.** `seed.sql` usa `on conflict do nothing`. |
-| `user_roles`                                              | **Se crea** y se rellena con los roles que había, más `student` para todos. |
-| `modules`, `lessons`, `blocks`                            | **Datos intactos.** Solo cambian sus políticas.              |
-| `exercises`                                               | **Se borra y se recrea.** Sus filas se pierden.              |
-| `exercise_attempts`, `lesson_progress`, `ai_interactions` | Se crean si no existen; si ya existen, se conservan.         |
+| `roles`                                                   | **Datos intactos.** `seed.sql` usa `on conflict do nothing`.                                        |
+| `user_roles`                                              | **Se crea** y se rellena con los roles que había, más `student` para todos.                         |
+| `modules`, `lessons`, `blocks`                            | **Datos intactos.** Solo cambian sus políticas.                                                     |
+| `exercises`                                               | **Se borra y se recrea.** Sus filas se pierden.                                                     |
+| `exercise_attempts`, `lesson_progress`, `ai_interactions` | Se crean si no existen; si ya existen, se conservan.                                                |
 
 Es decir: las cuentas de usuario y su asociación con los roles **no se pierden** —cambian de sitio, de `profiles.role_id` a `user_roles`—, ni tampoco el contenido del curso. La única tabla cuyos datos desaparecen es `exercises`.
 
@@ -139,7 +142,7 @@ Es decir: las cuentas de usuario y su asociación con los roles **no se pierden*
   **no** publica los borradores que haya en ese momento.
 
 - **`20260908120000_exercise_solution.sql` es seguro de reejecutar.** Añade columnas con `if not
-  exists` y redefine dos funciones.
+exists` y redefine dos funciones.
 
 - **`20260918120000_user_roles_many_to_many.sql` es seguro de reejecutar.** Crea la tabla, las
   políticas y las funciones comprobando antes si hace falta. El traslado de los roles existentes
@@ -208,7 +211,7 @@ Es decir: las cuentas de usuario y su asociación con los roles **no se pierden*
   `is_published` del propio ejercicio, y esta mira además su subtema y su tema.
 
 - **`20261001120000_tutor_activity.sql` es seguro de reejecutar.** Crea un índice con `if not
-  exists` y una función con `create or replace`.
+exists` y una función con `create or replace`.
 
   **No añade una policy de lectura sobre `ai_interactions`, y es deliberado**: esa tabla guarda el
   `prompt`, que lleva dentro las reglas del sistema y las defensas contra inyección. La función
@@ -250,7 +253,7 @@ where pronamespace = 'public'::regnamespace
 order by proname;
 ```
 
-Si sale alguna repetida, el panel fallará al guardar con *"Could not choose the best candidate function"*.
+Si sale alguna repetida, el panel fallará al guardar con _"Could not choose the best candidate function"_.
 
 ### Lo que puede ejecutar `anon`
 
@@ -386,10 +389,10 @@ order by 1, 2, 3;
 **La columna del dueño no es un adorno, es lo que hace legible el resultado.** Lo esperado son dos
 bloques distintos:
 
-| Dueño | Qué debe salir |
-| ----- | -------------- |
-| `postgres` | `authenticated`, `postgres` y `service_role`, y **ni `anon` ni `PUBLIC`** en ninguna de las tres categorías |
-| `supabase_admin` | `anon` sí aparece, y es correcto que aparezca |
+| Dueño            | Qué debe salir                                                                                              |
+| ---------------- | ----------------------------------------------------------------------------------------------------------- |
+| `postgres`       | `authenticated`, `postgres` y `service_role`, y **ni `anon` ni `PUBLIC`** en ninguna de las tres categorías |
+| `supabase_admin` | `anon` sí aparece, y es correcto que aparezca                                                               |
 
 `postgres` es el único que importa: el editor SQL corre con `current_user = postgres`, de modo que es
 el rol con el que este proyecto crea todo lo que hay en `public`. La entrada de `supabase_admin` es
@@ -444,7 +447,7 @@ group by 1 order by 1;
 > tabla ya lo hizo con los usuarios que existían entonces, pero no puede hacerlo con los futuros.
 
 > **Sobre el nombre.** Hasta la migración 10 este rol se llamaba `admin`. Se renombró porque
-> *administrador* nombra a quien gestiona el sistema —usuarios, permisos, parámetros— y no a quien
+> _administrador_ nombra a quien gestiona el sistema —usuarios, permisos, parámetros— y no a quien
 > escribe el contenido del curso. Las migraciones anteriores a la 10 siguen diciendo `admin`: son
 > un registro fechado, no la descripción del estado actual.
 >
